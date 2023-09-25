@@ -196,11 +196,11 @@ class _MyAppState extends State<MyApp> {
     try {
       await startFunction();
       print("${startFunction.toString()} called successfully ✅");
-      eventSubscription = eventStream.listen((event) {
-        handleEvent(event);
-      }, onError: (error) {
-        print(error);
-      });
+      // microphoneEventSubscription = eventStream.listen((event) {
+      //   handleEvent(event);
+      // }, onError: (error) {
+      //   print(error);
+      // });
     } on PlatformException catch (e) {
       print(e);
     }
@@ -219,7 +219,8 @@ class _MyAppState extends State<MyApp> {
 
   void handleEvent(dynamic event) {
     print(event);
-    if (event['type'] == 'screenRecordingStatus') {
+    if (event['type'] == 'screenRecordingStatus' ||
+        event['type'] == 'microphoneStatus') {
       setState(() {
         _counter = event['elapsedTime'];
       });
@@ -268,6 +269,10 @@ class _MyAppState extends State<MyApp> {
                   "Stop System Audio Only Capturing",
                   () => stopRecording(_shadowPlugin.stopScreenCapture,
                       screenCaptureEventSubscription)),
+              CustomButton(
+                  "Request Microhpone Permission",
+                  () => startRecording(_shadowPlugin.requestMicPermission,
+                      _shadowPlugin.screenCaptureEvents)),
               // ... [rest of the buttons]
             ],
           ),

@@ -14,6 +14,9 @@ class MockShadowPlatform
   Stream<dynamic> get screenCaptureEvents => Stream.empty();
 
   @override
+  Future<void> requestMicPermission() async {}
+
+  @override
   Future<String?> getPlatformVersion() => Future.value('42');
 
   //SystemAudio

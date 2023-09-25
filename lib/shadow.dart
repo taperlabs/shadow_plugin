@@ -7,12 +7,17 @@ class Shadow {
 
   Stream<dynamic> get screenCaptureEvents =>
       ShadowPlatform.instance.screenCaptureEvents;
+
+  Future<void> requestMicPermission() {
+    return ShadowPlatform.instance.requestMicPermission();
+  }
+
   //Test
   Future<String?> getPlatformVersion() {
     return ShadowPlatform.instance.getPlatformVersion();
   }
 
-  //SystemAudio
+  //System Audio
   Future<void> startSystemAudioRecordingWithConfig(
       [Map<String, dynamic>? config]) {
     return ShadowPlatform.instance.startSystemAudioRecordingWithConfig(config);
@@ -48,6 +53,7 @@ class Shadow {
     return ShadowPlatform.instance.stopMicRecording();
   }
 
+  //System and Mic Audio
   Future<void> startSystemAndMicAudioRecordingWithDefault() {
     return ShadowPlatform.instance.startSystemAndMicAudioRecordingWithDefault();
   }

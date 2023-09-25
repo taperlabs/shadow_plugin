@@ -10,17 +10,6 @@ class AssetWriterHelper {
     var videoInput: AVAssetWriterInput?
     var audioInput: AVAssetWriterInput?
     
-    //    private var audioSetting: [String: Any]?
-    
-    //    private func setUpAudioConfiguration() {
-    //        audioSetting = [
-    //            AVFormatIDKey: kAudioFormatMPEG4AAC,
-    //            AVNumberOfChannelsKey: 1,
-    //            AVSampleRateKey: 16000.0,
-    //            AVEncoderAudioQualityKey: AVAudioQuality.min.rawValue
-    //        ]
-    //    }
-    
     //Audio Configuration Setting
     private func setAudioConfiguration(format: AudioFormatOption ,
                                        channels: NumberOfChannels,
@@ -73,14 +62,6 @@ class AssetWriterHelper {
             
             // AudioOuput Setting
             let audioOutputSettings = AudioSetting.setAudioConfiguration(format: format, channels: channels, sampleRate: sampleRate)
-//            let audioOutputSettings = setAudioConfiguration(format: format, channels: channels, sampleRate: sampleRate)
-            
-            //            let audioOutputSettings: [String: Any] = [
-            //                AVFormatIDKey: kAudioFormatMPEG4AAC,
-            //                AVNumberOfChannelsKey: 1,
-            //                AVSampleRateKey: 16000.0,
-            //                AVEncoderAudioQualityKey: AVAudioQuality.min.rawValue
-            //            ]
             
             //AssetWriterInput 셋업
             systemAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: audioOutputSettings)
@@ -96,48 +77,7 @@ class AssetWriterHelper {
             print("AVAssetWriter initalizer 실패", error)
         }
     }
-    
-//    func setUpSystemAudioAssetWriter() {
-//        let systemAudioFileName = "FlutterSystemAudio.m4a"
-//
-//        //System Audio Output URL 설정 + Nil Check
-//        guard let audioOutputURL = FileManagerHelper.getURL(for: systemAudioFileName) else {
-//            print("audioOutputURL을 가져오는데 실패하였습니다.")
-//            return
-//        }
-//
-//        //이전에 저장한 시스템 오디오 파일이 존재하는지 체크 후 존재 시 삭제
-//        FileManagerHelper.deleteFileIfExists(at: audioOutputURL)
-//
-//        do {
-//            //AssetWriter Setting
-//            systemAudioAssetWriter = try AVAssetWriter(outputURL: audioOutputURL, fileType: .m4a)
-//
-//            // AudioOuput Setting
-//            let audioOutputSettings = setAudioConfiguration(format: .mpeg4AAC, channels: .stereo, sampleRate: .rate48K)
-//
-//            //            let audioOutputSettings: [String: Any] = [
-//            //                AVFormatIDKey: kAudioFormatMPEG4AAC,
-//            //                AVNumberOfChannelsKey: 1,
-//            //                AVSampleRateKey: 16000.0,
-//            //                AVEncoderAudioQualityKey: AVAudioQuality.min.rawValue
-//            //            ]
-//
-//            //AssetWriterInput 셋업
-//            systemAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: audioOutputSettings)
-//            systemAudioInput?.expectsMediaDataInRealTime = true
-//            if let audioInput = systemAudioInput, systemAudioAssetWriter?.canAdd(audioInput) == true {
-//                systemAudioAssetWriter?.add(audioInput)
-//            }
-//
-//            systemAudioAssetWriter?.startWriting()
-//            systemAudioAssetWriter?.startSession(atSourceTime: CMTime.zero)
-//
-//        } catch  {
-//            print("AVAssetWriter initalizer 실패", error)
-//        }
-//    }
-    
+        
     //Screen + System Audio AssetWriter
     func setUpAssetWriter() {
         
@@ -167,14 +107,7 @@ class AssetWriterHelper {
             }
             
             let audioOutputSettings = setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate44_1K)
-            
-            // Create and configure the audio input
-            //            let audioOutputSettings: [String: Any] = [
-            //                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            //                AVNumberOfChannelsKey: 2,
-            //                AVSampleRateKey: 44100.0,
-            //                AVEncoderBitRateKey: 192000
-            //            ]
+
             audioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: audioOutputSettings)
             audioInput?.expectsMediaDataInRealTime = true
             if let audioInput = audioInput, assetWriter?.canAdd(audioInput) == true {

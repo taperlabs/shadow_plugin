@@ -83,12 +83,6 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
         guard let eventSink = eventSink else { return }
         
         print("센드 리코딩 투 플러터", isRecording)
-        //        eventSink?(isRecording)
-        //        let eventData: [String: Any] = [
-        //            "type": EventChannelAction.screenRecordingStatus.rawValue,
-        //            "isRecording": isRecording
-        //        ]
-
         
         let eventData = RecordingStatusEventModel(type: .screenRecordingStatus, isRecording: isRecording, elapsedTime: 0)
         
@@ -108,39 +102,8 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
         switch type {
         case .screen:
             break
-            //            guard let frame = createFrame(for: sampleBuffer) else {
-            //                print("create Frame Error!!")
-            //                return
-            //            }
-            //            capturedFrameHandler?(frame)
-            
-            //            print("Hello This is Screen")
-            
-            //            var timestampedSampleBuffer = adjustTimeStamp(sampleBuffer: sampleBuffer)
-            //            print("비디오 샘플버퍼!!!!!", timestampedSampleBuffer!)
-            
-            // Write to video input
-            //            guard let videoInput = recorder?.assetWriterSetup.videoInput, videoInput.isReadyForMoreMediaData else  {
-            //                print("준비가 안됐음 11111111")
-            //                return
-            //            }
-            //
-            //            guard let realSamplBuffer = timestampedSampleBuffer else {
-            //                return
-            //            }
-            //
-            //            videoInput.append(realSamplBuffer)
-            
         case .audio:
-            //            print("Audio Sample Buffer: \(sampleBuffer)")
-            
-            var timestampledSampleBuffer = adjustTimeStamp(sampleBuffer: sampleBuffer)
-            
-            // Write to audio input
-            //            guard let audioInput = recorder?.assetWriterSetup.audioInput, audioInput.isReadyForMoreMediaData else  {
-            //                print("준비가 안됐음 ㅋㅋ2222")
-            //                return
-            //            }
+            let timestampledSampleBuffer = adjustTimeStamp(sampleBuffer: sampleBuffer)
             
             //systemAudioInput에 AudioBuffer 쓰기
             guard let systemAudioInput = recorder?.assetWriterSetup.systemAudioInput, systemAudioInput.isReadyForMoreMediaData else {

@@ -23,6 +23,11 @@ abstract class ShadowPlatform extends PlatformInterface {
     _instance = instance;
   }
 
+  Future<void> requestMicPermission() {
+    throw UnimplementedError(
+        'requestMicPermission() has not been implemented.');
+  }
+
   Future<String?> getPlatformVersion() {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }

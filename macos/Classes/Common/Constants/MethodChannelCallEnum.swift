@@ -2,7 +2,7 @@ import Foundation
 
 //MARK: - MethodChannel Call 상수
 enum MethodChannelCall: String {
-    //SystemAudio Only
+    //System Audio Only
     case startSystemAudioRecordingWithConfig = "startSystemAudioRecordingWithConfig"
     case startSystemAudioRecordingWithDefault = "startSystemAudioRecordingWithDefault"
     
@@ -10,10 +10,13 @@ enum MethodChannelCall: String {
     case startMicRecordingWithConfig = "startMicRecordingWithConfig"
     case startMicRecordingWithDefault = "startMicRecordingWithDefault"
     
-    //Combined System and Mic Recording
+    //Combined System and Mic Audio Recording
     case startSystemAndMicAudioRecordingWithConfig = "startSystemAndMicAudioRecordingWithConfig"
     case startSystemAndMicAudioRecordingWithDefault = "startSystemAndMicAudioRecordingWithDefault"
     case stopSystemAndMicAudioRecording = "stopSystemAndMicAudioRecording"
+    
+    
+    case requestMicPermission = "requestMicPermission"
     
     //Before
     case startScreenCapture = "startScreenCapture"

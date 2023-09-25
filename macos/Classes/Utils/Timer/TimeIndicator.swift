@@ -1,6 +1,6 @@
 import Foundation
 
-//MARK: - Timer Class
+//MARK: - Timer Class for both AVAudioRecorder and ScreenCaptureKit
 class TimeIndicator {
     private var timer: Timer?
     private(set) var elapsedTime: Int = 0

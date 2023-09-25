@@ -7,8 +7,7 @@ import FlutterMacOS
 class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     
     private var audioRecorder: AVAudioRecorder?
-    //    private let recordingFileName = "FlutterMicRecording.m4a"
-    private let recordingFileName = "FlutterLocationTest.m4a"
+    private let recordingFileName = "FlutterMicRecording.m4a"
     private var sink: FlutterEventSink?
     private var decibelTimer: Timer?
     private var isRecording = false
@@ -29,33 +28,6 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
         return nil
     }
     
-    @objc private func sendDecibelValue() {
-        guard let sink = sink else { return }
-        refreshMeters()
-        let decibelValue = getAveragePower(for: 0)  // or use getPeakPower(for: 0) based on your requirement
-        print(decibelValue)
-        sink(Int(decibelValue))
-    }
-    
-    //    @objc private func sendIsRecording() {
-    //        guard let sink = sink else { return }
-    //        sink(isRecording)
-    //        let eventData: [String: Any] = [
-    //            "type": EventChannelAction.microphoneStatus.rawValue,
-    //            "isRecording": isRecording
-    //        ]
-    
-    //        let eventData = RecordingStatusEventModel(type: .microphoneStatus, isRecording: isRecording, elapsedTime:)
-    
-    //        sink(eventData.recordingStatusDictionary)
-    //    }
-    
-    //    @objc private func sendTimeUpdate(_ time: Int) {
-    //        guard let sink = sink else { return }
-    //        let eventData = RecordingStatusEventModel(type: .microphoneStatus, isRecording: isRecording, elapsedTime: time)
-    //        sink(eventData.recordingStatusDictionary)
-    //    }
-    
     @objc private func sendTimeUpdate() {
         guard let sink = sink else { return }
         
@@ -68,7 +40,6 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     
     func startMicAudioRecording() {
         let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
-        //        let audioSettings = setMicRecordingSettings(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
         setupAndStartRecording(with: audioSettings, filename: recordingFileName)
     }
     
@@ -86,6 +57,7 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
         print("sampleRate 🎤", sampleRate)
         print("file Name 🎤", filename)
         
+        //TODO: - Change setMicRecordingSettings with Helper method
         let settings = setMicRecordingSettings(format: format, channels: channels, sampleRate: sampleRate)
         setupAndStartRecording(with: settings, filename: filename)
     }
@@ -115,36 +87,7 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     }
     
     
-    
-    //마이크 녹음 시작
-    //    func startAudioRecording() {
-    //        guard let fileURL = FileManagerHelper.getURL(for: recordingFileName) else {
-    //            print("Error generating recording URL")
-    //            return
-    //        }
-    //
-    //        let settings = setMicRecordingSettings(format: .mpeg4AAC, channels: .mono, sampleRate: .rate44_1K)
-    //
-    //        do {
-    //            audioRecorder = try AVAudioRecorder(url: fileURL, settings: settings)
-    //            audioRecorder?.prepareToRecord()
-    //            audioRecorder?.record()
-    //            isRecording = true
-    //
-    //            timeIndicator.start()
-    //            timeIndicator.timeUpdateHandler = { [weak self] _ in
-    //                self?.sendTimeUpdate()
-    //            }
-    //
-    //            audioRecorder?.isMeteringEnabled = true
-    //
-    //
-    //        } catch {
-    //            print("Error setting up audio recorder: \(error)")
-    //        }
-    //    }
-    
-    //마이크 녹음 중단
+    //stop mic audio recording
     func stopMicAudioRecording() {
         audioRecorder?.stop()
         audioRecorder = nil
@@ -163,29 +106,6 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
     }
-    
-    
-    //    private func setMicRecordingSettings(format: AudioFormatOption ,
-    //                                         channels: NumberOfChannels,
-    //                                         sampleRate: SampleRateOption ) -> [String: Any] {
-    //        return [
-    //            AVFormatIDKey: format.formatID,
-    //            AVSampleRateKey: sampleRate.rawValue,
-    //            AVNumberOfChannelsKey: channels.rawValue,
-    //            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-    //        ]
-    //    }
-    
-    
-    // Mic Audio Output File setting
-    //    private func getRecordingSettings() -> [String: Any] {
-    //        return [
-    //            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-    //            AVSampleRateKey: 44100,
-    //            AVNumberOfChannelsKey: 1,
-    //            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-    //        ]
-    //    }
 }
 
 // MARK: - Microphone Decibel 측정 Extension

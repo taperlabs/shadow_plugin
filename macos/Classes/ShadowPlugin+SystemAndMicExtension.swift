@@ -1,6 +1,6 @@
 import Foundation
 import FlutterMacOS
-//MARK: - ShadwPlugin Flutter Entry Point
+//MARK: - An extension for both system and mic audio related MethodChannel Call
 extension ShadowPlugin {
     
     public func handleSystemAudioAndMicRecordingWithConfig(args: [String: Any]?, result: @escaping FlutterResult) {
@@ -45,35 +45,35 @@ extension ShadowPlugin {
                 handleError(error: error, result: result)
             }
         }
-
         
-//        let group = DispatchGroup()
-//
-//        group.enter()
-//        DispatchQueue.global().async {
-//            let semaphore = DispatchSemaphore(value: 0)
-//            Task {
-//                do {
-//                    try await self.screenRecorder.stopCapture()
-//                } catch {
-//                    // Handle error if needed
-//                }
-//                semaphore.signal()
-//            }
-//            semaphore.wait()
-//            group.leave()
-//        }
-//
-//        group.enter()
-//        DispatchQueue.global().async {
-//            self.micAudioRecording.stopMicAudioRecording()
-//            group.leave()
-//        }
-//
-//        group.notify(queue: .main) {
-//            result("스크린 녹화 중지")
-//        }
         
-
+        //        let group = DispatchGroup()
+        //
+        //        group.enter()
+        //        DispatchQueue.global().async {
+        //            let semaphore = DispatchSemaphore(value: 0)
+        //            Task {
+        //                do {
+        //                    try await self.screenRecorder.stopCapture()
+        //                } catch {
+        //                    // Handle error if needed
+        //                }
+        //                semaphore.signal()
+        //            }
+        //            semaphore.wait()
+        //            group.leave()
+        //        }
+        //
+        //        group.enter()
+        //        DispatchQueue.global().async {
+        //            self.micAudioRecording.stopMicAudioRecording()
+        //            group.leave()
+        //        }
+        //
+        //        group.notify(queue: .main) {
+        //            result("스크린 녹화 중지")
+        //        }
+        
+        
     }
 }

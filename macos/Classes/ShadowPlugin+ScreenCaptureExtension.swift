@@ -1,7 +1,7 @@
 import Foundation
 import FlutterMacOS
 
-//MARK: - An extension for system audio capturing
+//MARK: - An extension for system audio related MethodChannel Call
 extension ShadowPlugin {
     
     public func handleSystemAudioRecording(args: [String: Any]? = nil, result: @escaping FlutterResult) {

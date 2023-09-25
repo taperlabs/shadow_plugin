@@ -6,7 +6,7 @@ struct RecordingStatusEventModel {
     let isRecording: Bool
     let elapsedTime: Int
     
-    //계산 속성 (computed property)
+    //recordingStatus dictionary (computed property)
     var recordingStatusDictionary: [String: Any] {
         return ["type": type.rawValue, "isRecording": isRecording, "elapsedTime": elapsedTime]
     }
