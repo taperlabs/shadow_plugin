@@ -21,6 +21,11 @@ class MethodChannelShadow extends ShadowPlatform {
       _screenCaptureEventChannel.receiveBroadcastStream();
 
   @override
+  Future<void> requestScreenPermission() async {
+    return methodChannel.invokeMethod('requestScreenPermission');
+  }
+
+  @override
   Future<void> requestMicPermission() async {
     return methodChannel.invokeMethod('requestMicPermission');
   }

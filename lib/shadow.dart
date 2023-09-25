@@ -8,6 +8,10 @@ class Shadow {
   Stream<dynamic> get screenCaptureEvents =>
       ShadowPlatform.instance.screenCaptureEvents;
 
+  Future<void> requestScreenPermission() {
+    return ShadowPlatform.instance.requestScreenPermission();
+  }
+
   Future<void> requestMicPermission() {
     return ShadowPlatform.instance.requestMicPermission();
   }

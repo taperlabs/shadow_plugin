@@ -44,6 +44,11 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+        case .requestScreenPermission:
+            Task {
+                try await ScreenRecorderPermissionHandler.requestScreenRecorderPermission()
+            }
+            
         case .requestMicPermission:
             print("Microphone 퍼미션 핸드럴")
             MicrophonePermissionHandler.requestMicPermission()

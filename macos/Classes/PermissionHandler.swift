@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import ScreenCaptureKit
 
 struct MicrophonePermissionHandler {
     
@@ -34,6 +35,17 @@ struct MicrophonePermissionHandler {
     
     static func isMicrophoneAccessGranted() -> Bool {
         return AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+    }
+}
+
+struct ScreenRecorderPermissionHandler {
+    
+    static func requestScreenRecorderPermission() async throws {
+        do {
+            try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+        } catch let error {
+            print("error", error.localizedDescription)
+        }
     }
 }
 

@@ -17,6 +17,7 @@ enum MethodChannelCall: String {
     
     
     case requestMicPermission = "requestMicPermission"
+    case requestScreenPermission = "requestScreenPermission"
     
     //Before
     case startScreenCapture = "startScreenCapture"
