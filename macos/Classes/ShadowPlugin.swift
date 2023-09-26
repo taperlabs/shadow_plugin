@@ -48,9 +48,10 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         case .requestScreenPermission:
             
             //            SystemSettingsHandler.checkScreenRecordingPermission()
-            Task {
-                try await ScreenRecorderPermissionHandler.requestScreenRecorderPermission()
-            }
+            ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
+//            Task {
+//                try await ScreenRecorderPermissionHandler.requestScreenRecorderPermission()
+//            }
             
         case .requestMicPermission:
             MicrophonePermissionHandler.requestMicrophonePermission { granted in

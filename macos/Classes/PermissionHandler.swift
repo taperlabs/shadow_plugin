@@ -47,6 +47,10 @@ struct MicrophonePermissionHandler {
 
 struct ScreenRecorderPermissionHandler {
     
+    static func requestScreenRecordingPermission() {
+        CGRequestScreenCaptureAccess()
+    }
+    
     static func requestScreenRecorderPermission() async throws {
         do {
             try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
