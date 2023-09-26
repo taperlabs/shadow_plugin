@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import ScreenCaptureKit
+import CoreGraphics
 
 struct MicrophonePermissionHandler {
     
@@ -12,9 +13,10 @@ struct MicrophonePermissionHandler {
             
         case .notDetermined:
             print(".notDetermined:  The user has not yet been asked for microphone access.")
-            AVCaptureDevice.requestAccess(for: .audio) { granted in
-                completion(granted)
-            }
+            SystemSettingsHandler.openSystemSetting(for: "microphone")
+//            AVCaptureDevice.requestAccess(for: .audio) { granted in
+//                completion(granted)
+//            }
             
         case .denied, .restricted:
             print(".denied or restrcited: The user has previously denied access or access is restricted.")
@@ -63,6 +65,15 @@ struct SystemSettingsHandler {
         let urlString = type == "microphone" ? microphoneURL : screenURL
         if let url = URL(string: urlString) {
             NSWorkspace.shared.open(url)
+        }
+    }
+    
+    static func checkScreenRecordingPermission() {
+        let hasAccess = CGPreflightScreenCaptureAccess()
+        if hasAccess {
+            print("App has screen recording permission", hasAccess)
+        } else {
+            print("App does not have screen recording permission", hasAccess)
         }
     }
 }
