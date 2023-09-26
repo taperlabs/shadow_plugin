@@ -74,6 +74,7 @@ struct SystemSettingsHandler {
             print("App has screen recording permission", hasAccess)
         } else {
             print("App does not have screen recording permission", hasAccess)
+            openSystemSetting(for: "screen")
         }
     }
 }
