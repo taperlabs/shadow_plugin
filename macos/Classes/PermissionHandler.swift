@@ -48,8 +48,18 @@ struct MicrophonePermissionHandler {
 struct ScreenRecorderPermissionHandler {
     
     static func requestScreenRecordingPermission() {
-        CGRequestScreenCaptureAccess()
-    }
+         // Request screen recording permission
+         CGRequestScreenCaptureAccess()
+         
+         // Check the permission status after a delay
+         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+             let hasAccess = CGPreflightScreenCaptureAccess()
+             if !hasAccess {
+                 // Open system settings if permission is not granted
+                 SystemSettingsHandler.openSystemSetting(for: "screen")
+             }
+         }
+     }
     
     static func requestScreenRecorderPermission() async throws {
         do {
