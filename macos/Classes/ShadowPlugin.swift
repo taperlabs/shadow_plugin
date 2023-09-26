@@ -1,4 +1,5 @@
 import Cocoa
+import AVFoundation
 import FlutterMacOS
 
 //MARK: - Fluuter <-> Swift native code entry point class
@@ -50,8 +51,14 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             }
             
         case .requestMicPermission:
-            print("Microphone 퍼미션 핸드럴")
-            MicrophonePermissionHandler.requestMicPermission()
+            MicrophonePermissionHandler.requestMicrophonePermission { granted in
+                if granted {
+                    print("granted!!!")
+                    // Proceed with your audio recording or processing code
+                } else {
+                    print("grant denied")
+                }
+            }
             
         case .startMicRecordingWithConfig:
             //Mic recording with custom configurations

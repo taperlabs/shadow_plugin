@@ -196,11 +196,11 @@ class _MyAppState extends State<MyApp> {
     try {
       await startFunction();
       print("${startFunction.toString()} called successfully ✅");
-      // microphoneEventSubscription = eventStream.listen((event) {
-      //   handleEvent(event);
-      // }, onError: (error) {
-      //   print(error);
-      // });
+      microphoneEventSubscription = eventStream.listen((event) {
+        handleEvent(event);
+      }, onError: (error) {
+        print(error);
+      });
     } on PlatformException catch (e) {
       print(e);
     }

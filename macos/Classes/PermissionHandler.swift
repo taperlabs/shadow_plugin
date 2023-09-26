@@ -7,18 +7,18 @@ struct MicrophonePermissionHandler {
     static func requestMicrophonePermission(completion: @escaping (Bool) -> Void) {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized:
-            print("authorized!!!")
-            // The user has previously granted access to the microphone
+            print("authorized!!! The user has previously granted access to the microphone")
             completion(true)
             
         case .notDetermined:
-            // The user has not yet been asked for microphone access.
+            print(".notDetermined:  The user has not yet been asked for microphone access.")
             AVCaptureDevice.requestAccess(for: .audio) { granted in
                 completion(granted)
             }
             
         case .denied, .restricted:
-            // The user has previously denied access or access is restricted.
+            print(".denied or restrcited: The user has previously denied access or access is restricted.")
+            SystemSettingsHandler.openSystemSetting(for: "microphone")
             completion(false)
             
         @unknown default:
@@ -43,8 +43,26 @@ struct ScreenRecorderPermissionHandler {
     static func requestScreenRecorderPermission() async throws {
         do {
             try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-        } catch let error {
+        } catch {
+            SystemSettingsHandler.openSystemSetting(for: "screen")
             print("error", error.localizedDescription)
+        }
+    }
+}
+
+
+struct SystemSettingsHandler {
+    
+    static func openSystemSetting(for type: String) {
+        guard type == "microphone" || type == "screen" else {
+            return
+        }
+        
+        let microphoneURL = "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
+        let screenURL = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+        let urlString = type == "microphone" ? microphoneURL : screenURL
+        if let url = URL(string: urlString) {
+            NSWorkspace.shared.open(url)
         }
     }
 }
