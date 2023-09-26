@@ -13,10 +13,15 @@ struct MicrophonePermissionHandler {
             
         case .notDetermined:
             print(".notDetermined:  The user has not yet been asked for microphone access.")
-            SystemSettingsHandler.openSystemSetting(for: "microphone")
-//            AVCaptureDevice.requestAccess(for: .audio) { granted in
-//                completion(granted)
-//            }
+            AVCaptureDevice.requestAccess(for: .audio) { granted in
+                if granted {
+                    print("permission granted")
+                    completion(granted)
+                } else {
+                    SystemSettingsHandler.openSystemSetting(for: "microphone")
+                    completion(granted)
+                }
+            }
             
         case .denied, .restricted:
             print(".denied or restrcited: The user has previously denied access or access is restricted.")
