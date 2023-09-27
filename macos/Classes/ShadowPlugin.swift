@@ -46,9 +46,15 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         
         switch method {
         case .requestScreenPermission:
+            let service = ScreenRecordingPermissionService.shared
+            service.onPermissionChange = { hasAccess in
+                print("Screen Recording Permission Status: \(hasAccess)")
+            }
+            service.startCheckingPermissionStatus()
+            service.requestScreenRecordingPermission()
             
             //            SystemSettingsHandler.checkScreenRecordingPermission()
-            ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
+//            ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
 //            Task {
 //                try await ScreenRecorderPermissionHandler.requestScreenRecorderPermission()
 //            }

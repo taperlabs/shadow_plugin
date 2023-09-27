@@ -3,6 +3,40 @@ import AVFoundation
 import ScreenCaptureKit
 import CoreGraphics
 
+final class ScreenRecordingPermissionService {
+    private var timer: Timer?
+    var hasAccess: Bool {
+        return CGPreflightScreenCaptureAccess()
+    }
+    
+    static let shared = ScreenRecordingPermissionService()
+    
+    var onPermissionChange: ((Bool) -> Void)?
+    
+    func startCheckingPermissionStatus() {
+        stopCheckingPermissionStatus() // Stop any existing timer
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            let currentAccess = self.hasAccess
+            self.onPermissionChange?(currentAccess)
+        }
+    }
+    
+    func stopCheckingPermissionStatus() {
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    func requestScreenRecordingPermission() {
+        CGRequestScreenCaptureAccess()
+    }
+    
+    deinit {
+        stopCheckingPermissionStatus()
+    }
+}
+
+
 struct MicrophonePermissionHandler {
     
     static func requestMicrophonePermission(completion: @escaping (Bool) -> Void) {
