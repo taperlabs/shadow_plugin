@@ -35,7 +35,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let methodsRequiringArgs: Set<MethodChannelCall> = [
             .startMicRecordingWithConfig,
             .startSystemAudioRecordingWithConfig,
-            .startSystemAndMicAudioRecordingWithConfig
+            .startSystemAndMicAudioRecordingWithConfig,
+            .deleteFileIfExists
         ]
         
         var argsFromFlutter: [String: Any]? = nil
@@ -45,14 +46,17 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+        case .deleteFileIfExists:
+            handleFileDeletion(args: argsFromFlutter, result: result)
+            
         case .requestScreenPermission:
-  
-        
+            
+            
             //            SystemSettingsHandler.checkScreenRecordingPermission()
             ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
-//            Task {
-//                try await ScreenRecorderPermissionHandler.requestScreenRecorderPermission()
-//            }
+            //            Task {
+            //                try await ScreenRecorderPermissionHandler.requestScreenRecorderPermission()
+            //            }
             
         case .requestMicPermission:
             MicrophonePermissionHandler.requestMicrophonePermission { granted in
@@ -118,5 +122,21 @@ extension ShadowPlugin {
         result(FlutterError(code: "UNAVAILABLE",
                             message: "Failed to handle method call",
                             details: error.localizedDescription))
+    }
+}
+
+
+extension ShadowPlugin {
+    public func handleFileDeletion(args: [String: Any]?, result: @escaping FlutterResult) {
+        guard let args = args else { return }
+        guard let fileName = args["fileName"] as? String else { return }
+        guard let fileURL = FileManagerHelper.getURL(for: fileName) else {
+            print("audioOutputURL을 가져오는데 실패하였습니다.")
+            return
+        }
+        
+        FileManagerHelper.deleteFileIfExists(at: fileURL)
+        
+        result("파일 삭제 성공!!!")
     }
 }

@@ -23,6 +23,10 @@ abstract class ShadowPlatform extends PlatformInterface {
     _instance = instance;
   }
 
+  Future<void> deleteFileIfExists(String fileName) {
+    throw UnimplementedError('deleteFileIfExists() has not been implemented.');
+  }
+
   Future<void> requestScreenPermission() {
     throw UnimplementedError(
         'requestScreenPermission() has not been implemented.');

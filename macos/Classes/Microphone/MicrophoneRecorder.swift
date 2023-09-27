@@ -68,6 +68,9 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
             return
         }
         
+        //이전에 저장한 시스템 오디오 파일이 존재하는지 체크 후 존재 시 삭제
+        FileManagerHelper.deleteFileIfExists(at: fileURL)
+        
         do {
             audioRecorder = try AVAudioRecorder(url: fileURL, settings: audioSettings)
             audioRecorder?.prepareToRecord()

@@ -14,6 +14,9 @@ class MockShadowPlatform
   Stream<dynamic> get screenCaptureEvents => Stream.empty();
 
   @override
+  Future<void> deleteFileIfExists(String fileName) async {}
+
+  @override
   Future<void> requestScreenPermission() async {}
 
   @override

@@ -21,6 +21,12 @@ class MethodChannelShadow extends ShadowPlatform {
       _screenCaptureEventChannel.receiveBroadcastStream();
 
   @override
+  Future<void> deleteFileIfExists(String fileName) async {
+    return methodChannel
+        .invokeMethod('deleteFileIfExists', {'fileName': fileName});
+  }
+
+  @override
   Future<void> requestScreenPermission() async {
     return methodChannel.invokeMethod('requestScreenPermission');
   }

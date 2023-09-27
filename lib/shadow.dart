@@ -8,6 +8,10 @@ class Shadow {
   Stream<dynamic> get screenCaptureEvents =>
       ShadowPlatform.instance.screenCaptureEvents;
 
+  Future<void> deleteFileIfExists(String fileName) {
+    return ShadowPlatform.instance.deleteFileIfExists(fileName);
+  }
+
   Future<void> requestScreenPermission() {
     return ShadowPlatform.instance.requestScreenPermission();
   }

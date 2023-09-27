@@ -191,6 +191,10 @@ class _MyAppState extends State<MyApp> {
   }
 
 //--------------------------------------@@@ 이하 테스트 코드 @@@--------------------------------------//
+  Future deleteFile(String fileName) async {
+    await _shadowPlugin.deleteFileIfExists(fileName);
+  }
+
   Future startRecording(
       Future Function() startFunction, Stream<dynamic> eventStream) async {
     try {
@@ -273,6 +277,10 @@ class _MyAppState extends State<MyApp> {
                   "Request Microhpone Permission",
                   () => startRecording(_shadowPlugin.requestMicPermission,
                       _shadowPlugin.screenCaptureEvents)),
+              CustomButton(
+                "Delete File!!!",
+                () => deleteFile("FlutterSystemAudio.m4a"),
+              )
               // ... [rest of the buttons]
             ],
           ),
