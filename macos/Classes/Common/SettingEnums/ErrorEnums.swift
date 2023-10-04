@@ -4,7 +4,10 @@ import Foundation
 enum CaptureError: Error {
     case missingParameters
     case streamOutputNotInitialized
+    case missingScreenRecordingPermission
+    case microphonePermissionNotGranted
 }
+
 
 
 //TODO: - handle various errors for AVAudioRecorder

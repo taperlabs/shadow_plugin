@@ -34,13 +34,20 @@ class ScreenRecorder {
     
     var micRecording = MicrophoneRecorder()
     
-//    var isRecording: Bool = false {
-//        didSet {
-//            streamOutput?.sendRecordingStatusToFlutter(isRecording)
-//        }
-//    }
-        
+    //    var isRecording: Bool = false {
+    //        didSet {
+    //            streamOutput?.sendRecordingStatusToFlutter(isRecording)
+    //        }
+    //    }
+    
     func getAvailableContent(withConfig config: [String: Any]? = nil) async throws {
+        if !ScreenRecorderPermissionHandler.checkScreenRecordingPermission() {
+            //            // If permission is not granted, request it or open system settings
+            //            // ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
+            SystemSettingsHandler.openSystemSetting(for: "screen")
+            throw CaptureError.missingScreenRecordingPermission
+        }
+        
         do {
             let availableContent = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             
@@ -66,9 +73,16 @@ class ScreenRecorder {
             display = [] // Set display to an empty array in case of an error
         }
     }
-
+    
     
     func startCapture(withConfig config: [String: Any]? = nil) async throws {
+        //        if !ScreenRecorderPermissionHandler.checkScreenRecordingPermission() {
+        //            // If permission is not granted, request it or open system settings
+        //            // ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
+        //            SystemSettingsHandler.openSystemSetting(for: "screen")
+        //            throw CaptureError.missingScreenRecordingPermission
+        //        }
+        
         guard let filtered = filtered, let streamConfig = streamConfig else {
             throw CaptureError.missingParameters
         }
@@ -83,14 +97,14 @@ class ScreenRecorder {
         try setupStream(with: filtered, config: streamConfig)
         try await initiateCapture()
     }
-
+    
     private func setupStreamOutput() {
         streamOutput = ScreenRecorderOutputHandler(recorder: self, timeIndicator: timeIndicator)
         timeIndicator.timeUpdateHandler = { [weak self] _ in
             self?.streamOutput?.sendTimeUpdate()
         }
     }
-
+    
     private func configureAssetWriter(withConfig config: [String: Any]? = nil) {
         if let config = config {
             assetWriterSetup.setUpSystemAudioAssetWriter(withConfig: config)
@@ -98,7 +112,7 @@ class ScreenRecorder {
             assetWriterSetup.setUpSystemAudioAssetWriter()
         }
     }
-
+    
     private func setupStream(with filter: SCContentFilter, config: SCStreamConfiguration) throws {
         let videoSampleBufferQueue = DispatchQueue(label: "phoenix")
         let audioSampleBufferQueue = DispatchQueue(label: "phoenix2")
@@ -111,22 +125,22 @@ class ScreenRecorder {
         
         try stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: videoSampleBufferQueue)
         try stream?.addStreamOutput(streamOutput, type: .audio, sampleHandlerQueue: audioSampleBufferQueue)
-//        micRecording.startMicAudioRecording()
+        //        micRecording.startMicAudioRecording()
         isRecording = true
         streamOutput.startSendingStatus()
         timeIndicator.start()
     }
-
+    
     private func initiateCapture() async throws {
         try await stream?.startCapture()
     }
-
+    
     
     func stopCapture() async throws {
         do {
             print("Stop Capture Called!!!!")
             try await stream?.stopCapture()
-//            micRecording.stopMicAudioRecording()
+            //            micRecording.stopMicAudioRecording()
             
             isRecording = false
             print("Stop Capture IsRecording", isRecording)

@@ -3,7 +3,7 @@ import AVFoundation
 import ScreenCaptureKit
 import CoreGraphics
 
-
+//MARK: - Microphone Permission Handler
 struct MicrophonePermissionHandler {
     
     static func requestMicrophonePermission(completion: @escaping (Bool) -> Void) {
@@ -46,6 +46,7 @@ struct MicrophonePermissionHandler {
     }
 }
 
+//MARK: - Screen Recording Permission Handler
 struct ScreenRecorderPermissionHandler {
     
     static func requestScreenRecordingPermission() {
@@ -72,7 +73,7 @@ struct ScreenRecorderPermissionHandler {
     }
 }
 
-
+//MARK: - System Settings Open Type Method
 struct SystemSettingsHandler {
     
     static func openSystemSetting(for type: String) {
@@ -88,14 +89,19 @@ struct SystemSettingsHandler {
         }
     }
     
-    static func checkScreenRecordingPermission() {
+    static func checkScreenRecordingPermission() -> Bool {
         let hasAccess = CGPreflightScreenCaptureAccess()
-        if hasAccess {
-            print("App has screen recording permission", hasAccess)
-        } else {
-            print("App does not have screen recording permission", hasAccess)
-            openSystemSetting(for: "screen")
-        }
+        return hasAccess
     }
+    
+//    static func checkScreenRecordingPermission() {
+//        let hasAccess = CGPreflightScreenCaptureAccess()
+//        if hasAccess {
+//            print("App has screen recording permission", hasAccess)
+//        } else {
+//            print("App does not have screen recording permission", hasAccess)
+//            openSystemSetting(for: "screen")
+//        }
+//    }
 }
 
