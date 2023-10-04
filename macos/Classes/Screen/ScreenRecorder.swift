@@ -41,7 +41,7 @@ class ScreenRecorder {
     //    }
     
     func getAvailableContent(withConfig config: [String: Any]? = nil) async throws {
-        if !ScreenRecorderPermissionHandler.checkScreenRecordingPermission() {
+        if !SystemSettingsHandler.checkScreenRecordingPermission() {
             //            // If permission is not granted, request it or open system settings
             //            // ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
             SystemSettingsHandler.openSystemSetting(for: "screen")
