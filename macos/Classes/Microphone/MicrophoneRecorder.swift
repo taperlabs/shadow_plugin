@@ -39,6 +39,7 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     }
     
     func startMicAudioRecording() {
+        print("isMicrophoneAccess Granted : 111",MicrophonePermissionHandler.isMicrophoneAccessGranted())
         if !MicrophonePermissionHandler.isMicrophoneAccessGranted() {
             SystemSettingsHandler.openSystemSetting(for: "microphone")
 //            throw CaptureError.microphonePermissionNotGranted
@@ -51,6 +52,7 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     
     
     func startMicAudioRecording(withConfig config: [String: Any]) {
+        print("isMicrophoneAccess Granted : 222",MicrophonePermissionHandler.isMicrophoneAccessGranted())
         if !MicrophonePermissionHandler.isMicrophoneAccessGranted() {
             SystemSettingsHandler.openSystemSetting(for: "microphone")
 //            throw CaptureError.microphonePermissionNotGranted

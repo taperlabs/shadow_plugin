@@ -42,12 +42,35 @@ struct MicrophonePermissionHandler {
     }
     
     static func isMicrophoneAccessGranted() -> Bool {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            print("Authorized")
+        case .denied:
+            print("Denied")
+        case .notDetermined:
+            print("notDetermined!!!")
+        case .restricted:
+            print("Restricted")
+        @unknown default:
+            print("default 임")
+        }
+        
         return AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
     }
 }
 
 //MARK: - Screen Recording Permission Handler
 struct ScreenRecorderPermissionHandler {
+    
+    //Request screen recording permission
+    static func requestScreenRecorderPermission() {
+        CGRequestScreenCaptureAccess()
+    }
+    
+    //Check the permission status of screen recording
+    static func checkScreenRecordingPermission() -> Bool {
+        return CGPreflightScreenCaptureAccess()
+    }
     
     static func requestScreenRecordingPermission() {
          // Request screen recording permission
