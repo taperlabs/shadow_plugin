@@ -23,6 +23,23 @@ abstract class ShadowPlatform extends PlatformInterface {
     _instance = instance;
   }
 
+  //Event Streams
+  Stream<dynamic> get microphoneEvents {
+    throw UnimplementedError('microphoneEvents has not been implemented.');
+  }
+
+  Stream<dynamic> get screenCaptureEvents {
+    throw UnimplementedError('screenCaptureEvents has not been implemented.');
+  }
+
+  Stream<dynamic> get microphonePermissionEvents {
+    throw UnimplementedError('systemAudioEvents has not been implemented.');
+  }
+
+  Stream<dynamic> get screenRecordingPermissionEvents {
+    throw UnimplementedError('systemAudioEvents has not been implemented.');
+  }
+
   Future<void> deleteFileIfExists(String fileName) {
     throw UnimplementedError('deleteFileIfExists() has not been implemented.');
   }
@@ -95,14 +112,5 @@ abstract class ShadowPlatform extends PlatformInterface {
   Future<void> stopRecordingMicAndSystemAudio() {
     throw UnimplementedError(
         'stopRecordingMicAndSystemAudio() has not been implemented.');
-  }
-
-  //Event Streams
-  Stream<dynamic> get microphoneEvents {
-    throw UnimplementedError('microphoneEvents has not been implemented.');
-  }
-
-  Stream<dynamic> get screenCaptureEvents {
-    throw UnimplementedError('screenCaptureEvents has not been implemented.');
   }
 }

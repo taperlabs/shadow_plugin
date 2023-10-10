@@ -8,6 +8,12 @@ class Shadow {
   Stream<dynamic> get screenCaptureEvents =>
       ShadowPlatform.instance.screenCaptureEvents;
 
+  Stream<dynamic> get microphonePermissionEvents =>
+      ShadowPlatform.instance.microphonePermissionEvents;
+
+  Stream<dynamic> get screenRecordingPermissionEvents =>
+      ShadowPlatform.instance.screenRecordingPermissionEvents;
+
   Future<void> deleteFileIfExists(String fileName) {
     return ShadowPlatform.instance.deleteFileIfExists(fileName);
   }

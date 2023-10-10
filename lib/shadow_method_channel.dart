@@ -11,6 +11,11 @@ class MethodChannelShadow extends ShadowPlatform {
   final _micEventChannel = const EventChannel('phoenixMicEventChannel');
   final _screenCaptureEventChannel = const EventChannel('phoenixEventChannel');
 
+  final _microphonePermissionEventChannel =
+      const EventChannel('phoenixMicrophonePermissionEventChannel');
+  final _screenRecordingPermissionEventChannel =
+      const EventChannel('phoenixScreenRecordingPermissionEventChannel');
+
   //Event Streams
   @override
   Stream<dynamic> get microphoneEvents =>
@@ -19,6 +24,14 @@ class MethodChannelShadow extends ShadowPlatform {
   @override
   Stream<dynamic> get screenCaptureEvents =>
       _screenCaptureEventChannel.receiveBroadcastStream();
+
+  @override
+  Stream<dynamic> get microphonePermissionEvents =>
+      _microphonePermissionEventChannel.receiveBroadcastStream();
+
+  @override
+  Stream<dynamic> get screenRecordingPermissionEvents =>
+      _screenRecordingPermissionEventChannel.receiveBroadcastStream();
 
   @override
   Future<void> deleteFileIfExists(String fileName) async {

@@ -6,6 +6,8 @@ import FlutterMacOS
 public class ShadowPlugin: NSObject, FlutterPlugin {
     private static let micEventChannelName = "phoenixMicEventChannel"
     private static let eventChannelName = "phoenixEventChannel"
+    private static let micPermissionEventChannelName = "phoenixMicrophonePermissionEventChannel"
+    private static let screenRecordingPermissionEventChannelName = "phoenixScreenRecordingPermissionEventChannel"
     static var screenEventChannel: FlutterEventChannel?
     var micAudioRecording = MicrophoneRecorder()
     var screenRecorder = ScreenRecorder()
@@ -17,10 +19,16 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         registrar.addMethodCallDelegate(instance, channel: channel)
         
         let micEventChannel = FlutterEventChannel(name: micEventChannelName, binaryMessenger: registrar.messenger)
+        let micPermissionEventChannel = FlutterEventChannel(name: micPermissionEventChannelName, binaryMessenger: registrar.messenger)
+        let screenRecordingPermissionEventChannel = FlutterEventChannel(name: screenRecordingPermissionEventChannelName, binaryMessenger: registrar.messenger)
         
         screenEventChannel = FlutterEventChannel(name: eventChannelName, binaryMessenger: registrar.messenger)
         
         micEventChannel.setStreamHandler(instance.micAudioRecording)
+        
+        //Permission Status Event Channel
+        micEventChannel.setStreamHandler(MicrophonePermissionStreamHandler())
+        screenRecordingPermissionEventChannel.setStreamHandler(ScreenRecordingStreamHandler())
     }
     
     
@@ -51,22 +59,37 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             
         case .requestScreenPermission:
             
+            let screenRecordingService = ScreenRecordingPermissionHandler.shared
+            screenRecordingService.requestScreenRecordingPermission()
             
+            
+//            ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
             //            SystemSettingsHandler.checkScreenRecordingPermission()
-            ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
+
             //            Task {
             //                try await ScreenRecorderPermissionHandler.requestScreenRecorderPermission()
             //            }
             
         case .requestMicPermission:
-            MicrophonePermissionHandler.requestMicrophonePermission { granted in
+            let microphoneService = MicrophonePermissionHandler.shared
+            microphoneService.requestMicrophoneAccess { granted in
+                // Handle the result
+                
                 if granted {
-                    print("granted!!!")
-                    // Proceed with your audio recording or processing code
+                    print("Granted!!!! Mic")
                 } else {
-                    print("grant denied")
+                    print("Not granted")
                 }
             }
+            
+//            MicrophonePermissionHandler.requestMicrophonePermission { granted in
+//                if granted {
+//                    print("granted!!!")
+//                    // Proceed with your audio recording or processing code
+//                } else {
+//                    print("grant denied")
+//                }
+//            }
             
         case .startMicRecordingWithConfig:
             //Mic recording with custom configurations
