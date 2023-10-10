@@ -27,7 +27,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         micEventChannel.setStreamHandler(instance.micAudioRecording)
         
         //Permission Status Event Channel
-        micEventChannel.setStreamHandler(MicrophonePermissionStreamHandler())
+        micPermissionEventChannel.setStreamHandler(MicrophonePermissionStreamHandler())
         screenRecordingPermissionEventChannel.setStreamHandler(ScreenRecordingStreamHandler())
     }
     

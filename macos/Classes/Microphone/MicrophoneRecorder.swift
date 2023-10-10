@@ -40,11 +40,11 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     
     func startMicAudioRecording() {
         print("isMicrophoneAccess Granted : 111",MicrophonePermissionHandler.isMicrophoneAccessGranted())
-        if !MicrophonePermissionHandler.isMicrophoneAccessGranted() {
-            SystemSettingsHandler.openSystemSetting(for: "microphone")
-//            throw CaptureError.microphonePermissionNotGranted
-            return 
-        }
+//        if !MicrophonePermissionHandler.isMicrophoneAccessGranted() {
+//            SystemSettingsHandler.openSystemSetting(for: "microphone")
+////            throw CaptureError.microphonePermissionNotGranted
+//            return
+//        }
         
         let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
         setupAndStartRecording(with: audioSettings, filename: recordingFileName)
