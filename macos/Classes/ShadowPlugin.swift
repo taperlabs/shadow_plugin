@@ -12,6 +12,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     var micAudioRecording = MicrophoneRecorder()
     var screenRecorder = ScreenRecorder()
     var captureEngineStreamOutput: ScreenRecorderOutputHandler?
+    var microphonePermissionClass = MicrophonePermissionStreamHandler()
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "shadow", binaryMessenger: registrar.messenger)
@@ -24,10 +25,11 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         
         screenEventChannel = FlutterEventChannel(name: eventChannelName, binaryMessenger: registrar.messenger)
         
+        
         micEventChannel.setStreamHandler(instance.micAudioRecording)
         
         //Permission Status Event Channel
-        micPermissionEventChannel.setStreamHandler(MicrophonePermissionStreamHandler())
+        micPermissionEventChannel.setStreamHandler(instance.microphonePermissionClass)
         screenRecordingPermissionEventChannel.setStreamHandler(ScreenRecordingStreamHandler())
     }
     
@@ -71,16 +73,23 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             //            }
             
         case .requestMicPermission:
-            let microphoneService = MicrophonePermissionHandler.shared
-            microphoneService.requestMicrophoneAccess { granted in
-                // Handle the result
-                
+            microphonePermissionClass.requestMicrophoneAccess { granted in
                 if granted {
-                    print("Granted!!!! Mic")
+                    print("GranteD!!")
                 } else {
-                    print("Not granted")
+                    print("dfsdfs")
                 }
             }
+//            let microphoneService = MicrophonePermissionHandler.shared
+//            microphoneService.requestMicrophoneAccess { granted in
+//                // Handle the result
+//
+//                if granted {
+//                    print("Granted!!!! Mic")
+//                } else {
+//                    print("Not granted")
+//                }
+//            }
             
 //            MicrophonePermissionHandler.requestMicrophonePermission { granted in
 //                if granted {
