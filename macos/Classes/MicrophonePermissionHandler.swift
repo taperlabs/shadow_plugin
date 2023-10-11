@@ -8,6 +8,7 @@ import FlutterMacOS
 public class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHandler {
     
     private var eventSink: FlutterEventSink?
+    private var timer: Timer?
 
     public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
         self.eventSink = eventSink
@@ -20,12 +21,10 @@ public class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHandler {
         eventSink = nil
         return nil
     }
-    
+
     var isMicrophoneAccessGranted: Bool {
         return AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
     }
-
-    private var timer: Timer?
  
     deinit {
         stopTimer()

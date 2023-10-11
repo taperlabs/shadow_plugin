@@ -13,6 +13,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     var screenRecorder = ScreenRecorder()
     var captureEngineStreamOutput: ScreenRecorderOutputHandler?
     var microphonePermissionClass = MicrophonePermissionStreamHandler()
+    var screenRecordingPermissionClass = ScreenRecordingPermissionHandler()
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "shadow", binaryMessenger: registrar.messenger)
@@ -23,6 +24,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let micPermissionEventChannel = FlutterEventChannel(name: micPermissionEventChannelName, binaryMessenger: registrar.messenger)
         let screenRecordingPermissionEventChannel = FlutterEventChannel(name: screenRecordingPermissionEventChannelName, binaryMessenger: registrar.messenger)
         
+        
         screenEventChannel = FlutterEventChannel(name: eventChannelName, binaryMessenger: registrar.messenger)
         
         
@@ -30,7 +32,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         
         //Permission Status Event Channel
         micPermissionEventChannel.setStreamHandler(instance.microphonePermissionClass)
-        screenRecordingPermissionEventChannel.setStreamHandler(ScreenRecordingStreamHandler())
+        screenRecordingPermissionEventChannel.setStreamHandler(instance.screenRecordingPermissionClass)
     }
     
     
@@ -60,9 +62,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             handleFileDeletion(args: argsFromFlutter, result: result)
             
         case .requestScreenPermission:
+            screenRecordingPermissionClass.requestScreenRecordingPermission()
             
-            let screenRecordingService = ScreenRecordingPermissionHandler.shared
-            screenRecordingService.requestScreenRecordingPermission()
             
             
 //            ScreenRecorderPermissionHandler.requestScreenRecordingPermission()

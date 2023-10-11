@@ -5,43 +5,51 @@ import AVFoundation
 import CoreGraphics
 import FlutterMacOS
 
-public class ScreenRecordingStreamHandler: NSObject, FlutterStreamHandler {
-    
-    private var eventSink: FlutterEventSink?
-    private let screenRecordingService = ScreenRecordingPermissionHandler.shared
-    
-    public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
-        self.eventSink = eventSink
-        screenRecordingService.startTimer(eventSink: eventSink)
-        return nil
-    }
-    
-    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
-        screenRecordingService.stopTimer()
-        eventSink = nil
-        return nil
-    }
-}
+//public class ScreenRecordingStreamHandler: NSObject, FlutterStreamHandler {
+//
+//    private var eventSink: FlutterEventSink?
+//    private let screenRecordingService = ScreenRecordingPermissionHandler.shared
+//
+//    public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
+//        print("OnListen for ScreenRecording이 불렸습니다!!!")
+//        self.eventSink = eventSink
+//        screenRecordingService.startTimer(eventSink: eventSink)
+//        return nil
+//    }
+//
+//    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+//        screenRecordingService.stopTimer()
+//        eventSink = nil
+//        return nil
+//    }
+//}
 
 
 
 //MARK: - Screen Recording Permission Handler class
-final class ScreenRecordingPermissionHandler {
-    
+final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHandler {
+    private var eventSink: FlutterEventSink?
+    private var timer: Timer?
     var isScreenRecordingPermitted: Bool {
         return Self.canRecordScreen()
     }
     
-    private var timer: Timer?
-    
-    // Singleton instance
-    static let shared: ScreenRecordingPermissionHandler = .init()
-    
-    private init() {}
-    
-    
+
     deinit {
         stopTimer()
+    }
+   
+    public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
+        print("OnListen for ScreenRecording이 불렸습니다!!!")
+        self.eventSink = eventSink
+        self.startTimer(eventSink: eventSink)
+        return nil
+    }
+    
+    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        self.stopTimer()
+        eventSink = nil
+        return nil
     }
     
     func startTimer(eventSink: @escaping FlutterEventSink) {

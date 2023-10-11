@@ -195,13 +195,36 @@ class _MyAppState extends State<MyApp> {
     await _shadowPlugin.deleteFileIfExists(fileName);
   }
 
+  Future requestPermission() async {
+    try {
+      _shadowPlugin.requestScreenPermission();
+      _shadowPlugin.screenRecordingPermissionEvents.listen((event) {
+        print("Received event: $event");
+      }, onError: (error) {
+        print("Error from event channel: $error");
+      });
+      // _shadowPlugin.requestMicPermission();
+      // _shadowPlugin.microphonePermissionEvents.listen((event) {
+      //   print("Received event: $event");
+      // }, onError: (error) {
+      //   print("Error from event channel: $error");
+      // });
+
+      print("requestScreenPermission called successfully ✅");
+    } on PlatformException catch (e) {
+      print(e);
+    }
+  }
+
   Future startRecording(
       Future Function() startFunction, Stream<dynamic> eventStream) async {
     try {
       await startFunction();
       print("${startFunction.toString()} called successfully ✅");
+
       microphoneEventSubscription = eventStream.listen((event) {
-        handleEvent(event);
+        print("event!! $event");
+        // handleEvent(event);
       }, onError: (error) {
         print(error);
       });
@@ -274,9 +297,7 @@ class _MyAppState extends State<MyApp> {
                   () => stopRecording(_shadowPlugin.stopScreenCapture,
                       screenCaptureEventSubscription)),
               CustomButton(
-                  "Request Microhpone Permission",
-                  () => startRecording(_shadowPlugin.requestMicPermission,
-                      _shadowPlugin.screenCaptureEvents)),
+                  "Request Microhpone Permission", () => requestPermission()),
               CustomButton(
                 "Delete File!!!",
                 () => deleteFile("FlutterSystemAudio.m4a"),
@@ -288,90 +309,6 @@ class _MyAppState extends State<MyApp> {
       ),
     );
   }
-
-//  Text('Running on: $_platformVersion\n'),
-  // @override
-  // Widget build(BuildContext context) {
-  //   return MaterialApp(
-  //     home: Scaffold(
-  //       appBar: AppBar(
-  //         title: const Text('Shadow Plugin Example App'),
-  //       ),
-  //       body: Center(
-  //         child: Column(
-  //           mainAxisAlignment: MainAxisAlignment.center,
-  //           children: <Widget>[
-  //             const Text(
-  //               'Timer ⬇️ ⏰:',
-  //             ),
-  //             Text(
-  //               '$_counter',
-  //               style: Theme.of(context).textTheme.headlineMedium,
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 startScreenCapture();
-  //               },
-  //               child: const Text('ScreenCapture 버튼'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 stopScreenCapture();
-  //               },
-  //               child: const Text('Stop ScreenCapture 버튼'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 startMicRecording();
-  //               },
-  //               child: const Text('Start Microphone Recording 버튼'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 stopMicRecording();
-  //               },
-  //               child: const Text('Stop Microphone Recording 버튼'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 startSystemAudioOnlyCapture();
-  //               },
-  //               child: const Text('Start System Audio Only Capturing'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 stopSystemAudioOnlyCapture();
-  //               },
-  //               child: const Text('Stop System Audio Only Capturing'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 // getFilePath("FlutterSystemAudio.m4a");
-  //               },
-  //               child: const Text('Start System Audio + Mic Capturing'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 // getFilePath("FlutterSystemAudio.m4a");
-  //               },
-  //               child: const Text('Stop System Audio + Mic Capturing'),
-  //             ),
-  //             // TextButton(
-  //             //   onPressed: () {
-  //             //     // getFilePath("FlutterSystemAudio.m4a");
-  //             //   },
-  //             //   child: const Text('Get File Path 버튼'),
-  //             // ),
-  //             // TextButton(
-  //             //   onPressed: () {},
-  //             //   child: const Text('FileIO 버튼'),
-  //             // ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 }
 
 class CustomButton extends StatelessWidget {
