@@ -41,11 +41,10 @@ class ScreenRecorder {
     //    }
     
     func getAvailableContent(withConfig config: [String: Any]? = nil) async throws {
-        if !ScreenRecorderPermissionHandler.checkScreenRecordingPermission() {
-            // If permission is not granted, request it or open system settings
-            // ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
-            SystemSettingsHandler.openSystemSetting(for: "screen")
-            throw CaptureError.missingScreenRecordingPermission
+        guard PermissionStatusCheckerHelper.checkScreenRecordingPermission() else {
+            //TODO: Add Custom Error Propagation
+            print("Screen Recording permission is not granted.")
+            return
         }
         
         do {
@@ -76,13 +75,6 @@ class ScreenRecorder {
     
     
     func startCapture(withConfig config: [String: Any]? = nil) async throws {
-        //        if !ScreenRecorderPermissionHandler.checkScreenRecordingPermission() {
-        //            // If permission is not granted, request it or open system settings
-        //            // ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
-        //            SystemSettingsHandler.openSystemSetting(for: "screen")
-        //            throw CaptureError.missingScreenRecordingPermission
-        //        }
-        
         guard let filtered = filtered, let streamConfig = streamConfig else {
             throw CaptureError.missingParameters
         }

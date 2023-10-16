@@ -14,6 +14,7 @@ extension ShadowPlugin {
     
     public func handleMicRecordingWithDefault(result: @escaping FlutterResult) {
         micAudioRecording.startMicAudioRecording()  // Use default settings
+        //This is where Swift sends a message to Flutter via MethodChannel
         result("Recording started")
     }
     

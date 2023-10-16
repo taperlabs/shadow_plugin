@@ -3,15 +3,52 @@ import AVFoundation
 import ScreenCaptureKit
 import CoreGraphics
 
+//MARK: - Permission status checker helper struct
+struct PermissionStatusCheckerHelper {
+    
+    static func checkMicrophonePermission() -> Bool {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            return true
+        case .denied, .restricted, .notDetermined:
+            return false
+        @unknown default:
+            return false
+        }
+    }
+    
+    static func checkScreenRecordingPermission() -> Bool {
+        let hasAccess = CGPreflightScreenCaptureAccess()
+        return hasAccess
+    }
+}
+
+//MARK: - System Settings Open Type Method
+struct SystemSettingsHandler {
+    
+    static func openSystemSetting(for type: String) {
+        guard type == "microphone" || type == "screen" else {
+            return
+        }
+        
+        let microphoneURL = "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
+        let screenURL = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+        let urlString = type == "microphone" ? microphoneURL : screenURL
+        
+        guard let url = URL(string: urlString) else { return }
+        NSWorkspace.shared.open(url)
+    }
+}
+
 //MARK: - Microphone Permission Handler
 //struct MicrophonePermissionHandler {
-//    
+//
 //    static func requestMicrophonePermission(completion: @escaping (Bool) -> Void) {
 //        switch AVCaptureDevice.authorizationStatus(for: .audio) {
 //        case .authorized:
 //            print("authorized!!! The user has previously granted access to the microphone")
 //            completion(true)
-//            
+//
 //        case .notDetermined:
 //            print(".notDetermined:  The user has not yet been asked for microphone access.")
 //            AVCaptureDevice.requestAccess(for: .audio) { granted in
@@ -23,24 +60,24 @@ import CoreGraphics
 //                    completion(granted)
 //                }
 //            }
-//            
+//
 //        case .denied, .restricted:
 //            print(".denied or restrcited: The user has previously denied access or access is restricted.")
 //            SystemSettingsHandler.openSystemSetting(for: "microphone")
 //            completion(false)
-//            
+//
 //        @unknown default:
 //            // Handle unknown case
 //            completion(false)
 //        }
 //    }
-//    
+//
 //    static func requestMicPermission() {
 //        AVCaptureDevice.requestAccess(for: .audio) { granted in
 //            print("granted", granted)
 //        }
 //    }
-//    
+//
 //    static func isMicrophoneAccessGranted() -> Bool {
 //        switch AVCaptureDevice.authorizationStatus(for: .audio) {
 //        case .authorized:
@@ -54,7 +91,7 @@ import CoreGraphics
 //        @unknown default:
 //            print("default 임")
 //        }
-//        
+//
 //        return AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
 //    }
 //}
@@ -96,35 +133,5 @@ struct ScreenRecorderPermissionHandler {
     }
 }
 
-//MARK: - System Settings Open Type Method
-struct SystemSettingsHandler {
-    
-    static func openSystemSetting(for type: String) {
-        guard type == "microphone" || type == "screen" else {
-            return
-        }
-        
-        let microphoneURL = "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
-        let screenURL = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
-        let urlString = type == "microphone" ? microphoneURL : screenURL
-        
-        guard let url = URL(string: urlString) else { return }
-        NSWorkspace.shared.open(url)
-    }
-    
-    static func checkScreenRecordingPermission() -> Bool {
-        let hasAccess = CGPreflightScreenCaptureAccess()
-        return hasAccess
-    }
-    
-//    static func checkScreenRecordingPermission() {
-//        let hasAccess = CGPreflightScreenCaptureAccess()
-//        if hasAccess {
-//            print("App has screen recording permission", hasAccess)
-//        } else {
-//            print("App does not have screen recording permission", hasAccess)
-//            openSystemSetting(for: "screen")
-//        }
-//    }
-}
+
 

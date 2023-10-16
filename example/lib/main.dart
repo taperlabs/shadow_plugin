@@ -18,11 +18,18 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   int _counter = 0;
+  String _micPermissionStatus = "Mic Permission Value";
+  bool _isScreenRecordingPermissionGranted = false;
   final _shadowPlugin = Shadow();
+
+  //Stream Subscriptions
   StreamSubscription<dynamic>? microphoneEventSubscription;
   StreamSubscription<dynamic>? screenCaptureEventSubscription;
   StreamSubscription<dynamic>? eventSubscription;
+  StreamSubscription<dynamic>? microphonePermissionSubscription;
+  StreamSubscription<dynamic>? screenRecordingPermissionSubscription;
 
+//Configs
   final micConfig = {
     'fileName': 'FlutterCustomMicrophone.m4a',
     'format': 'mpeg4AAC',
@@ -36,9 +43,6 @@ class _MyAppState extends State<MyApp> {
     'channels': 'stereo',
     'sampleRate': 'rate48K'
   };
-
-  // static const micEventChannel = EventChannel('phoenixMicEventChannel');
-  // static const eventChannel = EventChannel('phoenixEventChannel');
 
   @override
   void initState() {
@@ -66,6 +70,10 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _platformVersion = platformVersion;
     });
+  }
+
+  Future deleteFile(String fileName) async {
+    await _shadowPlugin.deleteFileIfExists(fileName);
   }
 
   //Microphone
@@ -134,6 +142,7 @@ class _MyAppState extends State<MyApp> {
     try {
       // final result = await _shadowPlugin.stopSystemAudioRecording();
       await _shadowPlugin.stopScreenCapture();
+
       screenCaptureEventSubscription?.cancel();
       print("stopSystemAudioOnlyCapture called successfully");
     } on PlatformException catch (e) {
@@ -191,26 +200,57 @@ class _MyAppState extends State<MyApp> {
   }
 
 //--------------------------------------@@@ 이하 테스트 코드 @@@--------------------------------------//
-  Future deleteFile(String fileName) async {
-    await _shadowPlugin.deleteFileIfExists(fileName);
+  Future requestPermission(Future Function() requestFunction) async {
+    try {
+      await requestFunction();
+      print("requestPermission called successfully ✅");
+    } on PlatformException catch (e) {
+      print(e);
+    }
   }
 
-  Future requestPermission() async {
+  Future requestMicPermissionWithEvents(
+      Future Function() requestFunction, Stream<dynamic> eventStream) async {
     try {
-      _shadowPlugin.requestScreenPermission();
-      _shadowPlugin.screenRecordingPermissionEvents.listen((event) {
-        print("Received event: $event");
+      microphonePermissionSubscription = eventStream.listen((event) {
+        print("Microphone Permission 🎤 Event입니다 $event");
+        setState(() {
+          _micPermissionStatus = event;
+        });
       }, onError: (error) {
-        print("Error from event channel: $error");
+        print(error);
       });
-      // _shadowPlugin.requestMicPermission();
-      // _shadowPlugin.microphonePermissionEvents.listen((event) {
-      //   print("Received event: $event");
-      // }, onError: (error) {
-      //   print("Error from event channel: $error");
-      // });
+      requestFunction();
 
-      print("requestScreenPermission called successfully ✅");
+      print("requestPermission called successfully ✅");
+    } on PlatformException catch (e) {
+      print(e);
+    }
+  }
+
+  Future requestScreenRecordingPermissionWithEvents(
+      Future Function() requestFunction, Stream<dynamic> eventStream) async {
+    try {
+      screenCaptureEventSubscription = eventStream.listen((event) {
+        print("Screen Recording 🎥 Event입니다z $event");
+        setState(() {
+          _isScreenRecordingPermissionGranted = event;
+        });
+      }, onError: (error) {
+        print(error);
+      });
+      requestFunction();
+
+      print("requestPermission called successfully ✅");
+    } on PlatformException catch (e) {
+      print(e);
+    }
+  }
+
+  Future stopRequestingPermission(StreamSubscription<dynamic>? event) async {
+    try {
+      event?.cancel();
+      print("stopRequestingPermission called successfully ✅");
     } on PlatformException catch (e) {
       print(e);
     }
@@ -221,10 +261,8 @@ class _MyAppState extends State<MyApp> {
     try {
       await startFunction();
       print("${startFunction.toString()} called successfully ✅");
-
       microphoneEventSubscription = eventStream.listen((event) {
-        print("event!! $event");
-        // handleEvent(event);
+        handleEvent(event);
       }, onError: (error) {
         print(error);
       });
@@ -268,6 +306,31 @@ class _MyAppState extends State<MyApp> {
               const Text('Timer ⬇️ ⏰:'),
               Text('$_counter',
                   style: Theme.of(context).textTheme.headlineMedium),
+              Text('$_micPermissionStatus',
+                  style: Theme.of(context).textTheme.headlineMedium),
+              Text('$_isScreenRecordingPermissionGranted',
+                  style: Theme.of(context).textTheme.headlineMedium),
+              CustomButton(
+                  "Request Microhpone Permission",
+                  () => requestMicPermissionWithEvents(
+                        _shadowPlugin.requestMicPermission,
+                        _shadowPlugin.microphonePermissionEvents,
+                      )),
+              CustomButton(
+                  "Request Screen Permission",
+                  () => requestScreenRecordingPermissionWithEvents(
+                        _shadowPlugin.requestScreenPermission,
+                        _shadowPlugin.screenRecordingPermissionEvents,
+                      )),
+              CustomButton(
+                "Stop Microphone Permission Request Stream 버튼",
+                () =>
+                    stopRequestingPermission(microphonePermissionSubscription),
+              ),
+              CustomButton(
+                "Stop Screen Recording Permission Request Stream 버튼",
+                () => stopRequestingPermission(screenCaptureEventSubscription),
+              ),
               CustomButton(
                   "ScreenCapture 버튼",
                   () => startRecording(
@@ -297,9 +360,7 @@ class _MyAppState extends State<MyApp> {
                   () => stopRecording(_shadowPlugin.stopScreenCapture,
                       screenCaptureEventSubscription)),
               CustomButton(
-                  "Request Microhpone Permission", () => requestPermission()),
-              CustomButton(
-                "Delete File!!!",
+                "Delete File 버튼",
                 () => deleteFile("FlutterSystemAudio.m4a"),
               )
               // ... [rest of the buttons]
@@ -309,6 +370,90 @@ class _MyAppState extends State<MyApp> {
       ),
     );
   }
+
+//  Text('Running on: $_platformVersion\n'),
+  // @override
+  // Widget build(BuildContext context) {
+  //   return MaterialApp(
+  //     home: Scaffold(
+  //       appBar: AppBar(
+  //         title: const Text('Shadow Plugin Example App'),
+  //       ),
+  //       body: Center(
+  //         child: Column(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: <Widget>[
+  //             const Text(
+  //               'Timer ⬇️ ⏰:',
+  //             ),
+  //             Text(
+  //               '$_counter',
+  //               style: Theme.of(context).textTheme.headlineMedium,
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 startScreenCapture();
+  //               },
+  //               child: const Text('ScreenCapture 버튼'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 stopScreenCapture();
+  //               },
+  //               child: const Text('Stop ScreenCapture 버튼'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 startMicRecording();
+  //               },
+  //               child: const Text('Start Microphone Recording 버튼'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 stopMicRecording();
+  //               },
+  //               child: const Text('Stop Microphone Recording 버튼'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 startSystemAudioOnlyCapture();
+  //               },
+  //               child: const Text('Start System Audio Only Capturing'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 stopSystemAudioOnlyCapture();
+  //               },
+  //               child: const Text('Stop System Audio Only Capturing'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 // getFilePath("FlutterSystemAudio.m4a");
+  //               },
+  //               child: const Text('Start System Audio + Mic Capturing'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 // getFilePath("FlutterSystemAudio.m4a");
+  //               },
+  //               child: const Text('Stop System Audio + Mic Capturing'),
+  //             ),
+  //             // TextButton(
+  //             //   onPressed: () {
+  //             //     // getFilePath("FlutterSystemAudio.m4a");
+  //             //   },
+  //             //   child: const Text('Get File Path 버튼'),
+  //             // ),
+  //             // TextButton(
+  //             //   onPressed: () {},
+  //             //   child: const Text('FileIO 버튼'),
+  //             // ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
 
 class CustomButton extends StatelessWidget {

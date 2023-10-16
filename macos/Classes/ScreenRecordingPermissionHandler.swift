@@ -1,39 +1,17 @@
 import Cocoa
-
 import Foundation
 import AVFoundation
 import CoreGraphics
 import FlutterMacOS
 
-//public class ScreenRecordingStreamHandler: NSObject, FlutterStreamHandler {
-//
-//    private var eventSink: FlutterEventSink?
-//    private let screenRecordingService = ScreenRecordingPermissionHandler.shared
-//
-//    public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
-//        print("OnListen for ScreenRecording이 불렸습니다!!!")
-//        self.eventSink = eventSink
-//        screenRecordingService.startTimer(eventSink: eventSink)
-//        return nil
-//    }
-//
-//    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
-//        screenRecordingService.stopTimer()
-//        eventSink = nil
-//        return nil
-//    }
-//}
-
-
-
-//MARK: - Screen Recording Permission Handler class
-final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHandler {
+//MARK: - Screen Recording permission handler class
+public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHandler {
     private var eventSink: FlutterEventSink?
     private var timer: Timer?
-    var isScreenRecordingPermitted: Bool {
+    
+    var isScreenRecordingGranted: Bool {
         return Self.canRecordScreen()
     }
-    
 
     deinit {
         stopTimer()
@@ -52,7 +30,7 @@ final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHandler {
         return nil
     }
     
-    func startTimer(eventSink: @escaping FlutterEventSink) {
+    private func startTimer(eventSink: @escaping FlutterEventSink) {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
@@ -61,7 +39,7 @@ final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHandler {
         }
     }
     
-    func stopTimer() {
+    private func stopTimer() {
         timer?.invalidate()
     }
     
@@ -90,7 +68,26 @@ final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHandler {
             window[kCGWindowName as String] as? String != nil
         })
     }
-
 }
+
+
+//public class ScreenRecordingStreamHandler: NSObject, FlutterStreamHandler {
+//
+//    private var eventSink: FlutterEventSink?
+//    private let screenRecordingService = ScreenRecordingPermissionHandler.shared
+//
+//    public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
+//        print("OnListen for ScreenRecording이 불렸습니다!!!")
+//        self.eventSink = eventSink
+//        screenRecordingService.startTimer(eventSink: eventSink)
+//        return nil
+//    }
+//
+//    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+//        screenRecordingService.stopTimer()
+//        eventSink = nil
+//        return nil
+//    }
+//}
 
 

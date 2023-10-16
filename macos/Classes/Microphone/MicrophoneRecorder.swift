@@ -3,8 +3,8 @@ import AVFAudio
 import AVFoundation
 import FlutterMacOS
 
-// MARK: - Microphone 녹음 클래스
-class MicrophoneRecorder: NSObject, FlutterStreamHandler {
+// MARK: - Microphone recording class
+final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     
     private var audioRecorder: AVAudioRecorder?
     private let recordingFileName = "FlutterMicRecording.m4a"
@@ -39,43 +39,33 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     }
     
     func startMicAudioRecording() {
-//        print("isMicrophoneAccess Granted : 111",MicrophonePermissionHandler.isMicrophoneAccessGranted())
-//        if !MicrophonePermissionHandler.isMicrophoneAccessGranted() {
-//            SystemSettingsHandler.openSystemSetting(for: "microphone")
-////            throw CaptureError.microphonePermissionNotGranted
-//            return
-//        }
-        
         let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
         setupAndStartRecording(with: audioSettings, filename: recordingFileName)
     }
     
     
     func startMicAudioRecording(withConfig config: [String: Any]) {
-//        print("isMicrophoneAccess Granted : 222",MicrophonePermissionHandler.isMicrophoneAccessGranted())
-//        if !MicrophonePermissionHandler.isMicrophoneAccessGranted() {
-//            SystemSettingsHandler.openSystemSetting(for: "microphone")
-////            throw CaptureError.microphonePermissionNotGranted
-//            return
-//        }
-        
         print("config!!!", config)
         let format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .mpeg4AAC
         let channels = NumberOfChannels(rawValue: config["channels"] as? String ?? "") ?? .mono
         let sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate44_1K
         let filename = config["fileName"] as? String ?? recordingFileName
-        
         print("format 🎤", format)
         print("channels 🎤", channels)
         print("sampleRate 🎤", sampleRate)
         print("file Name 🎤", filename)
-        
-        //TODO: - Change setMicRecordingSettings with Helper method
-        let settings = setMicRecordingSettings(format: format, channels: channels, sampleRate: sampleRate)
-        setupAndStartRecording(with: settings, filename: filename)
+        let audioSettings = AudioSetting.setAudioConfiguration(format: format, channels: channels, sampleRate: sampleRate)
+        setupAndStartRecording(with: audioSettings, filename: filename)
     }
     
     private func setupAndStartRecording(with audioSettings: [String: Any], filename: String) {
+        // Check for microphone permission
+        guard PermissionStatusCheckerHelper.checkMicrophonePermission() else {
+            //TODO: Add Custom Error Propagation
+            print("Microphone permission is not granted.")
+            return
+        }
+        
         guard let fileURL = FileManagerHelper.getURL(for: filename) else {
             print("Error generating recording URL")
             return
@@ -124,7 +114,7 @@ class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     }
 }
 
-// MARK: - Microphone Decibel 측정 Extension
+// MARK: - Microphone decibel measure extension
 extension MicrophoneRecorder {
     
     //recorder nill check

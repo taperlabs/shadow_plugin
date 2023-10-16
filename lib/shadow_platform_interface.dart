@@ -33,11 +33,13 @@ abstract class ShadowPlatform extends PlatformInterface {
   }
 
   Stream<dynamic> get microphonePermissionEvents {
-    throw UnimplementedError('systemAudioEvents has not been implemented.');
+    throw UnimplementedError(
+        'microphonePermissionEvents has not been implemented.');
   }
 
   Stream<dynamic> get screenRecordingPermissionEvents {
-    throw UnimplementedError('systemAudioEvents has not been implemented.');
+    throw UnimplementedError(
+        'screenRecordingPermissionEvents has not been implemented.');
   }
 
   Future<void> deleteFileIfExists(String fileName) {

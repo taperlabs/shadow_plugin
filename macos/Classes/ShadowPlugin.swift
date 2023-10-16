@@ -8,6 +8,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     private static let eventChannelName = "phoenixEventChannel"
     private static let micPermissionEventChannelName = "phoenixMicrophonePermissionEventChannel"
     private static let screenRecordingPermissionEventChannelName = "phoenixScreenRecordingPermissionEventChannel"
+    private static let shadowMethodChannelName = "shadow"
     static var screenEventChannel: FlutterEventChannel?
     var micAudioRecording = MicrophoneRecorder()
     var screenRecorder = ScreenRecorder()
@@ -21,12 +22,9 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         registrar.addMethodCallDelegate(instance, channel: channel)
         
         let micEventChannel = FlutterEventChannel(name: micEventChannelName, binaryMessenger: registrar.messenger)
+        screenEventChannel = FlutterEventChannel(name: eventChannelName, binaryMessenger: registrar.messenger)
         let micPermissionEventChannel = FlutterEventChannel(name: micPermissionEventChannelName, binaryMessenger: registrar.messenger)
         let screenRecordingPermissionEventChannel = FlutterEventChannel(name: screenRecordingPermissionEventChannelName, binaryMessenger: registrar.messenger)
-        
-        
-        screenEventChannel = FlutterEventChannel(name: eventChannelName, binaryMessenger: registrar.messenger)
-        
         
         micEventChannel.setStreamHandler(instance.micAudioRecording)
         
@@ -76,7 +74,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         case .requestMicPermission:
             microphonePermissionClass.requestMicrophoneAccess { granted in
                 if granted {
-                    print("GranteD!!")
+                    print("GrantedD!!")
                 } else {
                     print("dfsdfs")
                 }
@@ -158,13 +156,13 @@ extension ShadowPlugin {
     }
 }
 
-
+//MARK: - File deletion handler extension
 extension ShadowPlugin {
     public func handleFileDeletion(args: [String: Any]?, result: @escaping FlutterResult) {
         guard let args = args else { return }
         guard let fileName = args["fileName"] as? String else { return }
         guard let fileURL = FileManagerHelper.getURL(for: fileName) else {
-            print("audioOutputURL을 가져오는데 실패하였습니다.")
+            print("File URL을 가져오는데 실패하였습니다.")
             return
         }
         

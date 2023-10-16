@@ -5,7 +5,8 @@ import AVFoundation
 import CoreGraphics
 import FlutterMacOS
 
-public class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHandler {
+//MARK: - Microphone Permission Handler class
+public final class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHandler {
     
     private var eventSink: FlutterEventSink?
     private var timer: Timer?
@@ -22,7 +23,7 @@ public class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHandler {
         return nil
     }
 
-    var isMicrophoneAccessGranted: Bool {
+    var isMicrophonePermissionGranted: Bool {
         return AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
     }
  
@@ -30,17 +31,37 @@ public class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHandler {
         stopTimer()
     }
     
-    func startTimer(eventSink: @escaping FlutterEventSink) {
+    private func startTimer(eventSink: @escaping FlutterEventSink) {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             let status = AVCaptureDevice.authorizationStatus(for: .audio).rawValue
-            print("Timer ", status)
-            eventSink(status)
+            let statusString = self.stringRepresentation(of: status)
+            print("Timer ofss ", statusString)
+            eventSink(statusString)
+        }
+    }
+    
+    private func stringRepresentation(of status: Int) -> String {
+        if let status = AVAuthorizationStatus(rawValue: status) {
+            switch status {
+            case .notDetermined:
+                return "notDetermined"
+            case .restricted:
+                return "restricted"
+            case .denied:
+                return "denied"
+            case .authorized:
+                return "authorized"
+            @unknown default:
+                return "unknown"
+            }
+        } else {
+            return "invalid"
         }
     }
 
-    func stopTimer() {
+    private func stopTimer() {
         timer?.invalidate()
     }
 
@@ -73,7 +94,6 @@ public class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHandler {
 }
 
 
-//MARK: - Microphone Permission Handler class
 //final class MicrophonePermissionHandler {
 //
 //    var isMicrophoneAccessGranted: Bool {
