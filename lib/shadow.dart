@@ -26,6 +26,14 @@ class Shadow {
     return ShadowPlatform.instance.openScreenSystemSetting();
   }
 
+  Future<bool> isMicPermissionGranted() {
+    return ShadowPlatform.instance.isMicPermissionGranted();
+  }
+
+  Future<bool> isScreenPermissionGranted() {
+    return ShadowPlatform.instance.isScreenPermissionGranted();
+  }
+
   Future<void> requestScreenPermission() {
     return ShadowPlatform.instance.requestScreenPermission();
   }

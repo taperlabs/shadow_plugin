@@ -25,6 +25,9 @@ enum MethodChannelCall: String {
     case openMicSystemSetting = "openMicSystemSetting"
     case openScreenSystemSetting = "openScreenSystemSetting"
     
+    case isMicPermissionGranted = "isMicPermissionGranted"
+    case isScreenPermissionGranted = "isScreenPermissionGranted"
+    
     //Before
     case startScreenCapture = "startScreenCapture"
     case stopScreenCapture = "stopScreenCapture"

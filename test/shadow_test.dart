@@ -29,6 +29,16 @@ class MockShadowPlatform
   Future<void> openScreenSystemSetting() async {}
 
   @override
+  Future<bool> isMicPermissionGranted() async {
+    return true; // Mocked to always return true for this example
+  }
+
+  @override
+  Future<bool> isScreenPermissionGranted() async {
+    return true; // Mocked to always return true for this example
+  }
+
+  @override
   Future<void> requestScreenPermission() async {}
 
   @override

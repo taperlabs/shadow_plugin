@@ -292,6 +292,16 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  Future<void> checkMicPermission() async {
+    bool granted = await _shadowPlugin.isMicPermissionGranted();
+    print("Microphone Permission: $granted");
+  }
+
+  Future<void> checkScreenPermission() async {
+    bool granted = await _shadowPlugin.isScreenPermissionGranted();
+    print("Screen Permission: $granted");
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -330,6 +340,22 @@ class _MyAppState extends State<MyApp> {
               CustomButton(
                 "Stop Screen Recording Permission Request Stream 버튼",
                 () => stopRequestingPermission(screenCaptureEventSubscription),
+              ),
+              CustomButton(
+                "Open Mic System Setting 버튼",
+                () => _shadowPlugin.openMicSystemSetting(),
+              ),
+              CustomButton(
+                "Open Screen Recording System Setting 버튼",
+                () => _shadowPlugin.openScreenSystemSetting(),
+              ),
+              CustomButton(
+                "Is Microphone Permission Granted 버튼",
+                () => checkMicPermission(),
+              ),
+              CustomButton(
+                "Is Screen Recording Permission Granted 버튼",
+                () => checkScreenPermission(),
               ),
               CustomButton(
                   "ScreenCapture 버튼",

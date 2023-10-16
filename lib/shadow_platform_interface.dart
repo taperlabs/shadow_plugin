@@ -56,6 +56,16 @@ abstract class ShadowPlatform extends PlatformInterface {
         'openScreenSystemSetting() has not been implemented.');
   }
 
+  Future<bool> isMicPermissionGranted() {
+    throw UnimplementedError(
+        'isMicPermissionGranted() has not been implemented.');
+  }
+
+  Future<bool> isScreenPermissionGranted() {
+    throw UnimplementedError(
+        'isScreenPermissionGranted() has not been implemented.');
+  }
+
   Future<void> requestScreenPermission() {
     throw UnimplementedError(
         'requestScreenPermission() has not been implemented.');

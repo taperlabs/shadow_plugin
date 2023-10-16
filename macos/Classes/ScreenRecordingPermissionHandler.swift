@@ -18,7 +18,7 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
     }
    
     public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
-        print("OnListen for ScreenRecording이 불렸습니다!!!")
+        print("OnListen for ScreenRecording이 불렸습니다!!!s")
         self.eventSink = eventSink
         self.startTimer(eventSink: eventSink)
         return nil

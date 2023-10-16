@@ -50,6 +50,20 @@ class MethodChannelShadow extends ShadowPlatform {
   }
 
   @override
+  Future<bool> isMicPermissionGranted() async {
+    final result =
+        await methodChannel.invokeMethod<bool>('isMicPermissionGranted');
+    return result ?? false;
+  }
+
+  @override
+  Future<bool> isScreenPermissionGranted() async {
+    final result =
+        await methodChannel.invokeMethod<bool>('isScreenPermissionGranted');
+    return result ?? false;
+  }
+
+  @override
   Future<void> requestScreenPermission() async {
     return methodChannel.invokeMethod('requestScreenPermission');
   }
