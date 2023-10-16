@@ -46,6 +46,16 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('deleteFileIfExists() has not been implemented.');
   }
 
+  Future<void> openMicSystemSetting() {
+    throw UnimplementedError(
+        'openMicSystemSetting() has not been implemented.');
+  }
+
+  Future<void> openScreenSystemSetting() {
+    throw UnimplementedError(
+        'openScreenSystemSetting() has not been implemented.');
+  }
+
   Future<void> requestScreenPermission() {
     throw UnimplementedError(
         'requestScreenPermission() has not been implemented.');

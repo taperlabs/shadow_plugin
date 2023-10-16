@@ -21,6 +21,10 @@ enum MethodChannelCall: String {
     
     case deleteFileIfExists = "deleteFileIfExists"
     
+    //System Settings
+    case openMicSystemSetting = "openMicSystemSetting"
+    case openScreenSystemSetting = "openScreenSystemSetting"
+    
     //Before
     case startScreenCapture = "startScreenCapture"
     case stopScreenCapture = "stopScreenCapture"

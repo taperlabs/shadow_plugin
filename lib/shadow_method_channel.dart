@@ -40,6 +40,16 @@ class MethodChannelShadow extends ShadowPlatform {
   }
 
   @override
+  Future<void> openMicSystemSetting() async {
+    return methodChannel.invokeMethod('openMicSystemSetting');
+  }
+
+  @override
+  Future<void> openScreenSystemSetting() async {
+    return methodChannel.invokeMethod('openScreenSystemSetting');
+  }
+
+  @override
   Future<void> requestScreenPermission() async {
     return methodChannel.invokeMethod('requestScreenPermission');
   }

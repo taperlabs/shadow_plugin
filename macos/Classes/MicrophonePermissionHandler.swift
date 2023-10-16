@@ -12,6 +12,7 @@ public final class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHan
     private var timer: Timer?
 
     public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
+        print("OnListen for 마이크로폰!!")
         self.eventSink = eventSink
         self.startTimer(eventSink: eventSink)
         return nil
@@ -37,7 +38,7 @@ public final class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHan
             guard let self = self else { return }
             let status = AVCaptureDevice.authorizationStatus(for: .audio).rawValue
             let statusString = self.stringRepresentation(of: status)
-            print("Timer ofss ", statusString)
+            print("Timer ofsss ", statusString)
             eventSink(statusString)
         }
     }

@@ -56,6 +56,12 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+        case .openMicSystemSetting:
+            SystemSettingsHandler.openSystemSetting(for: "microphone")
+        
+        case .openScreenSystemSetting:
+            SystemSettingsHandler.openSystemSetting(for: "screen")
+            
         case .deleteFileIfExists:
             handleFileDeletion(args: argsFromFlutter, result: result)
             

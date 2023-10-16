@@ -23,6 +23,12 @@ class MockShadowPlatform
   Future<void> deleteFileIfExists(String fileName) async {}
 
   @override
+  Future<void> openMicSystemSetting() async {}
+
+  @override
+  Future<void> openScreenSystemSetting() async {}
+
+  @override
   Future<void> requestScreenPermission() async {}
 
   @override
