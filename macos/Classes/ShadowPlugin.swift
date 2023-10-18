@@ -56,11 +56,15 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+        case .restartApp:
+            RestartApplication.relaunch()
         case .isMicPermissionGranted:
-            let status = PermissionStatusCheckerHelper.checkMicrophonePermission()
+//            let status = PermissionStatusCheckerHelper.checkMicrophonePermission()
+            let status = microphonePermissionClass.isMicrophonePermissionGranted
             result(status)
         case .isScreenPermissionGranted:
             let status = PermissionStatusCheckerHelper.checkScreenRecordingPermission()
+//            let status = screenRecordingPermissionClass.isScreenRecordingGranted
             result(status)
             
         case .openMicSystemSetting:

@@ -18,6 +18,10 @@ class Shadow {
     return ShadowPlatform.instance.deleteFileIfExists(fileName);
   }
 
+  Future<void> restartApp() {
+    return ShadowPlatform.instance.restartApp();
+  }
+
   Future<void> openMicSystemSetting() {
     return ShadowPlatform.instance.openMicSystemSetting();
   }

@@ -69,7 +69,7 @@ public final class MicrophonePermissionStreamHandler: NSObject, FlutterStreamHan
     func requestMicrophoneAccess(completion: @escaping (Bool) -> Void) {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized:
-            print("authorized")
+            print("authorizedd")
             completion(true)
             
         case .notDetermined:

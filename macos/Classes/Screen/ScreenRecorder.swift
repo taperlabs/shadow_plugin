@@ -41,11 +41,11 @@ class ScreenRecorder {
     //    }
     
     func getAvailableContent(withConfig config: [String: Any]? = nil) async throws {
-        guard PermissionStatusCheckerHelper.checkScreenRecordingPermission() else {
-            //TODO: Add Custom Error Propagation
-            print("Screen Recording permission is not granted.")
-            return
-        }
+//        guard PermissionStatusCheckerHelper.checkScreenRecordingPermission() else {
+//            //TODO: Add Custom Error Propagation
+//            print("Screen Recording permission is not granted.")
+//            return
+//        }
         
         do {
             let availableContent = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)

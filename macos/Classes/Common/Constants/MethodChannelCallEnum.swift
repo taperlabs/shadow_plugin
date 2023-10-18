@@ -28,6 +28,8 @@ enum MethodChannelCall: String {
     case isMicPermissionGranted = "isMicPermissionGranted"
     case isScreenPermissionGranted = "isScreenPermissionGranted"
     
+    case restartApp = "restartApp"
+    
     //Before
     case startScreenCapture = "startScreenCapture"
     case stopScreenCapture = "stopScreenCapture"

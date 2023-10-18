@@ -20,6 +20,9 @@ class MockShadowPlatform
   Stream<dynamic> get screenRecordingPermissionEvents => Stream.empty();
 
   @override
+  Future<void> restartApp() async {}
+
+  @override
   Future<void> deleteFileIfExists(String fileName) async {}
 
   @override

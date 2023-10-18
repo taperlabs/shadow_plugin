@@ -388,6 +388,10 @@ class _MyAppState extends State<MyApp> {
               CustomButton(
                 "Delete File 버튼",
                 () => deleteFile("FlutterSystemAudio.m4a"),
+              ),
+              CustomButton(
+                "Relaunch 버튼",
+                () => _shadowPlugin.restartApp(),
               )
               // ... [rest of the buttons]
             ],

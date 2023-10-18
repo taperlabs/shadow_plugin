@@ -50,6 +50,11 @@ class MethodChannelShadow extends ShadowPlatform {
   }
 
   @override
+  Future<void> restartApp() async {
+    return methodChannel.invokeMethod('restartApp');
+  }
+
+  @override
   Future<bool> isMicPermissionGranted() async {
     final result =
         await methodChannel.invokeMethod<bool>('isMicPermissionGranted');

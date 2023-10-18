@@ -12,13 +12,13 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
     var isScreenRecordingGranted: Bool {
         return Self.canRecordScreen()
     }
-
+    
     deinit {
         stopTimer()
     }
-   
+    
     public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
-        print("OnListen for ScreenRecording이 불렸습니다!!!s")
+        print("OnListen for ScreenRecording이 불렸습니다!!!")
         self.eventSink = eventSink
         self.startTimer(eventSink: eventSink)
         return nil
@@ -43,8 +43,23 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
         timer?.invalidate()
     }
     
+    //    func requestScreenRecordingPermission() {
+    //        CGRequestScreenCaptureAccess()
+    //    }
+    
     func requestScreenRecordingPermission() {
+        
+        // Request screen recording permission
         CGRequestScreenCaptureAccess()
+        
+        // Check the permission status after a delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            let hasAccess = CGPreflightScreenCaptureAccess()
+            if !hasAccess {
+                // Open system settings if permission is not granted
+                SystemSettingsHandler.openSystemSetting(for: "screen")
+            }
+        }
     }
     
     private static func canRecordScreen() -> Bool {

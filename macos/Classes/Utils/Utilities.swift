@@ -1,6 +1,7 @@
 import Foundation
 import FlutterMacOS
 import AVFAudio
+import AppKit
 
 //MARK: - Arguments parsing helper type method
 struct ArgumentParser {
@@ -20,6 +21,18 @@ struct AudioSetting {
             AVNumberOfChannelsKey: channels.channelCount,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
+    }
+}
+
+struct RestartApplication {
+    static func relaunch(afterDelay seconds: TimeInterval = 0.5) -> Never {
+        let task = Process()
+        task.launchPath = "/bin/sh"
+        task.arguments = ["-c", "sleep \(seconds); open \"\(Bundle.main.bundlePath)\""]
+        task.launch()
+        
+        NSApp.terminate(self)
+        exit(0)
     }
 }
 
