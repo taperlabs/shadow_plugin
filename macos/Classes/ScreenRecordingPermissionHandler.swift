@@ -55,7 +55,8 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
         // Check the permission status after a delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             let hasAccess = CGPreflightScreenCaptureAccess()
-            if !hasAccess {
+            let hasAccessViaCGWIndow = Self.canRecordScreen()
+            if !hasAccess || !hasAccessViaCGWIndow {
                 // Open system settings if permission is not granted
                 SystemSettingsHandler.openSystemSetting(for: "screen")
             }
