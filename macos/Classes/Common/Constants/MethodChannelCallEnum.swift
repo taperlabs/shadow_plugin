@@ -30,6 +30,8 @@ enum MethodChannelCall: String {
     
     case restartApp = "restartApp"
     
+    case getAllScreenPermissionStatuses = "getAllScreenPermissionStatuses"
+    
     //Before
     case startScreenCapture = "startScreenCapture"
     case stopScreenCapture = "stopScreenCapture"

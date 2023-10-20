@@ -33,13 +33,11 @@ abstract class ShadowPlatform extends PlatformInterface {
   }
 
   Stream<dynamic> get microphonePermissionEvents {
-    throw UnimplementedError(
-        'microphonePermissionEvents has not been implemented.');
+    throw UnimplementedError('microphonePermissionEvents has not been implemented.');
   }
 
   Stream<dynamic> get screenRecordingPermissionEvents {
-    throw UnimplementedError(
-        'screenRecordingPermissionEvents has not been implemented.');
+    throw UnimplementedError('screenRecordingPermissionEvents has not been implemented.');
   }
 
   Future<void> deleteFileIfExists(String fileName) {
@@ -47,37 +45,35 @@ abstract class ShadowPlatform extends PlatformInterface {
   }
 
   Future<void> openMicSystemSetting() {
-    throw UnimplementedError(
-        'openMicSystemSetting() has not been implemented.');
+    throw UnimplementedError('openMicSystemSetting() has not been implemented.');
   }
 
   Future<void> openScreenSystemSetting() {
-    throw UnimplementedError(
-        'openScreenSystemSetting() has not been implemented.');
+    throw UnimplementedError('openScreenSystemSetting() has not been implemented.');
   }
 
   Future<void> restartApp() {
     throw UnimplementedError('restartApp() has not been implemented.');
   }
 
+  Future<Map<String, dynamic>> getAllScreenPermissionStatuses() {
+    throw UnimplementedError('getScreenConfig() has not been implemented.');
+  }
+
   Future<bool> isMicPermissionGranted() {
-    throw UnimplementedError(
-        'isMicPermissionGranted() has not been implemented.');
+    throw UnimplementedError('isMicPermissionGranted() has not been implemented.');
   }
 
   Future<bool> isScreenPermissionGranted() {
-    throw UnimplementedError(
-        'isScreenPermissionGranted() has not been implemented.');
+    throw UnimplementedError('isScreenPermissionGranted() has not been implemented.');
   }
 
   Future<void> requestScreenPermission() {
-    throw UnimplementedError(
-        'requestScreenPermission() has not been implemented.');
+    throw UnimplementedError('requestScreenPermission() has not been implemented.');
   }
 
   Future<void> requestMicPermission() {
-    throw UnimplementedError(
-        'requestMicPermission() has not been implemented.');
+    throw UnimplementedError('requestMicPermission() has not been implemented.');
   }
 
   Future<String?> getPlatformVersion() {
@@ -86,14 +82,11 @@ abstract class ShadowPlatform extends PlatformInterface {
 
   //SystemAudio
   Future<void> startSystemAudioRecordingWithDefault() {
-    throw UnimplementedError(
-        'startSystemAudioRecordingWithDefault() has not been implemented.');
+    throw UnimplementedError('startSystemAudioRecordingWithDefault() has not been implemented.');
   }
 
-  Future<void> startSystemAudioRecordingWithConfig(
-      [Map<String, dynamic>? config]) {
-    throw UnimplementedError(
-        'startSystemAudioRecordingWithConfig() has not been implemented.');
+  Future<void> startSystemAudioRecordingWithConfig([Map<String, dynamic>? config]) {
+    throw UnimplementedError('startSystemAudioRecordingWithConfig() has not been implemented.');
   }
 
   //ScreenCapture
@@ -123,20 +116,17 @@ abstract class ShadowPlatform extends PlatformInterface {
   }
 
   Future<void> startSystemAndMicAudioRecordingWithDefault() {
-    throw UnimplementedError(
-        'startSystemAndMicAudioRecordingWithDefault() has not been implemented.');
+    throw UnimplementedError('startSystemAndMicAudioRecordingWithDefault() has not been implemented.');
   }
 
   Future<void> startSystemAndMicAudioRecordingWithConfig({
     Map<String, dynamic>? systemAudioConfig,
     Map<String, dynamic>? micConfig,
   }) {
-    throw UnimplementedError(
-        'startSystemAndMicAudioRecordingWithConfig() has not been implemented.');
+    throw UnimplementedError('startSystemAndMicAudioRecordingWithConfig() has not been implemented.');
   }
 
   Future<void> stopRecordingMicAndSystemAudio() {
-    throw UnimplementedError(
-        'stopRecordingMicAndSystemAudio() has not been implemented.');
+    throw UnimplementedError('stopRecordingMicAndSystemAudio() has not been implemented.');
   }
 }

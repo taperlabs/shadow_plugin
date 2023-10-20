@@ -4,9 +4,7 @@ import 'package:shadow/shadow_platform_interface.dart';
 import 'package:shadow/shadow_method_channel.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-class MockShadowPlatform
-    with MockPlatformInterfaceMixin
-    implements ShadowPlatform {
+class MockShadowPlatform with MockPlatformInterfaceMixin implements ShadowPlatform {
   @override
   Stream<dynamic> get microphoneEvents => Stream.empty();
 
@@ -32,6 +30,11 @@ class MockShadowPlatform
   Future<void> openScreenSystemSetting() async {}
 
   @override
+  Future<Map<String, dynamic>> getAllScreenPermissionStatuses() async {
+    return {}; // Mocked to always return an empty map for this example
+  }
+
+  @override
   Future<bool> isMicPermissionGranted() async {
     return true; // Mocked to always return true for this example
   }
@@ -55,8 +58,7 @@ class MockShadowPlatform
   Future<void> startSystemAudioRecordingWithDefault() async {}
 
   @override
-  Future<void> startSystemAudioRecordingWithConfig(
-      [Map<String, dynamic>? config]) async {}
+  Future<void> startSystemAudioRecordingWithConfig([Map<String, dynamic>? config]) async {}
 
   //ScreenCapture
   @override
@@ -70,8 +72,7 @@ class MockShadowPlatform
   Future<void> startMicRecordingWithDefault() async {}
 
   @override
-  Future<void> startMicRecordingWithConfig(
-      [Map<String, dynamic>? config]) async {}
+  Future<void> startMicRecordingWithConfig([Map<String, dynamic>? config]) async {}
 
   @override
   Future<void> startMicRecording() async {}
@@ -83,9 +84,7 @@ class MockShadowPlatform
   Future<void> startSystemAndMicAudioRecordingWithDefault() async {}
 
   @override
-  Future<void> startSystemAndMicAudioRecordingWithConfig(
-      {Map<String, dynamic>? systemAudioConfig,
-      Map<String, dynamic>? micConfig}) async {}
+  Future<void> startSystemAndMicAudioRecordingWithConfig({Map<String, dynamic>? systemAudioConfig, Map<String, dynamic>? micConfig}) async {}
 
   @override
   Future<void> stopRecordingMicAndSystemAudio() async {}

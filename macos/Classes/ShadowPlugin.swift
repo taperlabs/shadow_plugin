@@ -56,6 +56,12 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+        case .getAllScreenPermissionStatuses:
+            let statusCGPREFLIGHT = PermissionStatusCheckerHelper.checkScreenRecordingPermission()
+            let statusCGWINDOW = screenRecordingPermissionClass.isScreenRecordingGranted
+            let response: [String: Any] = ["statusCGPREFLIGHT": statusCGPREFLIGHT, "statusCGWINDOW": statusCGWINDOW]
+            result(response)
+            
         case .restartApp:
             RestartApplication.relaunch()
         case .isMicPermissionGranted:
@@ -63,9 +69,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             let status = microphonePermissionClass.isMicrophonePermissionGranted
             result(status)
         case .isScreenPermissionGranted:
-            let status = PermissionStatusCheckerHelper.checkScreenRecordingPermission()
-//            let status = screenRecordingPermissionClass.isScreenRecordingGranted
-            result(status)
+            let response = PermissionStatusCheckerHelper.checkScreenRecordingPermission()
+            result(response)
             
         case .openMicSystemSetting:
             SystemSettingsHandler.openSystemSetting(for: "microphone")

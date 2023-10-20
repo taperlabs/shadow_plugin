@@ -30,19 +30,9 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription<dynamic>? screenRecordingPermissionSubscription;
 
 //Configs
-  final micConfig = {
-    'fileName': 'FlutterCustomMicrophone.m4a',
-    'format': 'mpeg4AAC',
-    'channels': 'stereo',
-    'sampleRate': 'rate48K'
-  };
+  final micConfig = {'fileName': 'FlutterCustomMicrophone.m4a', 'format': 'mpeg4AAC', 'channels': 'stereo', 'sampleRate': 'rate48K'};
 
-  final systemAudioConfig = {
-    'fileName': 'FlutterCustomSystemAudio.m4a',
-    'format': 'mpeg4AAC',
-    'channels': 'stereo',
-    'sampleRate': 'rate48K'
-  };
+  final systemAudioConfig = {'fileName': 'FlutterCustomSystemAudio.m4a', 'format': 'mpeg4AAC', 'channels': 'stereo', 'sampleRate': 'rate48K'};
 
   @override
   void initState() {
@@ -56,8 +46,7 @@ class _MyAppState extends State<MyApp> {
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
     try {
-      platformVersion = await _shadowPlugin.getPlatformVersion() ??
-          'Unknown platform version';
+      platformVersion = await _shadowPlugin.getPlatformVersion() ?? 'Unknown platform version';
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }
@@ -84,8 +73,7 @@ class _MyAppState extends State<MyApp> {
       // await _shadowPlugin.startMicRecording();
       // print(result);
       print("startMicRecording called successfully ✅");
-      microphoneEventSubscription =
-          _shadowPlugin.microphoneEvents.listen((event) {
+      microphoneEventSubscription = _shadowPlugin.microphoneEvents.listen((event) {
         print("마이크 오디오 이벤트 스트림 테스트입니다");
         print(event);
 
@@ -119,8 +107,7 @@ class _MyAppState extends State<MyApp> {
       // final result = await _shadowPlugin.startSystemAudioRecordingWithConfig(systemAudioConfig);
       await _shadowPlugin.startSystemAudioRecordingWithDefault();
 
-      screenCaptureEventSubscription =
-          _shadowPlugin.screenCaptureEvents.listen((event) {
+      screenCaptureEventSubscription = _shadowPlugin.screenCaptureEvents.listen((event) {
         print("시스템 오디오 이벤트 스트림 테스트입니다");
         print(event);
 
@@ -161,15 +148,13 @@ class _MyAppState extends State<MyApp> {
 
       // await _shadowPlugin.startSystemAndMicAudioRecordingWithConfig()
 
-      await _shadowPlugin.startSystemAndMicAudioRecordingWithConfig(
-          systemAudioConfig: systemAudioConfig, micConfig: micConfig);
+      await _shadowPlugin.startSystemAndMicAudioRecordingWithConfig(systemAudioConfig: systemAudioConfig, micConfig: micConfig);
 
       // await _shadowPlugin.startSystemAndMicAudioRecordingWithDefault();
 
       print('startScreenCapture called successfully');
 
-      screenCaptureEventSubscription =
-          _shadowPlugin.screenCaptureEvents.listen((event) {
+      screenCaptureEventSubscription = _shadowPlugin.screenCaptureEvents.listen((event) {
         print("시스템 오디오 이벤트 스트림 테스트입니다");
         print(event);
 
@@ -209,8 +194,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future requestMicPermissionWithEvents(
-      Future Function() requestFunction, Stream<dynamic> eventStream) async {
+  Future requestMicPermissionWithEvents(Future Function() requestFunction, Stream<dynamic> eventStream) async {
     try {
       microphonePermissionSubscription = eventStream.listen((event) {
         print("Microphone Permission 🎤 Event입니다 $event");
@@ -228,8 +212,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future requestScreenRecordingPermissionWithEvents(
-      Future Function() requestFunction, Stream<dynamic> eventStream) async {
+  Future requestScreenRecordingPermissionWithEvents(Future Function() requestFunction, Stream<dynamic> eventStream) async {
     try {
       screenCaptureEventSubscription = eventStream.listen((event) {
         print("Screen Recording 🎥 Event입니다z $event");
@@ -256,12 +239,11 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future startRecording(
-      Future Function() startFunction, Stream<dynamic> eventStream) async {
+  Future startRecording(Future Function() startFunction, Stream<dynamic> eventStream) async {
     try {
       await startFunction();
       print("${startFunction.toString()} called successfully ✅");
-      microphoneEventSubscription = eventStream.listen((event) {
+      screenCaptureEventSubscription = eventStream.listen((event) {
         handleEvent(event);
       }, onError: (error) {
         print(error);
@@ -271,8 +253,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future stopRecording(Future Function() stopFunction,
-      StreamSubscription<dynamic>? eventSubscription) async {
+  Future stopRecording(Future Function() stopFunction, StreamSubscription<dynamic>? eventSubscription) async {
     try {
       await stopFunction();
       eventSubscription?.cancel();
@@ -284,8 +265,7 @@ class _MyAppState extends State<MyApp> {
 
   void handleEvent(dynamic event) {
     print(event);
-    if (event['type'] == 'screenRecordingStatus' ||
-        event['type'] == 'microphoneStatus') {
+    if (event['type'] == 'screenRecordingStatus' || event['type'] == 'microphoneStatus') {
       setState(() {
         _counter = event['elapsedTime'];
       });
@@ -302,6 +282,11 @@ class _MyAppState extends State<MyApp> {
     print("Screen Permission: $granted");
   }
 
+  Future<void> getAllScreenRecordingPermissionStatuses() async {
+    Map<String, dynamic> result = await _shadowPlugin.getAllScreenPermissionStatuses();
+    print("getAllScreenRecordingPermissionStatuses: $result");
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -314,12 +299,9 @@ class _MyAppState extends State<MyApp> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               const Text('Timer ⬇️ ⏰:'),
-              Text('$_counter',
-                  style: Theme.of(context).textTheme.headlineMedium),
-              Text('$_micPermissionStatus',
-                  style: Theme.of(context).textTheme.headlineMedium),
-              Text('$_isScreenRecordingPermissionGranted',
-                  style: Theme.of(context).textTheme.headlineMedium),
+              Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
+              Text('$_micPermissionStatus', style: Theme.of(context).textTheme.headlineMedium),
+              Text('$_isScreenRecordingPermissionGranted', style: Theme.of(context).textTheme.headlineMedium),
               CustomButton(
                   "Request Microhpone Permission",
                   () => requestMicPermissionWithEvents(
@@ -334,8 +316,7 @@ class _MyAppState extends State<MyApp> {
                       )),
               CustomButton(
                 "Stop Microphone Permission Request Stream 버튼",
-                () =>
-                    stopRequestingPermission(microphonePermissionSubscription),
+                () => stopRequestingPermission(microphonePermissionSubscription),
               ),
               CustomButton(
                 "Stop Screen Recording Permission Request Stream 버튼",
@@ -357,34 +338,16 @@ class _MyAppState extends State<MyApp> {
                 "Is Screen Recording Permission Granted 버튼",
                 () => checkScreenPermission(),
               ),
+              CustomButton("ScreenCapture 버튼",
+                  () => startRecording(_shadowPlugin.startSystemAndMicAudioRecordingWithDefault, _shadowPlugin.screenCaptureEvents)),
               CustomButton(
-                  "ScreenCapture 버튼",
-                  () => startRecording(
-                      _shadowPlugin.startSystemAndMicAudioRecordingWithDefault,
-                      _shadowPlugin.screenCaptureEvents)),
+                  "Stop ScreenCapture 버튼", () => stopRecording(_shadowPlugin.stopRecordingMicAndSystemAudio, screenCaptureEventSubscription)),
               CustomButton(
-                  "Stop ScreenCapture 버튼",
-                  () => stopRecording(
-                      _shadowPlugin.stopRecordingMicAndSystemAudio,
-                      screenCaptureEventSubscription)),
-              CustomButton(
-                  "Start Microphone Recording 버튼",
-                  () => startRecording(
-                      _shadowPlugin.startMicRecordingWithDefault,
-                      _shadowPlugin.microphoneEvents)),
-              CustomButton(
-                  "Stop Microphone Recording 버튼",
-                  () => stopRecording(_shadowPlugin.stopMicRecording,
-                      microphoneEventSubscription)),
-              CustomButton(
-                  "Start System Audio Only Capturing",
-                  () => startRecording(
-                      _shadowPlugin.startSystemAudioRecordingWithDefault,
-                      _shadowPlugin.screenCaptureEvents)),
-              CustomButton(
-                  "Stop System Audio Only Capturing",
-                  () => stopRecording(_shadowPlugin.stopScreenCapture,
-                      screenCaptureEventSubscription)),
+                  "Start Microphone Recording 버튼", () => startRecording(_shadowPlugin.startMicRecordingWithDefault, _shadowPlugin.microphoneEvents)),
+              CustomButton("Stop Microphone Recording 버튼", () => stopRecording(_shadowPlugin.stopMicRecording, microphoneEventSubscription)),
+              CustomButton("Start System Audio Only Capturing",
+                  () => startRecording(_shadowPlugin.startSystemAudioRecordingWithDefault, _shadowPlugin.screenCaptureEvents)),
+              CustomButton("Stop System Audio Only Capturing", () => stopRecording(_shadowPlugin.stopScreenCapture, screenCaptureEventSubscription)),
               CustomButton(
                 "Delete File 버튼",
                 () => deleteFile("FlutterSystemAudio.m4a"),
@@ -392,6 +355,10 @@ class _MyAppState extends State<MyApp> {
               CustomButton(
                 "Relaunch 버튼",
                 () => _shadowPlugin.restartApp(),
+              ),
+              CustomButton(
+                "Get All Screen Recording Permission 버튼",
+                () => getAllScreenRecordingPermissionStatuses(),
               )
               // ... [rest of the buttons]
             ],

@@ -2,17 +2,13 @@ import 'shadow_platform_interface.dart';
 
 //User facing API
 class Shadow {
-  Stream<dynamic> get microphoneEvents =>
-      ShadowPlatform.instance.microphoneEvents;
+  Stream<dynamic> get microphoneEvents => ShadowPlatform.instance.microphoneEvents;
 
-  Stream<dynamic> get screenCaptureEvents =>
-      ShadowPlatform.instance.screenCaptureEvents;
+  Stream<dynamic> get screenCaptureEvents => ShadowPlatform.instance.screenCaptureEvents;
 
-  Stream<dynamic> get microphonePermissionEvents =>
-      ShadowPlatform.instance.microphonePermissionEvents;
+  Stream<dynamic> get microphonePermissionEvents => ShadowPlatform.instance.microphonePermissionEvents;
 
-  Stream<dynamic> get screenRecordingPermissionEvents =>
-      ShadowPlatform.instance.screenRecordingPermissionEvents;
+  Stream<dynamic> get screenRecordingPermissionEvents => ShadowPlatform.instance.screenRecordingPermissionEvents;
 
   Future<void> deleteFileIfExists(String fileName) {
     return ShadowPlatform.instance.deleteFileIfExists(fileName);
@@ -20,6 +16,10 @@ class Shadow {
 
   Future<void> restartApp() {
     return ShadowPlatform.instance.restartApp();
+  }
+
+  Future<Map<String, dynamic>> getAllScreenPermissionStatuses() {
+    return ShadowPlatform.instance.getAllScreenPermissionStatuses();
   }
 
   Future<void> openMicSystemSetting() {
@@ -52,8 +52,7 @@ class Shadow {
   }
 
   //System Audio
-  Future<void> startSystemAudioRecordingWithConfig(
-      [Map<String, dynamic>? config]) {
+  Future<void> startSystemAudioRecordingWithConfig([Map<String, dynamic>? config]) {
     return ShadowPlatform.instance.startSystemAudioRecordingWithConfig(config);
   }
 
@@ -96,8 +95,7 @@ class Shadow {
     Map<String, dynamic>? systemAudioConfig,
     Map<String, dynamic>? micConfig,
   }) {
-    return ShadowPlatform.instance.startSystemAndMicAudioRecordingWithConfig(
-        systemAudioConfig: systemAudioConfig, micConfig: micConfig);
+    return ShadowPlatform.instance.startSystemAndMicAudioRecordingWithConfig(systemAudioConfig: systemAudioConfig, micConfig: micConfig);
   }
 
   Future<void> stopRecordingMicAndSystemAudio() {

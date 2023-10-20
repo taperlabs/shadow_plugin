@@ -11,32 +11,25 @@ class MethodChannelShadow extends ShadowPlatform {
   final _micEventChannel = const EventChannel('phoenixMicEventChannel');
   final _screenCaptureEventChannel = const EventChannel('phoenixEventChannel');
 
-  final _microphonePermissionEventChannel =
-      const EventChannel('phoenixMicrophonePermissionEventChannel');
-  final _screenRecordingPermissionEventChannel =
-      const EventChannel('phoenixScreenRecordingPermissionEventChannel');
+  final _microphonePermissionEventChannel = const EventChannel('phoenixMicrophonePermissionEventChannel');
+  final _screenRecordingPermissionEventChannel = const EventChannel('phoenixScreenRecordingPermissionEventChannel');
 
   //Event Streams
   @override
-  Stream<dynamic> get microphoneEvents =>
-      _micEventChannel.receiveBroadcastStream();
+  Stream<dynamic> get microphoneEvents => _micEventChannel.receiveBroadcastStream();
 
   @override
-  Stream<dynamic> get screenCaptureEvents =>
-      _screenCaptureEventChannel.receiveBroadcastStream();
+  Stream<dynamic> get screenCaptureEvents => _screenCaptureEventChannel.receiveBroadcastStream();
 
   @override
-  Stream<dynamic> get microphonePermissionEvents =>
-      _microphonePermissionEventChannel.receiveBroadcastStream();
+  Stream<dynamic> get microphonePermissionEvents => _microphonePermissionEventChannel.receiveBroadcastStream();
 
   @override
-  Stream<dynamic> get screenRecordingPermissionEvents =>
-      _screenRecordingPermissionEventChannel.receiveBroadcastStream();
+  Stream<dynamic> get screenRecordingPermissionEvents => _screenRecordingPermissionEventChannel.receiveBroadcastStream();
 
   @override
   Future<void> deleteFileIfExists(String fileName) async {
-    return methodChannel
-        .invokeMethod('deleteFileIfExists', {'fileName': fileName});
+    return methodChannel.invokeMethod('deleteFileIfExists', {'fileName': fileName});
   }
 
   @override
@@ -55,16 +48,27 @@ class MethodChannelShadow extends ShadowPlatform {
   }
 
   @override
+  Future<Map<String, dynamic>> getAllScreenPermissionStatuses() async {
+    final result = await methodChannel.invokeMethod('getAllScreenPermissionStatuses');
+    if (result is Map<dynamic, dynamic>) {
+      return result.cast<String, dynamic>();
+    }
+    return {};
+  }
+  // Future<Map<String, dynamic>> getAllScreenPermissionStatuses() async {
+  //   final result = await methodChannel.invokeMethod<Map<String, dynamic>>('getAllScreenPermissionStatuses');
+  //   return result ?? {};
+  // }
+
+  @override
   Future<bool> isMicPermissionGranted() async {
-    final result =
-        await methodChannel.invokeMethod<bool>('isMicPermissionGranted');
+    final result = await methodChannel.invokeMethod<bool>('isMicPermissionGranted');
     return result ?? false;
   }
 
   @override
   Future<bool> isScreenPermissionGranted() async {
-    final result =
-        await methodChannel.invokeMethod<bool>('isScreenPermissionGranted');
+    final result = await methodChannel.invokeMethod<bool>('isScreenPermissionGranted');
     return result ?? false;
   }
 
@@ -81,8 +85,7 @@ class MethodChannelShadow extends ShadowPlatform {
   //Test
   @override
   Future<String?> getPlatformVersion() async {
-    final version =
-        await methodChannel.invokeMethod<String>('getPlatformVersion');
+    final version = await methodChannel.invokeMethod<String>('getPlatformVersion');
     return version;
   }
 
@@ -93,10 +96,8 @@ class MethodChannelShadow extends ShadowPlatform {
   }
 
   @override
-  Future startSystemAudioRecordingWithConfig(
-      [Map<String, dynamic>? config]) async {
-    return methodChannel.invokeMethod(
-        'startSystemAudioRecordingWithConfig', config);
+  Future startSystemAudioRecordingWithConfig([Map<String, dynamic>? config]) async {
+    return methodChannel.invokeMethod('startSystemAudioRecordingWithConfig', config);
   }
 
   //ScreenCapture
@@ -117,8 +118,7 @@ class MethodChannelShadow extends ShadowPlatform {
   }
 
   @override
-  Future<void> startMicRecordingWithConfig(
-      [Map<String, dynamic>? config]) async {
+  Future<void> startMicRecordingWithConfig([Map<String, dynamic>? config]) async {
     return methodChannel.invokeMethod('startMicRecordingWithConfig', config);
   }
 
@@ -134,8 +134,7 @@ class MethodChannelShadow extends ShadowPlatform {
 
   @override
   Future<void> startSystemAndMicAudioRecordingWithDefault() async {
-    return methodChannel
-        .invokeMethod('startSystemAndMicAudioRecordingWithDefault');
+    return methodChannel.invokeMethod('startSystemAndMicAudioRecordingWithDefault');
   }
 
   @override
@@ -147,8 +146,7 @@ class MethodChannelShadow extends ShadowPlatform {
       'systemAudioConfig': systemAudioConfig,
       'micConfig': micConfig,
     };
-    return methodChannel.invokeMethod(
-        'startSystemAndMicAudioRecordingWithConfig', arguments);
+    return methodChannel.invokeMethod('startSystemAndMicAudioRecordingWithConfig', arguments);
   }
 
   @override
