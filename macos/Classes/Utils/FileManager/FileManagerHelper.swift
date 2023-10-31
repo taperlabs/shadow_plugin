@@ -5,7 +5,7 @@ struct FileManagerHelper {
     
     //set or get a file path
     static func getURL(for filename: String) -> URL? {
-        return FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.appendingPathComponent(filename)
+        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(filename)
     }
     
     //get url and delete file if existing
