@@ -1,8 +1,67 @@
+////import Foundation
+////import ScreenCaptureKit
+////import FlutterMacOS
+////
+////
+////final class NudgeHelper:  NSObject, FlutterStreamHandler {
+////    private var eventSink: FlutterEventSink?
+////    private var timer: Timer?
+////    private var windows: [SCWindow]?
+////    private var apps: [SCRunningApplication]?
+////    private var displays: [SCDisplay]?
+////
+////    var isZoomMeetingIn = false
+////    var isGoogleMeetIn = false
+////
+////    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+////        print("hey")
+////    }
+////
+////    func onCancel(withArguments arguments: Any?) -> FlutterError? {
+////        print("Hi")
+////    }
+////
+//func startNudging() -> Void {
+//    let availableContent = SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { [weak self] content, error in
+//        guard let content = content else { return }
+//        self?.windows = content.windows
+//        self?.apps = content.applications
+//        self?.display = content.displays
 //
-//  NudgeHelper.swift
-//  shadow
+//        //            print(self?.windows)
+//    }
+//}
+////
+////
+//private func detectZoomMeetingIn() -> Void {
+//    guard let unWrappedWindows = self.windows else { return }
+//    let titles = unWrappedWindows.compactMap { $0.title }
 //
-//  Created by Phoenix on 2023/11/07.
+//    for title in titles {
+//        print(title)
+//    }
 //
-
-import Foundation
+//    let owningApps = unWrappedWindows.compactMap { $0.owningApplication }
+//    let isZoomRunning = titles.contains("Zoom Meeting")
+//    self.isZoomRunning = isZoomRunning
+//
+//}
+////
+////    private func detectGoogleMeetingIn() -> Void {
+////
+////    }
+////
+////    private func getAllRunningApps() -> Void {
+////
+////    }
+////
+////
+////}
+////
+////extension NudgeHelper {
+////    //TODO:
+////}
+////
+////extension NudgeHelper {
+////    //TODO:
+////}

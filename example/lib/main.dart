@@ -240,6 +240,13 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future startRecording(Future Function() startFunction, Stream<dynamic> eventStream) async {
+    // if (_isRecordingInProgress) {
+    //   print("Recording is already in progress. Ignoring the start command.");
+    //   return;
+    // }
+
+    // _isRecordingInProgress = true;
+
     try {
       await startFunction();
       print("${startFunction.toString()} called successfully ✅");

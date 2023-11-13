@@ -10,8 +10,8 @@ extension ShadowPlugin {
             return
         }
         
-        print("여기는 인사이드 입니다 1111 \(type(of: systemAudioConfig))", systemAudioConfig)
-        print("여기는 인사이드 입니다 1111 \(type(of: micAudioConfig))", micAudioConfig)
+//        print("여기는 인사이드 입니다 1111 \(type(of: systemAudioConfig))", systemAudioConfig)
+//        print("여기는 인사이드 입니다 1111 \(type(of: micAudioConfig))", micAudioConfig)
         
         handleSystemAudioRecordingWithConfig(args: (systemAudioConfig as? [String : Any]), result: result)
         handleMicRecordingWithConfig(args: (micAudioConfig as? [String : Any]), result: result)
@@ -22,16 +22,40 @@ extension ShadowPlugin {
             do {
                 try await screenRecorder.getAvailableContent()
                 handleMicRecordingWithDefault(result: result)
-                
-                guard let screenEventChannel = ShadowPlugin.screenEventChannel, let screenRecorderOutput = screenRecorder.streamOutput else { return }
-                captureEngineStreamOutput = screenRecorderOutput
-                screenEventChannel.setStreamHandler(captureEngineStreamOutput)
+
+                // Check if a stream handler is already set
+                if captureEngineStreamOutput == nil {
+                    guard let screenEventChannel = ShadowPlugin.screenEventChannel,
+                          let screenRecorderOutput = screenRecorder.streamOutput else { return }
+
+                    captureEngineStreamOutput = screenRecorderOutput
+                    screenEventChannel.setStreamHandler(captureEngineStreamOutput)
+                }
                 result("스크린 녹화 시작")
             } catch {
+                // If there's an error, make sure to clear the existing stream handler
+                ShadowPlugin.screenEventChannel?.setStreamHandler(nil)
+                captureEngineStreamOutput = nil
                 handleError(error: error, result: result)
             }
         }
     }
+    
+//    public func handleSystemAudioAndMicRecordingWithDefault(result: @escaping FlutterResult) {
+//        Task {
+//            do {
+//                try await screenRecorder.getAvailableContent()
+//                handleMicRecordingWithDefault(result: result)
+//
+//                guard let screenEventChannel = ShadowPlugin.screenEventChannel, let screenRecorderOutput = screenRecorder.streamOutput else { return }
+//                captureEngineStreamOutput = screenRecorderOutput
+//                screenEventChannel.setStreamHandler(captureEngineStreamOutput)
+//                result("스크린 녹화 시작")
+//            } catch {
+//                handleError(error: error, result: result)
+//            }
+//        }
+//    }
     
     
     public func handleStopSystemAudioAndMicRecording(result: @escaping FlutterResult) {
