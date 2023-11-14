@@ -347,6 +347,7 @@ class _MyAppState extends State<MyApp> {
               ),
               CustomButton("ScreenCapture 버튼",
                   () => startRecording(_shadowPlugin.startSystemAndMicAudioRecordingWithDefault, _shadowPlugin.screenCaptureEvents)),
+              // () => startScreenCapture()),
               CustomButton(
                   "Stop ScreenCapture 버튼", () => stopRecording(_shadowPlugin.stopRecordingMicAndSystemAudio, screenCaptureEventSubscription)),
               CustomButton(

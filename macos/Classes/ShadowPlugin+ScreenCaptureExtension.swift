@@ -16,9 +16,17 @@ extension ShadowPlugin {
                     try await screenRecorder.getAvailableContent()
                 }
                 
-                guard let screenEventChannel = ShadowPlugin.screenEventChannel, let screenRecorderOutput = screenRecorder.streamOutput else { return }
-                captureEngineStreamOutput = screenRecorderOutput
-                screenEventChannel.setStreamHandler(captureEngineStreamOutput)
+                if captureEngineStreamOutput == nil {
+                    guard let screenEventChannel = ShadowPlugin.screenEventChannel,
+                          let screenRecorderOutput = screenRecorder.streamOutput else { return }
+                    
+                    captureEngineStreamOutput = screenRecorderOutput
+                    screenEventChannel.setStreamHandler(captureEngineStreamOutput)
+                }
+                
+                //                guard let screenEventChannel = ShadowPlugin.screenEventChannel, let screenRecorderOutput = screenRecorder.streamOutput else { return }
+                //                captureEngineStreamOutput = screenRecorderOutput
+                //                screenEventChannel.setStreamHandler(captureEngineStreamOutput)
                 result("스크린 녹화 시작")
             } catch {
                 handleError(error: error, result: result)
@@ -33,7 +41,7 @@ extension ShadowPlugin {
     public func handleSystemAudioRecordingWithDefault(result: @escaping FlutterResult) {
         handleSystemAudioRecording(result: result)
     }
-
+    
     public func handleStartScreenCapture(result: @escaping FlutterResult) {
         print("startScreen Capture called!!!")
         Task {
