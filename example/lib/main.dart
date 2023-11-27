@@ -28,6 +28,7 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription<dynamic>? eventSubscription;
   StreamSubscription<dynamic>? microphonePermissionSubscription;
   StreamSubscription<dynamic>? screenRecordingPermissionSubscription;
+  StreamSubscription<dynamic>? nudgeSubscription;
 
 //Configs
   final micConfig = {'fileName': 'FlutterCustomMicrophone.m4a', 'format': 'mpeg4AAC', 'channels': 'stereo', 'sampleRate': 'rate48K'};
@@ -270,6 +271,31 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  Future startNudging() async {
+    try {
+      nudgeSubscription = _shadowPlugin.nudgeEvents.listen(
+        (event) {
+          print("Nudge Event입니다 $event");
+        },
+        onError: (error) {
+          print(error);
+        },
+      );
+      print("startNudging called successfully ✅");
+    } on PlatformException catch (e) {
+      print(e);
+    }
+  }
+
+  Future cancelNudging() async {
+    try {
+      nudgeSubscription?.cancel();
+      print("cancelNudging called successfully ✅");
+    } on PlatformException catch (e) {
+      print(e);
+    }
+  }
+
   void handleEvent(dynamic event) {
     print(event);
     if (event['type'] == 'screenRecordingStatus' || event['type'] == 'microphoneStatus') {
@@ -365,8 +391,16 @@ class _MyAppState extends State<MyApp> {
                 () => _shadowPlugin.restartApp(),
               ),
               CustomButton(
-                "Get All Screen Recording Permission 버튼",
+                "start Nudging Button",
                 () => getAllScreenRecordingPermissionStatuses(),
+              ),
+              CustomButton(
+                "Start Nudging",
+                () => startNudging(),
+              ),
+              CustomButton(
+                "Cancel Nudging",
+                () => cancelNudging(),
               )
               // ... [rest of the buttons]
             ],

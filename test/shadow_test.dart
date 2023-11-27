@@ -18,6 +18,9 @@ class MockShadowPlatform with MockPlatformInterfaceMixin implements ShadowPlatfo
   Stream<dynamic> get screenRecordingPermissionEvents => Stream.empty();
 
   @override
+  Stream<dynamic> get nudgeEvents => Stream.empty();
+
+  @override
   Future<void> restartApp() async {}
 
   @override

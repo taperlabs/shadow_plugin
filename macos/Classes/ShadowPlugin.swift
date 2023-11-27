@@ -9,12 +9,14 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     private static let micPermissionEventChannelName = "phoenixMicrophonePermissionEventChannel"
     private static let screenRecordingPermissionEventChannelName = "phoenixScreenRecordingPermissionEventChannel"
     private static let shadowMethodChannelName = "shadow"
+    private static let nudgeEventChannelName = "phoenixNudgeEventChannel"
     static var screenEventChannel: FlutterEventChannel?
     var micAudioRecording = MicrophoneRecorder()
     var screenRecorder = ScreenRecorder()
     var captureEngineStreamOutput: ScreenRecorderOutputHandler?
     var microphonePermissionClass = MicrophonePermissionStreamHandler()
     var screenRecordingPermissionClass = ScreenRecordingPermissionHandler()
+    var nudgeHelperClass = NudgeHelper()
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "shadow", binaryMessenger: registrar.messenger)
@@ -25,6 +27,10 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         screenEventChannel = FlutterEventChannel(name: eventChannelName, binaryMessenger: registrar.messenger)
         let micPermissionEventChannel = FlutterEventChannel(name: micPermissionEventChannelName, binaryMessenger: registrar.messenger)
         let screenRecordingPermissionEventChannel = FlutterEventChannel(name: screenRecordingPermissionEventChannelName, binaryMessenger: registrar.messenger)
+        
+        let nudgeEventChannel = FlutterEventChannel(name: nudgeEventChannelName, binaryMessenger: registrar.messenger)
+        
+        nudgeEventChannel.setStreamHandler(instance.nudgeHelperClass)
         
         micEventChannel.setStreamHandler(instance.micAudioRecording)
         
@@ -56,6 +62,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+            
         case .getAllScreenPermissionStatuses:
             let statusCGPREFLIGHT = PermissionStatusCheckerHelper.checkScreenRecordingPermission()
             let statusCGWINDOW = screenRecordingPermissionClass.isScreenRecordingGranted

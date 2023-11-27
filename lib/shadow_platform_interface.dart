@@ -40,6 +40,10 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('screenRecordingPermissionEvents has not been implemented.');
   }
 
+  Stream<dynamic> get nudgeEvents {
+    throw UnimplementedError('NudgeEvents has not been implemented.');
+  }
+
   Future<void> deleteFileIfExists(String fileName) {
     throw UnimplementedError('deleteFileIfExists() has not been implemented.');
   }

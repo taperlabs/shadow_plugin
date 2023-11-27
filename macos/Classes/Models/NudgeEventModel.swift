@@ -1,8 +1,12 @@
-//
-//  NudgeEventModel.swift
-//  shadow
-//
-//  Created by Phoenix on 2023/11/23.
-//
-
 import Foundation
+
+struct NudgeEventModel {
+    let appName: String
+    let isInMeeting: Bool
+    let windowID: Int
+    
+    
+    var nudgeEventDictionary: [String: Any] {
+        return ["appName": appName, "isInMeeting": isInMeeting, "windowID": windowID]
+    }
+}
