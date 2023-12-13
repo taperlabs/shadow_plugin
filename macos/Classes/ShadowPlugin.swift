@@ -17,6 +17,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     var microphonePermissionClass = MicrophonePermissionStreamHandler()
     var screenRecordingPermissionClass = ScreenRecordingPermissionHandler()
     var nudgeHelperClass = NudgeHelper()
+//    var nudgeHelperClass = NudgeService()
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "shadow", binaryMessenger: registrar.messenger)
@@ -72,7 +73,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         case .restartApp:
             RestartApplication.relaunch()
         case .isMicPermissionGranted:
-//            let status = PermissionStatusCheckerHelper.checkMicrophonePermission()
+            //            let status = PermissionStatusCheckerHelper.checkMicrophonePermission()
             let status = microphonePermissionClass.isMicrophonePermissionGranted
             result(status)
         case .isScreenPermissionGranted:
@@ -81,7 +82,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             
         case .openMicSystemSetting:
             SystemSettingsHandler.openSystemSetting(for: "microphone")
-        
+            
         case .openScreenSystemSetting:
             SystemSettingsHandler.openSystemSetting(for: "screen")
             
@@ -93,9 +94,9 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             
             
             
-//            ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
+            //            ScreenRecorderPermissionHandler.requestScreenRecordingPermission()
             //            SystemSettingsHandler.checkScreenRecordingPermission()
-
+            
             //            Task {
             //                try await ScreenRecorderPermissionHandler.requestScreenRecorderPermission()
             //            }
@@ -108,25 +109,25 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
                     print("dfsdfs")
                 }
             }
-//            let microphoneService = MicrophonePermissionHandler.shared
-//            microphoneService.requestMicrophoneAccess { granted in
-//                // Handle the result
-//
-//                if granted {
-//                    print("Granted!!!! Mic")
-//                } else {
-//                    print("Not granted")
-//                }
-//            }
+            //            let microphoneService = MicrophonePermissionHandler.shared
+            //            microphoneService.requestMicrophoneAccess { granted in
+            //                // Handle the result
+            //
+            //                if granted {
+            //                    print("Granted!!!! Mic")
+            //                } else {
+            //                    print("Not granted")
+            //                }
+            //            }
             
-//            MicrophonePermissionHandler.requestMicrophonePermission { granted in
-//                if granted {
-//                    print("granted!!!")
-//                    // Proceed with your audio recording or processing code
-//                } else {
-//                    print("grant denied")
-//                }
-//            }
+            //            MicrophonePermissionHandler.requestMicrophonePermission { granted in
+            //                if granted {
+            //                    print("granted!!!")
+            //                    // Proceed with your audio recording or processing code
+            //                } else {
+            //                    print("grant denied")
+            //                }
+            //            }
             
         case .startMicRecordingWithConfig:
             //Mic recording with custom configurations
