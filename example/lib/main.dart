@@ -391,10 +391,6 @@ class _MyAppState extends State<MyApp> {
                 () => _shadowPlugin.restartApp(),
               ),
               CustomButton(
-                "start Nudging Button",
-                () => getAllScreenRecordingPermissionStatuses(),
-              ),
-              CustomButton(
                 "Start Nudging",
                 () => startNudging(),
               ),

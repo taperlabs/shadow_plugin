@@ -23,8 +23,11 @@ final class NudgeHelper: NSObject, FlutterStreamHandler {
     private var isMicrophoneInUse = false
     private var microphoneListenerBlock: AudioObjectPropertyListenerBlock?
     
+    private var deviceID: AudioDeviceID?
+    
     override init() {
         super.init()
+        self.setUpDefaultInputDeviceListener() // Set up listener for default input device changes
         self.detectMicInUsage()
     }
     
@@ -36,9 +39,9 @@ final class NudgeHelper: NSObject, FlutterStreamHandler {
         
         var detectionString: String {
             switch self {
-            case .googleMeet: return "Meet -"
+            case .googleMeet: return "Meet"
             case .zoom: return "Zoom Meeting"
-            case .slack: return "- Slack"
+            case .slack: return "Huddle"
             }
         }
         
@@ -54,7 +57,7 @@ final class NudgeHelper: NSObject, FlutterStreamHandler {
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         print("Nudge OnListen 시작 🟢")
         self.eventSink = events
-//        nudgeTimer = Timer.scheduledTimer(timeInterval: 2.0, target: self, selector: #selector(fetchWindows), userInfo: nil, repeats: true)
+        nudgeTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateSCWindows2), userInfo: nil, repeats: true)
         
         return nil
     }
@@ -64,9 +67,48 @@ final class NudgeHelper: NSObject, FlutterStreamHandler {
         nudgeTimer?.invalidate()
         self.resetMeetingProperties()
         self.eventSink = nil
+
         
         return nil
     }
+    
+    func setUpDefaultInputDeviceListener() {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultInputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
+            // Default input device changed, update microphone monitoring
+            self?.updateMicMonitoring()
+        }
+
+        let status = AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject),
+                                                         &propertyAddress,
+                                                         nil,
+                                                         block)
+
+        if status != noErr {
+            print("Error adding default input device listener: \(status)")
+        }
+    }
+    
+    func updateMicMonitoring() {
+        // First, remove existing microphone listener if it exists
+        if let existingBlock = microphoneListenerBlock, let oldDeviceID = self.deviceID {
+            var propertyAddress = AudioObjectPropertyAddress(
+                mSelector: kAudioDevicePropertyDeviceIsRunningSomewhere,
+                mScope: kAudioObjectPropertyScopeGlobal,
+                mElement: kAudioObjectPropertyElementMain
+            )
+            AudioObjectRemovePropertyListenerBlock(AudioObjectID(oldDeviceID), &propertyAddress, nil, existingBlock)
+        }
+
+        // Now, set up the microphone listener for the new default input device
+        detectMicInUsage()
+    }
+
     
     func getDefaultInputDevice() -> AudioDeviceID {
         var defaultInputDeviceID = kAudioObjectUnknown
@@ -97,6 +139,7 @@ final class NudgeHelper: NSObject, FlutterStreamHandler {
     func detectMicInUsage() -> Void {
         print("Detect Mic Usage 메소드 호출")
         var deviceID = self.getDefaultInputDevice()
+        self.deviceID = deviceID
         
         var propertyAddress = AudioObjectPropertyAddress(
             mSelector: kAudioDevicePropertyDeviceIsRunningSomewhere,
@@ -122,9 +165,14 @@ final class NudgeHelper: NSObject, FlutterStreamHandler {
             
             if self.isMicrophoneInUse {
                 print("Microphone is now in use")
-                updateSCWindows { [weak self] in
+//                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+//                    print("2초 뒤 호출이다")
+//
+//                }
+                self.updateSCWindows { [weak self] in
                     self?.detectInMeeting2()
                 }
+                
               
                 
             } else {
@@ -150,14 +198,29 @@ final class NudgeHelper: NSObject, FlutterStreamHandler {
     
     
     private func resetMeetingProperties() -> Void {
+        self.isMicrophoneInUse = false
         self.isInMeeting = false
         self.lastFoundAppName = nil
         self.lastGoogleMeetID = nil
         self.lastFoundAppName = nil
     }
     
+    @objc private func updateSCWindows2() -> Void {
+        print("updateSCWindow START!!")
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
+                guard let content = content else { return }
+                DispatchQueue.main.async {
+                    self?.windows = content.windows
+                    self?.apps = content.applications
+                    self?.displays = content.displays
+                }
+            }
+        }
+    }
+    
     private func updateSCWindows(completion: @escaping () -> Void) {
-        DispatchQueue.global().async { [weak self] in
+        DispatchQueue.global(qos:.userInitiated).async { [weak self] in
             SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
                 guard let content = content else { return }
                 DispatchQueue.main.async {
@@ -224,7 +287,9 @@ final class NudgeHelper: NSObject, FlutterStreamHandler {
                 print("In a meeting app: \(frontmostApp)")
                 self.eventSink?(["IsInMeeting": true, "appName": frontmostApp])
             } else if frontmostApp == "Google Chrome" {
-                self.checkForGoogleMeetInChrome()
+                    self.updateSCWindows {
+                        self.checkForGoogleMeetInChrome()
+                    }
             } else {
                 self.eventSink?(["IsInMeeting": false])
             }
@@ -236,7 +301,7 @@ final class NudgeHelper: NSObject, FlutterStreamHandler {
             print("Window is Nil")
             return
         }
-
+        
         let isGoogleMeetSession = unWrappedWindows.contains { window in
             window.title?.contains(WindowTitles.googleMeet.detectionString) ?? false
         }

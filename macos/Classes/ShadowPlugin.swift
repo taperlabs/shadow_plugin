@@ -16,8 +16,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     var captureEngineStreamOutput: ScreenRecorderOutputHandler?
     var microphonePermissionClass = MicrophonePermissionStreamHandler()
     var screenRecordingPermissionClass = ScreenRecordingPermissionHandler()
-    var nudgeHelperClass = NudgeHelper()
-//    var nudgeHelperClass = NudgeService()
+//    var nudgeHelperClass = NudgeHelper()
+    var nudgeHelperClass = NudgeService()
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "shadow", binaryMessenger: registrar.messenger)
