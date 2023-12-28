@@ -20,6 +20,7 @@ class _MyAppState extends State<MyApp> {
   int _counter = 0;
   String _micPermissionStatus = "Mic Permission Value";
   bool _isScreenRecordingPermissionGranted = false;
+  String isInMeeting = "미팅 ❌";
   final _shadowPlugin = Shadow();
 
   //Stream Subscriptions
@@ -276,6 +277,15 @@ class _MyAppState extends State<MyApp> {
       nudgeSubscription = _shadowPlugin.nudgeEvents.listen(
         (event) {
           print("Nudge Event입니다 $event");
+          if (event['isInMeeting']) {
+            setState(() {
+              isInMeeting = "미팅 ✅";
+            });
+          } else {
+            setState(() {
+              isInMeeting = "미팅 ❌";
+            });
+          }
         },
         onError: (error) {
           print(error);
@@ -335,6 +345,7 @@ class _MyAppState extends State<MyApp> {
               Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
               Text('$_micPermissionStatus', style: Theme.of(context).textTheme.headlineMedium),
               Text('$_isScreenRecordingPermissionGranted', style: Theme.of(context).textTheme.headlineMedium),
+              Text('$isInMeeting', style: Theme.of(context).textTheme.headlineMedium),
               CustomButton(
                   "Request Microhpone Permission",
                   () => requestMicPermissionWithEvents(
