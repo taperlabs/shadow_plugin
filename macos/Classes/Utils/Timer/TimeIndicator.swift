@@ -22,6 +22,7 @@ class TimeIndicator {
         timer?.invalidate()
         timer = nil
         startTime = nil // Clear the start time
+        elapsedTime = 0
     }
 
     @objc private func updateTime() {

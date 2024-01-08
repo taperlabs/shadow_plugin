@@ -51,7 +51,7 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
         print("이벤트 구독 취소 입니다!!! 🔥 ScreenOutPUT!!!")
         statusTimer?.invalidate()
         statusTimer = nil
-//        stopSendingStatus()
+        //        stopSendingStatus()
         // Clear the event sink
         self.eventSink = nil
         
@@ -91,7 +91,7 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
     
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         //Error Handler
-        print(error)
+        print("didStopWithError -> ❌",error)
     }
     
     //ScreenCapture Stream Output
@@ -105,8 +105,20 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
         case .audio:
             let timestampledSampleBuffer = adjustTimeStamp(sampleBuffer: sampleBuffer)
             
+            guard let recorder = self.recorder else { return }
+            
+            
+            //            guard let display = recorder.display else { return }
+            //
+            //            let newFilter = SCContentFilter(display: display[1], including: [], exceptingWindows: [])
+            //
+            //            stream.updateContentFilter(newFilter)
+            
+            
+            //Audio Buffer discard if clamshell mode
+            
             //systemAudioInput에 AudioBuffer 쓰기
-            guard let systemAudioInput = recorder?.assetWriterSetup.systemAudioInput, systemAudioInput.isReadyForMoreMediaData else {
+            guard let systemAudioInput = recorder.assetWriterSetup.systemAudioInput, systemAudioInput.isReadyForMoreMediaData else {
                 print("System Audio Recording Not Ready")
                 return
             }

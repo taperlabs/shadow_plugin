@@ -1,11 +1,29 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:shadow/shadow.dart';
 
 void main() {
   runApp(const MyApp());
+}
+
+class LsofEntry {
+  final String appName;
+  final String port;
+  final String pid;
+  final DateTime startTime;
+
+  LsofEntry(this.appName, this.port, this.pid, this.startTime);
+
+  Map<String, dynamic> toDictionary() {
+    return {'appName': appName, 'port': port, 'pid': pid, 'startTime': startTime.toIso8601String()};
+  }
+
+  bool get isConnectionOlderThanNSeconds {
+    return DateTime.now().difference(startTime).inSeconds >= 2;
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -32,14 +50,189 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription<dynamic>? nudgeSubscription;
 
 //Configs
-  final micConfig = {'fileName': 'FlutterCustomMicrophone.m4a', 'format': 'mpeg4AAC', 'channels': 'stereo', 'sampleRate': 'rate48K'};
+  final micConfig = {
+    'fileName': 'FlutterCustomMicrophone.m4a',
+    'format': 'mpeg4AAC',
+    'channels': 'stereo',
+    'sampleRate': 'rate48K',
+    'filePath': 'ApplicationSupportDirectory'
+  };
 
-  final systemAudioConfig = {'fileName': 'FlutterCustomSystemAudio.m4a', 'format': 'mpeg4AAC', 'channels': 'stereo', 'sampleRate': 'rate48K'};
+  final systemAudioConfig = {
+    'fileName': 'FlutterCustomSystemAudio.m4a',
+    'format': 'mpeg4AAC',
+    'channels': 'stereo',
+    'sampleRate': 'rate48K',
+    'filePath': 'ApplicationSupportDirectory'
+  };
+
+  Timer? timer;
+  bool _isInMeeting = false;
+  final Map<String, LsofEntry> entries = {};
+  final List<String> whitelistAppNames = [
+    "Around",
+    "Discord",
+    "zoom.us",
+    "Slack",
+    "GoogleChromeHelper",
+    "com.apple",
+    "MicrosoftEdgeHelper",
+    "ArcHelper",
+    "plugin-co", //firefox
+  ];
 
   @override
   void initState() {
     super.initState();
     // initPlatformState();
+  }
+
+  Future<String> runLsofCommand() async {
+    final result = await Process.run('lsof', ['-i', 'UDP:40000-69999', '+c', '30']);
+    return result.stdout as String;
+  }
+
+  List<LsofEntry> parseLsofOutput(String output) {
+    final lines = output.split('\n').skip(1);
+    final pattern = RegExp(r'UDP (\*|\d{1,3}(\.\d{1,3}){3}):([4-6]\d{4,5})(?!.*->)');
+    final foundPIDs = <String>{};
+
+    return lines
+        .map((line) {
+          final words = line.split(' ').where((str) => str.isNotEmpty).toList();
+          if (words.isNotEmpty) {
+            final matchedLine = pattern.firstMatch(line);
+
+            if (matchedLine != null) {
+              final appName = words[0];
+              final appNameWithoutSpaces = appName.replaceAll('\\x20', '');
+              print(appNameWithoutSpaces);
+
+              final portPattern = RegExp(r':(\d+)$');
+              final portMatch = portPattern.firstMatch(words.last);
+              final bool isAppNameInWhitelist = whitelistAppNames.any((whitelistAppName) => appNameWithoutSpaces.startsWith(whitelistAppName));
+
+              if (portMatch != null && isAppNameInWhitelist) {
+                final pid = words[1];
+                foundPIDs.add(pid);
+
+                entries[pid] = entries.putIfAbsent(pid, () => LsofEntry(words[0], portMatch.group(1)!, pid, DateTime.now()));
+
+                return LsofEntry(words[0], portMatch.group(1)!, words[1], DateTime.now());
+              }
+            }
+          }
+        })
+        .where((item) => item != null)
+        .toList()
+        .cast<LsofEntry>();
+  }
+
+  void updateEntries(List<LsofEntry> parsedLines) {
+    final foundPIDs = parsedLines.map((entry) => entry.pid).toSet();
+    print("foundPID, $foundPIDs");
+    entries.removeWhere((key, value) => !foundPIDs.contains(key));
+  }
+
+  void updateMeetingStatus() {
+    if (entries.isEmpty) {
+      print("No entries found");
+      if (_isInMeeting) {
+        print("You were in a meeting but now you are not");
+        _isInMeeting = false;
+      }
+      setState(() {
+        isInMeeting = "미팅 ❌";
+      });
+    }
+
+    if (entries.isNotEmpty) {
+      entries.values.forEach((entry) {
+        if (entry.isConnectionOlderThanNSeconds) {
+          print("Meeting is longer than 5 seconds");
+          _isInMeeting = true;
+          setState(() {
+            isInMeeting = "미팅 ✅";
+          });
+        }
+      });
+    }
+  }
+
+  detectInMeetingSession2() {
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      final output = await runLsofCommand();
+      final parsedLines = parseLsofOutput(output);
+      updateEntries(parsedLines);
+      updateMeetingStatus();
+      print(parsedLines.map((entry) => entry.toDictionary()).toList());
+    });
+  }
+
+  detectInMeetingSession() {
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      final result = await Process.run('lsof', ['-i', 'UDP:40000-69999']);
+      final output = result.stdout as String;
+
+      final lines = output.split('\n').skip(1);
+
+      final pattern = RegExp(r'UDP (\*|\d{1,3}(\.\d{1,3}){3}):([4-6]\d{4,5})(?!.*->)');
+      final foundPIDs = <String>{};
+
+      final parsedLines = lines
+          .map((line) {
+            final words = line.split(' ').where((str) => str.isNotEmpty).toList();
+
+            if (words.isNotEmpty) {
+              final matchedLine = pattern.firstMatch(line);
+
+              if (matchedLine != null) {
+                final appName = words[0];
+                final portPattern = RegExp(r':(\d+)$');
+                final portMatch = portPattern.firstMatch(words.last);
+
+                if (portMatch != null && whitelistAppNames.contains(appName)) {
+                  final pid = words[1];
+                  foundPIDs.add(pid);
+
+                  entries[pid] = entries.putIfAbsent(pid, () => LsofEntry(words[0], portMatch.group(1)!, pid, DateTime.now()));
+
+                  return LsofEntry(words[0], portMatch.group(1)!, words[1], DateTime.now());
+                }
+              }
+            }
+          })
+          .where((item) => item != null)
+          .toList()
+          .cast<LsofEntry>();
+
+      entries.removeWhere((key, value) => !foundPIDs.contains(key));
+
+      if (entries.isEmpty) {
+        print("No entries found");
+        if (_isInMeeting) {
+          print("You were in a meeting but now you are not");
+          _isInMeeting = false;
+        }
+        setState(() {
+          isInMeeting = "미팅 ❌";
+        });
+      }
+
+      if (entries.isNotEmpty) {
+        entries.values.forEach((entry) {
+          if (entry.isConnectionOlderThanNSeconds) {
+            print("Meeting is longer than 5 seconds");
+            _isInMeeting = true;
+            setState(() {
+              isInMeeting = "미팅 ✅";
+            });
+          }
+        });
+      }
+
+      print(parsedLines.map((entry) => entry.toDictionary()).toList());
+    });
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -70,8 +263,8 @@ class _MyAppState extends State<MyApp> {
   //Microphone
   Future startMicRecording() async {
     try {
-      // await _shadowPlugin.startMicRecordingWithConfig(micConfig);
-      await _shadowPlugin.startMicRecordingWithDefault();
+      await _shadowPlugin.startMicRecordingWithConfig(micConfig);
+      // await _shadowPlugin.startMicRecordingWithDefault();
       // await _shadowPlugin.startMicRecording();
       // print(result);
       print("startMicRecording called successfully ✅");
@@ -242,24 +435,43 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future startRecording(Future Function() startFunction, Stream<dynamic> eventStream) async {
+    Future.delayed(const Duration(seconds: 3), () async {
+      // if (_isRecordingInProgress) {
+      //   print("Recording is already in progress. Ignoring the start command.");
+      //   return;
+      // }
+
+      // _isRecordingInProgress = true;
+      try {
+        await startFunction();
+        print("${startFunction.toString()} called successfully ✅");
+        screenCaptureEventSubscription = eventStream.listen((event) {
+          handleEvent(event);
+        }, onError: (error) {
+          print(error);
+        });
+      } on PlatformException catch (e) {
+        print(e);
+      }
+    });
+
     // if (_isRecordingInProgress) {
     //   print("Recording is already in progress. Ignoring the start command.");
     //   return;
     // }
 
     // _isRecordingInProgress = true;
-
-    try {
-      await startFunction();
-      print("${startFunction.toString()} called successfully ✅");
-      screenCaptureEventSubscription = eventStream.listen((event) {
-        handleEvent(event);
-      }, onError: (error) {
-        print(error);
-      });
-    } on PlatformException catch (e) {
-      print(e);
-    }
+    // try {
+    //   await startFunction();
+    //   print("${startFunction.toString()} called successfully ✅");
+    //   screenCaptureEventSubscription = eventStream.listen((event) {
+    //     handleEvent(event);
+    //   }, onError: (error) {
+    //     print(error);
+    //   });
+    // } on PlatformException catch (e) {
+    //   print(e);
+    // }
   }
 
   Future stopRecording(Future Function() stopFunction, StreamSubscription<dynamic>? eventSubscription) async {
@@ -352,6 +564,8 @@ class _MyAppState extends State<MyApp> {
                         _shadowPlugin.requestMicPermission,
                         _shadowPlugin.microphonePermissionEvents,
                       )),
+              CustomButton("RUN LOOF COMMAND", () => detectInMeetingSession2()),
+
               CustomButton(
                   "Request Screen Permission",
                   () => requestScreenRecordingPermissionWithEvents(
@@ -361,6 +575,10 @@ class _MyAppState extends State<MyApp> {
               CustomButton(
                 "Stop Microphone Permission Request Stream 버튼",
                 () => stopRequestingPermission(microphonePermissionSubscription),
+              ),
+              CustomButton(
+                "임시 테스트 마이크",
+                () => startMicRecording(),
               ),
               CustomButton(
                 "Stop Screen Recording Permission Request Stream 버튼",
@@ -382,8 +600,8 @@ class _MyAppState extends State<MyApp> {
                 "Is Screen Recording Permission Granted 버튼",
                 () => checkScreenPermission(),
               ),
-              CustomButton("ScreenCapture 버튼",
-                  () => startRecording(_shadowPlugin.startSystemAndMicAudioRecordingWithDefault, _shadowPlugin.screenCaptureEvents)),
+              CustomButton(
+                  "ScreenCapture 버튼", () => startRecording(_shadowPlugin.startSystemAndMicAudioRecordingWithDefault, _shadowPlugin.microphoneEvents)),
               // () => startScreenCapture()),
               CustomButton(
                   "Stop ScreenCapture 버튼", () => stopRecording(_shadowPlugin.stopRecordingMicAndSystemAudio, screenCaptureEventSubscription)),

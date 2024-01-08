@@ -8,6 +8,7 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     
     private var audioRecorder: AVAudioRecorder?
     private let recordingFileName = "FlutterMicRecording.m4a"
+    private let recordingFilePath = "ApplicationSupportDirectory"
     private var sink: FlutterEventSink?
     private var decibelTimer: Timer?
     private var isRecording = false
@@ -40,7 +41,7 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     
     func startMicAudioRecording() {
         let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
-        setupAndStartRecording(with: audioSettings, filename: recordingFileName)
+        setupAndStartRecording(with: audioSettings, filename: recordingFileName, filePath: recordingFilePath)
     }
     
     
@@ -50,15 +51,17 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
         let channels = NumberOfChannels(rawValue: config["channels"] as? String ?? "") ?? .mono
         let sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate44_1K
         let filename = config["fileName"] as? String ?? recordingFileName
+        let filePath = config["filePath"] as? String ?? recordingFilePath
         print("format 🎤", format)
         print("channels 🎤", channels)
         print("sampleRate 🎤", sampleRate)
         print("file Name 🎤", filename)
+        print("file Path 🗳️", filePath)
         let audioSettings = AudioSetting.setAudioConfiguration(format: format, channels: channels, sampleRate: sampleRate)
-        setupAndStartRecording(with: audioSettings, filename: filename)
+        setupAndStartRecording(with: audioSettings, filename: filename, filePath: filePath)
     }
     
-    private func setupAndStartRecording(with audioSettings: [String: Any], filename: String) {
+    private func setupAndStartRecording(with audioSettings: [String: Any], filename: String, filePath: String) {
         // Check for microphone permission
         guard PermissionStatusCheckerHelper.checkMicrophonePermission() else {
             //TODO: Add Custom Error Propagation
@@ -66,7 +69,7 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
             return
         }
         
-        guard let fileURL = FileManagerHelper.getURL(for: filename) else {
+        guard let fileURL = FileManagerHelper.getURL(for: filename, in: filePath) else {
             print("Error generating recording URL")
             return
         }

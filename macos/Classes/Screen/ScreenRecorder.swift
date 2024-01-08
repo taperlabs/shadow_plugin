@@ -39,7 +39,7 @@ class ScreenRecorder {
     //            streamOutput?.sendRecordingStatusToFlutter(isRecording)
     //        }
     //    }
-    
+ 
     func getAvailableContent(withConfig config: [String: Any]? = nil) async throws {
 //        guard PermissionStatusCheckerHelper.checkScreenRecordingPermission() else {
 //            //TODO: Add Custom Error Propagation
@@ -55,6 +55,12 @@ class ScreenRecorder {
             let excludedApps = availableContent.applications.filter { app in
                 Bundle.main.bundleIdentifier == app.bundleIdentifier
             }
+            
+//            print("Display Name!! 000", availableContent.displays[0].displayID, availableContent.displays[0].frame)
+//            print("Display Name!! 111", availableContent.displays[1].displayID, availableContent.displays[1].frame)
+//            
+//            currentDisplay = availableContent.displays[0]
+                
             
             filtered = SCContentFilter(display: availableContent.displays[0],
                                        excludingApplications: excludedApps,
@@ -114,7 +120,7 @@ class ScreenRecorder {
         guard let streamOutput = streamOutput else {
             throw CaptureError.streamOutputNotInitialized
         }
-        
+    
         try stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: videoSampleBufferQueue)
         try stream?.addStreamOutput(streamOutput, type: .audio, sampleHandlerQueue: audioSampleBufferQueue)
         //        micRecording.startMicAudioRecording()
@@ -141,13 +147,13 @@ class ScreenRecorder {
             
             finishAssetWriting(assetWriter: assetWriterSetup.systemAudioAssetWriter)
             finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
-        } catch  {
+        } catch let error  {
             print(error.localizedDescription)
         }
         print("Stop Capture() Completed")
     }
     
-    private func finishAssetWriting(assetWriter: AVAssetWriter?) {
+     private func finishAssetWriting(assetWriter: AVAssetWriter?) {
         guard let writer = assetWriter else {
             print("AssetWriter is nil")
             return

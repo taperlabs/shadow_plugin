@@ -191,7 +191,7 @@ extension ShadowPlugin {
     public func handleFileDeletion(args: [String: Any]?, result: @escaping FlutterResult) {
         guard let args = args else { return }
         guard let fileName = args["fileName"] as? String else { return }
-        guard let fileURL = FileManagerHelper.getURL(for: fileName) else {
+        guard let fileURL = FileManagerHelper.getURL(for: fileName, in: "ApplicationSupportDirectory") else {
             print("File URL을 가져오는데 실패하였습니다.")
             return
         }

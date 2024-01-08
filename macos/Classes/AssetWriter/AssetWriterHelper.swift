@@ -25,21 +25,24 @@ class AssetWriterHelper {
     //System Audio만 셋업
     func setUpSystemAudioAssetWriter(withConfig config: [String: Any]? = nil) {
         let systemAudioFileName = "FlutterSystemAudio.m4a"
+        let defaultFilePath = "ApplicationSupportDirectory"
         let format: AudioFormatOption
         let channels: NumberOfChannels
         let sampleRate: SampleRateOption
         let filename: String
-        
+        let filePath: String
         if let config = config {
             format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .mpeg4AAC
             channels = NumberOfChannels(rawValue: config["channels"] as? String ?? "") ?? .mono
             sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate16K
             filename = config["fileName"] as? String ?? systemAudioFileName
+            filePath = config["filePath"] as? String ?? defaultFilePath
         } else {
             format = .mpeg4AAC
             channels = .mono
             sampleRate = .rate16K
             filename = systemAudioFileName
+            filePath = defaultFilePath
         }
         
         print("format", format)
@@ -48,7 +51,7 @@ class AssetWriterHelper {
         print("file Name", filename)
         
         //System Audio Output URL 설정 + Nil Check
-        guard let audioOutputURL = FileManagerHelper.getURL(for: filename) else {
+        guard let audioOutputURL = FileManagerHelper.getURL(for: filename, in: filePath) else {
             print("audioOutputURL을 가져오는데 실패하였습니다.")
             return
         }
@@ -81,7 +84,7 @@ class AssetWriterHelper {
     //Screen + System Audio AssetWriter
     func setUpAssetWriter() {
         
-        guard let outputURL = FileManagerHelper.getURL(for: "FlutterSCCapture.m4a") else {
+        guard let outputURL = FileManagerHelper.getURL(for: "FlutterSCCapture.m4a", in: "ApplicationSupportDirectory") else {
             print("audioOutputURL을 가져오는데 실패하였습니다.")
             return
         }

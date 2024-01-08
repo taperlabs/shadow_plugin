@@ -8,6 +8,10 @@ struct LsofEntry {
     let port: String
     let pid: String
     let startTime: Date
+    var isConnectionOlderThanNSeconds: Bool {
+        print("Time ===>",-startTime.timeIntervalSinceNow)
+        return -startTime.timeIntervalSinceNow > 5
+    }
     
     func toDictionary() -> [String: Any] {
         return ["appName": appName, "port": port, "pid": pid, "startTime": startTime]
@@ -15,10 +19,6 @@ struct LsofEntry {
     
     func toDitionaryWithoutTime() -> [String: Any] {
         return ["appName": appName, "port": port, "pid": pid,]
-    }
-    
-    var isConnectionOlderThanNSeconds: Bool {
-        return -startTime.timeIntervalSinceNow > 5
     }
 }
 
@@ -79,6 +79,18 @@ final class NudgeService: NSObject, FlutterStreamHandler {
                 print("You were in a meeting but now ended 🔴")
                 self.eventSink?(["isInMeeting": false])
                 self.isMeetingInProgress = false
+            }
+            
+            activeConnections.values.forEach { entry in
+                if isAppNameWhitelisted(appName: entry.appName) {
+                    if entry.isConnectionOlderThanNSeconds {
+                        print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
+                        self.isMeetingInProgress = true
+                        self.eventSink?(["isInMeeting": self.isMeetingInProgress])
+                    } else {
+                        print("Connection is too short, might not be a meeting")
+                    }
+                }
             }
             
             for entry in activeConnections.values {
@@ -148,8 +160,11 @@ final class NudgeService: NSObject, FlutterStreamHandler {
                 let matchedLine = String(line[range])
                 let lineArr = line.split(separator: " ")
                 let pid = extractPID(from: lineArr)
+                let appName = extractAppName(from: lineArr)
                 
-                foundPIDs.insert(pid)
+                if isAppNameWhitelisted(appName: appName) {
+                    foundPIDs.insert(pid)
+                }
                 
                 if !blacklistAppNames.contains(extractAppName(from: lineArr)) && activeConnections[pid] == nil {
                     let entry = LsofEntry(appName: extractAppName(from: lineArr),
