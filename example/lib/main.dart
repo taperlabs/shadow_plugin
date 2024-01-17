@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:shadow/shadow.dart';
@@ -81,10 +82,92 @@ class _MyAppState extends State<MyApp> {
     "plugin-co", //firefox
   ];
 
+  List tempProcessList = [];
+  List processList = [];
+  Process? process;
+
   @override
   void initState() {
     super.initState();
     // initPlatformState();
+  }
+
+  runStream() async {
+    // Dart uses Futures and Streams for asynchronous operations
+    var newProcess = await Process.start('/usr/bin/log', [
+      'stream',
+      '--predicate',
+      "subsystem == 'com.apple.controlcenter' AND (eventMessage CONTAINS 'Recent activity attributions changed to' OR eventMessage CONTAINS 'Active activity attributions changed to')"
+    ]);
+
+    process = newProcess;
+
+    // Setting up a subscription to listen to the output
+    newProcess.stdout.transform(utf8.decoder).listen((data) {
+      print(data); // Printing the data received
+    }).onError((error) {
+      print('Error occurred: $error');
+    });
+
+    // You can also handle stderr in a similar way if needed
+  }
+
+  void stopStream() {
+    process?.kill();
+  }
+
+  finalLsofTest() async {
+    Timer test = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) async {
+        ProcessResult results = await Process.run('lsof', ['-i', 'UDP:40000-69999']);
+        var lines = results.stdout.split('\n').skip(1);
+        var pattern = RegExp(r'UDP \*(?!:).*[^->]$');
+
+        var filteredProcesses =
+            lines.where((line) => line.trim().isNotEmpty && !pattern.hasMatch(line) && !line.contains('->') && !line.contains('*')).map(
+          (line) {
+            print("Line - $line");
+            var item = line.replaceAll(RegExp(r'\s{2,}'), ' ').split(' ');
+            return {
+              'command': item.first.replaceAll('\\x20', ''),
+              'pid': item[1],
+              'port': item.last.split(':').last,
+              'firstRunAt': DateTime.now().millisecondsSinceEpoch,
+            };
+          },
+        ).toList();
+
+        // 필터링 된 라인이 있으면 임시 프로세스 목록에 추가
+        tempProcessList.addAll(filteredProcesses.where((newProcess) => !tempProcessList.any((process) => process['pid'] == newProcess['pid'])));
+
+        // 임시 프로세스 리스트가 없으면 종료
+        if (tempProcessList.isEmpty) return;
+
+        // 임시 프로세스 목록에서 5초 이상 머무른 프로세스 체크
+        var addedProcesses = tempProcessList.where((tempProcess) {
+          if ((tempProcess['command'] == 'Microsoft' || tempProcess['command'] == 'Google') &&
+              DateTime.now().millisecondsSinceEpoch - tempProcess['firstRunAt'] < 5000) return false;
+          return !processList.any((process) => process['pid'] == tempProcess['pid']);
+        }).toList();
+
+        // 프로세스 목록에 추가하며 START 넛지 주기
+        if (addedProcesses.isNotEmpty) {
+          processList.addAll(addedProcesses);
+          print('Added to processList: $addedProcesses');
+        }
+
+        // 종료된 프로세스 체크
+        tempProcessList.removeWhere((tempProcess) => !filteredProcesses.any((process) => process['pid'] == tempProcess['pid']));
+        var removedProcesses = processList.where((process) => !tempProcessList.any((tempProcess) => tempProcess['pid'] == process['pid'])).toList();
+
+        // 프로세스 목록에서 제거하며 END 넛지 주기
+        if (removedProcesses.isNotEmpty) {
+          processList.removeWhere((process) => removedProcesses.contains(process));
+          print('Removed from processList: $removedProcesses');
+        }
+      },
+    );
   }
 
   Future<String> runLsofCommand() async {
@@ -94,7 +177,8 @@ class _MyAppState extends State<MyApp> {
 
   List<LsofEntry> parseLsofOutput(String output) {
     final lines = output.split('\n').skip(1);
-    final pattern = RegExp(r'UDP (\*|\d{1,3}(\.\d{1,3}){3}):([4-6]\d{4,5})(?!.*->)');
+    // final pattern = RegExp(r'UDP (\*|\d{1,3}(\.\d{1,3}){3}):([4-6]\d{4,5})(?!.*->)');
+    var pattern = RegExp(r'UDP \*(?!:).*[^->]$');
     final foundPIDs = <String>{};
 
     return lines
@@ -564,7 +648,9 @@ class _MyAppState extends State<MyApp> {
                         _shadowPlugin.requestMicPermission,
                         _shadowPlugin.microphonePermissionEvents,
                       )),
-              CustomButton("RUN LOOF COMMAND", () => detectInMeetingSession2()),
+              CustomButton("RUN LOOF COMMAND", () => finalLsofTest()),
+              CustomButton("Run log stream --predicate", () => runStream()),
+              CustomButton("stop log stream --predicate", () => stopStream()),
 
               CustomButton(
                   "Request Screen Permission",

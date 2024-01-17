@@ -1,8 +1,404 @@
-//
-//  Autopilot.swift
-//  shadow
-//
-//  Created by Phoenix on 2024/01/16.
-//
-
 import Foundation
+import ScreenCaptureKit
+import FlutterMacOS
+
+struct LsofEntry {
+    let appName: String
+    let port: String
+    let pid: String
+    let startTime: Date
+    
+    func toDictionary() -> [String: Any] {
+        return ["appName": appName, "port": port, "pid": pid, "startTime": startTime]
+    }
+    
+    var isConnectionOlderThanNSeconds: Bool {
+//        print("Time ===>",floor(-startTime.timeIntervalSinceNow))
+        return -startTime.timeIntervalSinceNow > 2
+    }
+}
+
+final class Autopilot: NSObject, FlutterStreamHandler {
+    private var eventSink: FlutterEventSink?
+    private var process: Process?
+    private var windows: [SCWindow]?
+    private var isInMeetingByMic: Bool = false
+    private var isInMeetingByWindowTitle: Bool = false
+    private var isMeetingDetected: Bool = false
+    private var windowCheckTimer: Timer?
+    private var activeMeetingApp: MicrophoneApp?
+    
+    private var isMeetingInProgress: Bool = false
+    private var activeConnections: [String: LsofEntry] = [:] // Use PID as the key
+    private let blacklistAppNames: Set<String> = ["firefox", "Spotify"]
+    private var lsofUDPCheckTimer: Timer?
+    
+    enum WhitelistAppName: String, CaseIterable {
+        case Around = "Around"
+        case Discord = "Discord"
+        case Zoom = "zoom.us"
+        case Slack = "Slack"
+    }
+    
+    
+    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+        self.eventSink = events
+        runStream()
+        startWindowCheckTimer()
+        startLSOFUDPCheckTimer()
+        print("Autopilot OnListen 시작 🟢")
+        
+        return nil
+    }
+    
+    func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        self.eventSink = nil
+        stopStream()
+        endWindowCheckTimer()
+        endLSOFUDPCheckTimer()
+        print("Autopilot OnCancel 캔슬 🔴")
+        
+        return nil
+    }
+    
+    // Start a timer to check window titles every second
+    private func startWindowCheckTimer() {
+        windowCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.fetchWindows()
+        }
+    }
+    
+    private func endWindowCheckTimer() {
+        windowCheckTimer?.invalidate()
+        windowCheckTimer = nil
+    }
+    
+    private func startLSOFUDPCheckTimer() {
+        lsofUDPCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.detectMeetingInSession()
+            
+        }
+    }
+    
+    private func endLSOFUDPCheckTimer() {
+        lsofUDPCheckTimer?.invalidate()
+        lsofUDPCheckTimer = nil
+    }
+    
+    private func isAppNameWhitelisted(appName: String) -> Bool {
+        return WhitelistAppName.allCases.contains { appName.contains($0.rawValue) }
+    }
+    
+    private func detectMeetingInSession() {
+//        let startTime = Date()
+        do {
+            let output = try executeLsof()
+            parseLsofOutput(output)
+//            print("🏄‍♂️", activeConnections)
+            
+            if activeConnections.isEmpty && self.isMeetingInProgress {
+//                print("You were in a Meeting but now ended 🔴")
+                self.isMeetingInProgress = false
+                self.isInMeetingByMic = false
+                self.isInMeetingByWindowTitle = false
+                self.updateMeetingStatus()
+            }
+            
+            for entry in activeConnections.values {
+//                print("Entry", entry)
+                
+                if isAppNameWhitelisted(appName: entry.appName) {
+                    if entry.isConnectionOlderThanNSeconds {
+//                        print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
+                        self.isMeetingInProgress = true
+                        self.isInMeetingByMic = true
+                        self.isInMeetingByWindowTitle = true
+                        self.updateMeetingStatus()
+                        //Logic
+                    } else {
+                        print("Connection is too short, might not be a meeting")
+                    }
+                }
+            }
+        } catch let error {
+            print("Failed to run lsof: \(error.localizedDescription)")
+        }
+        
+        
+//        let endTime = Date()  // Record the end time after all operations, including executeLsof, are completed
+//        let executionTime = endTime.timeIntervalSince(startTime)
+//        print("Total Execution Time for CoreNetwork: \(executionTime) seconds")
+    }
+    
+    private func executeLsof() throws -> String {
+        let process = Process()
+        let pipe = Pipe()
+        
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["lsof", "-i", "UDP:40000-69999"]
+        process.standardOutput = pipe
+
+        try process.run()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        return String(data: data, encoding: .utf8) ?? ""
+    }
+    
+    private func parseLsofOutput(_ output: String) {
+        let newLines = output.components(separatedBy: .newlines)
+        let pattern = "UDP (\\*|\\d{1,3}(\\.\\d{1,3}){3}):([4-6]\\d{4,5})(?!.*->)"
+        var foundPIDs: Set<String> = []
+        
+        for line in newLines {
+            if let range = line.range(of: pattern, options: .regularExpression), line.contains("UDP") {
+                let matchedLine = String(line[range])
+                let lineArr = line.split(separator: " ")
+                let pid = extractPID(from: lineArr)
+                let appName = extractAppName(from: lineArr)
+                
+                if isAppNameWhitelisted(appName: appName) {
+                    foundPIDs.insert(pid)
+                }
+                
+                // Check against the blacklist
+                if activeConnections[pid] == nil {
+                    // New connection detected, add it
+                    let entry = LsofEntry(appName: appName,
+                                          port: extractPort(from: matchedLine),
+                                          pid: pid,
+                                          startTime: Date())
+                    activeConnections[pid] = entry
+                    
+                }
+            }
+        }
+        
+        // Remove any entries not found in the latest lsof output
+        activeConnections.keys.forEach { key in
+            if !foundPIDs.contains(key) {
+                activeConnections.removeValue(forKey: key)
+            }
+        }
+    }
+    
+    private func extractPID(from line: [Substring]) -> String {
+        //        print("This is PID ->", line[1])
+        let pid = String(line[1])
+        
+        return pid
+    }
+    
+    private func extractAppName(from line: [Substring]) -> String {
+        //        print("This is extractAppName ->", line[0])
+        let appName = String(line[0])
+        
+        return appName
+    }
+    
+    private func extractPort(from line: String) -> String {
+        let components = line.split(separator: " ")
+        if let lastComponent = components.last {
+            let portNumber = lastComponent.split(separator: ":")
+            if portNumber.count > 1 {
+                return String(portNumber[1])
+            }
+        }
+        return "Unknown Port Number"
+    }
+    
+    private func updateMeetingStatus() {
+        if isInMeetingByMic && isInMeetingByWindowTitle && !isMeetingDetected {
+            isMeetingDetected = true
+            self.eventSink?(["isInMeeting": isMeetingDetected])
+            print("✈️ 미팅 시작 감지 성공 Flutter로 메세지 보냅니다 🟢")
+            // Perform actions for meeting start
+        } else if isMeetingDetected && !isInMeetingByMic {
+            isMeetingDetected = false
+            self.eventSink?(["isInMeeting": isMeetingDetected])
+            print("🗳️ 미팅 종료 감지 성공 Flutter로 메세지 보냅니다 🔴")
+            // Perform actions for meeting end
+        }
+    }
+
+
+
+    
+    //"com.apple.Safari"
+    enum WindowTitles {
+        case googleMeet
+        case teams
+        case webex
+        
+        var detectionString: String {
+            switch self {
+            case .googleMeet: return "Meet -"
+            case .teams: return "Meeting with"
+            case .webex: return "Cisco Webex"
+            }
+        }
+        
+        var appName: String {
+            switch self {
+            case .googleMeet: return "Google Meet"
+            case .teams: return "Microsoft Teams"
+            case .webex: return "Cisco Webex"
+            }
+        }
+    }
+    
+    enum MicrophoneApp: String {
+        case chrome = "\"mic:com.google.Chrome\""
+        case safari = "\"mic:com.apple.WebKit.GPU\""
+        case arc = "\"mic:company.thebrowser.Browser\""
+        case edge = "\"mic:com.microsoft.edgemac\""
+        case firefox = "\"mic:org.mozilla.firefox\""
+        case zoom = "\"mic:us.zoom.xos\""
+        case around = "\"mic:co.teamport.around\""
+        
+        static let allValues = [chrome, safari, arc, edge, firefox, zoom, around]
+    }
+    
+    private func fetchWindows() -> Void {
+        //Background Thread for executing the logic
+        DispatchQueue.global().async { [weak self] in
+            SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
+                guard let content = content else { return }
+                DispatchQueue.main.async {
+                    self?.windows = content.windows
+                    self?.detectInMeeting()
+                }
+            }
+        }
+    }
+    
+    private func detectInMeeting() -> Void {
+        guard let unWrappedWindows = self.windows else { return }
+        DispatchQueue.global().async { [weak self] in
+            
+            var foundWindowID: Int?
+            var foundAppName: String?
+            var googleMeetID: String?
+            
+            self?.isInMeetingByWindowTitle = false
+            
+            for window in unWrappedWindows {
+                guard let title = window.title, let bundleID = window.owningApplication?.bundleIdentifier else { continue }
+                
+                if bundleID == "company.thebrowser.Browser" && self?.isGoogleMeetFormat(title: title) == true {
+                    self?.isInMeetingByWindowTitle = true
+                    break
+                } else if title.contains(WindowTitles.teams.detectionString) {
+                    self?.isInMeetingByWindowTitle = true
+                    foundWindowID = Int(window.windowID)
+                    foundAppName = WindowTitles.teams.appName
+                    break
+                } else if title.contains(WindowTitles.googleMeet.detectionString) {
+                    self?.isInMeetingByWindowTitle = true
+                    foundWindowID = Int(window.windowID)
+                    foundAppName = WindowTitles.googleMeet.appName
+                    googleMeetID = self?.extractGoogleMeetID(from: title)
+                    break
+                } else if title.contains(WindowTitles.webex.detectionString) {
+                    self?.isInMeetingByWindowTitle = true
+                    foundWindowID = Int(window.windowID)
+                    foundAppName = WindowTitles.webex.appName
+                    break
+                }
+            }
+            
+            DispatchQueue.main.async {
+                self?.updateMeetingStatus()  // Call the update method here
+            }
+        }
+    }
+    
+    private func isGoogleMeetFormat(title: String) -> Bool {
+        let regex = try? NSRegularExpression(pattern: "^[a-zA-Z]{3}-[a-zA-Z]{4}-[a-zA-Z]{3}$", options: [])
+        let range = NSRange(location: 0, length: title.utf16.count)
+        return regex?.firstMatch(in: title, options: [], range: range) != nil
+    }
+    
+    private func extractGoogleMeetID(from title: String) -> String? {
+        guard let meetingIDPattern = try? Regex("[a-zA-Z]{3}-[a-zA-Z]{4}-[a-zA-Z]{3}") else { return nil }
+        guard let match = title.firstMatch(of: meetingIDPattern) else { return nil }
+        return String(title[match.range])
+    }
+    
+    
+    private func runStream() {
+        DispatchQueue.global(qos: .background).async {
+            let newProcess = Process()
+            let pipe = Pipe()
+            
+            newProcess.executableURL = URL(fileURLWithPath: "/usr/bin/log")
+            newProcess.arguments = ["stream", "--predicate", "subsystem == 'com.apple.controlcenter' AND eventMessage CONTAINS 'Active activity attributions changed to'"]
+            newProcess.standardOutput = pipe
+            
+            let readHandle = pipe.fileHandleForReading
+            readHandle.readabilityHandler = { fileHandle in
+                let data = fileHandle.availableData
+                if let string = String(data: data, encoding: .utf8), !string.isEmpty {
+//                    print("🏄‍♂️", string)
+                    DispatchQueue.main.async {
+                        if string.contains("Active activity attributions changed to") {
+                            let components = string.components(separatedBy: "Active activity attributions changed to")
+                            if components.count > 1 {
+                                let arrayPart = components[1]
+                                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                                    .trimmingCharacters(in: CharacterSet(charactersIn: "[]\"\n"))
+                                let arrayElements = arrayPart
+                                    .components(separatedBy: ",")
+                                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                                
+                                for app in MicrophoneApp.allValues {
+                                    let appIdentifier = app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                                    if arrayElements.contains(where: { element in
+                                        element.contains(appIdentifier)
+                                    }) {
+                                        self.isInMeetingByMic = true
+                                        self.activeMeetingApp = app
+//                                        print("Active Meeting App", app)
+//                                        print("Microphone is in use by \(app)")
+                                        // React to microphone being used by this app
+                                        break
+                                    }
+                                }
+                                
+                                if !arrayElements.contains(where: { element in
+                                    MicrophoneApp.allValues.contains { app in
+                                        element.contains(app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))
+                                    }
+                                }) {
+                                    self.isInMeetingByMic = false
+                                    self.activeMeetingApp = nil
+//                                    print("Microphone is no longer in use by listed apps")
+                                    // React to microphone not being used by listed apps
+                                }
+                                
+                                DispatchQueue.main.async {
+                                    self.updateMeetingStatus()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            
+            self.process = newProcess
+            
+            do {
+                try newProcess.run()
+            } catch {
+                DispatchQueue.main.async {
+                    print("Error occurred: \(error)")
+                }
+            }
+        }
+    }
+    
+    private func stopStream() {
+        DispatchQueue.global(qos: .background).async {
+            self.process?.terminate()
+        }
+    }
+}
