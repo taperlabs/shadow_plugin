@@ -92,6 +92,9 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         //Error Handler
         print("didStopWithError -> ❌",error)
+        guard let recorder = recorder else { return }
+        
+        recorder.stopCaptureForError()
     }
     
     //ScreenCapture Stream Output

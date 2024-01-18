@@ -133,6 +133,18 @@ class ScreenRecorder {
         try await stream?.startCapture()
     }
     
+    func stopCaptureForError() {
+        do {
+            streamOutput?.stopSendingStatus()
+            timeIndicator.stop()
+            
+            finishAssetWriting(assetWriter: assetWriterSetup.systemAudioAssetWriter)
+            finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
+        } catch let error {
+            print(error.localizedDescription)
+        }
+    }
+    
     
     func stopCapture() async throws {
         do {

@@ -258,10 +258,13 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
     
     private func fetchWindows() -> Void {
+        print("Fetch Window")
         //Background Thread for executing the logic
         DispatchQueue.global().async { [weak self] in
             SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
+                print("Fetch Window 2222")
                 guard let content = content else { return }
+                print("Fetch Window 3333")
                 DispatchQueue.main.async {
                     self?.windows = content.windows
                     self?.detectInMeeting()
@@ -356,8 +359,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                     }) {
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
-//                                        print("Active Meeting App", app)
-//                                        print("Microphone is in use by \(app)")
+                                        print("Active Meeting App", app)
+                                        print("Microphone is in use by \(app)")
                                         // React to microphone being used by this app
                                         break
                                     }
@@ -370,7 +373,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                 }) {
                                     self.isInMeetingByMic = false
                                     self.activeMeetingApp = nil
-//                                    print("Microphone is no longer in use by listed apps")
+                                    print("Microphone is no longer in use by listed apps")
                                     // React to microphone not being used by listed apps
                                 }
                                 
