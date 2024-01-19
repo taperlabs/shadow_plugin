@@ -2,6 +2,7 @@ import Cocoa
 import AVFoundation
 import FlutterMacOS
 
+
 //MARK: - Fluuter <-> Swift native code entry point class
 public class ShadowPlugin: NSObject, FlutterPlugin {
     private static let micEventChannelName = "phoenixMicEventChannel"

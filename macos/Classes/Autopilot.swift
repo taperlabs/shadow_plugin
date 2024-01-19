@@ -38,6 +38,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         case Discord = "Discord"
         case Zoom = "zoom.us"
         case Slack = "Slack"
+        case Webex = "WebexHelper"
     }
     
     
@@ -135,7 +136,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         let pipe = Pipe()
         
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["lsof", "-i", "UDP:40000-69999"]
+        process.arguments = ["lsof", "-i", "UDP:40000-69999", "+c", "30"]
         process.standardOutput = pipe
 
         try process.run()
@@ -245,6 +246,9 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         }
     }
     
+    //"mic:com.microsoft.teams2" -- Teams New
+    //"mic:com.microsoft.teams" -- Teams Classic
+    
     enum MicrophoneApp: String {
         case chrome = "\"mic:com.google.Chrome\""
         case safari = "\"mic:com.apple.WebKit.GPU\""
@@ -253,8 +257,10 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         case firefox = "\"mic:org.mozilla.firefox\""
         case zoom = "\"mic:us.zoom.xos\""
         case around = "\"mic:co.teamport.around\""
+        case teamsclassic = "\"mic:com.microsoft.teams\""
+        case teamsnew = "\"mic:com.microsoft.teams2\""
         
-        static let allValues = [chrome, safari, arc, edge, firefox, zoom, around]
+        static let allValues = [chrome, safari, arc, edge, firefox, zoom, around, teamsnew, teamsclassic]
     }
     
     private func fetchWindows() -> Void {
@@ -357,6 +363,17 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                     if arrayElements.contains(where: { element in
                                         element.contains(appIdentifier)
                                     }) {
+                                        // Special handling for teamsclassic and teamsnew
+                                        if app == .teamsclassic || app == .teamsnew {
+                                            print("Teams Detected")
+                                            self.isInMeetingByMic = true
+                                            self.activeMeetingApp = app
+                                            self.isInMeetingByWindowTitle = true
+                                            
+                                            break
+                                        }
+                                        
+                                        
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
                                         print("Active Meeting App", app)
