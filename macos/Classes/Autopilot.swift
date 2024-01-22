@@ -228,12 +228,14 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         case googleMeet
         case teams
         case webex
+        case around
         
         var detectionString: String {
             switch self {
             case .googleMeet: return "Meet -"
             case .teams: return "Meeting with"
             case .webex: return "Cisco Webex"
+            case .around: return "Room"
             }
         }
         
@@ -242,6 +244,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             case .googleMeet: return "Google Meet"
             case .teams: return "Microsoft Teams"
             case .webex: return "Cisco Webex"
+            case .around: return "Around"
             }
         }
     }
@@ -311,6 +314,10 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.webex.appName
                     break
+                }  else if title.contains(WindowTitles.around.detectionString) {
+                    self?.isInMeetingByWindowTitle = true
+                    foundWindowID = Int(window.windowID)
+                    foundAppName = WindowTitles.around.appName
                 }
             }
             
