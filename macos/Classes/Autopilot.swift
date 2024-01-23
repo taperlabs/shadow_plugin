@@ -39,6 +39,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         case Zoom = "zoom.us"
         case Slack = "Slack"
         case Webex = "WebexHelper"
+        case GoTo = "GoTo"
     }
     
     
