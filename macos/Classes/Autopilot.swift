@@ -13,7 +13,7 @@ struct LsofEntry {
     }
     
     var isConnectionOlderThanNSeconds: Bool {
-//        print("Time ===>",floor(-startTime.timeIntervalSinceNow))
+        //        print("Time ===>",floor(-startTime.timeIntervalSinceNow))
         return -startTime.timeIntervalSinceNow > 2
     }
 }
@@ -33,6 +33,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     private let blacklistAppNames: Set<String> = ["firefox", "Spotify"]
     private var lsofUDPCheckTimer: Timer?
     
+    private var isLogStreamSuspended: Bool = false
+    
     enum WhitelistAppName: String, CaseIterable {
         case Around = "Around"
         case Discord = "Discord"
@@ -44,8 +46,13 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+        
         self.eventSink = events
-        runStream()
+        if self.isLogStreamSuspended {
+            resumeLogStream()
+        } else {
+            runStream()
+        }
         startWindowCheckTimer()
         startLSOFUDPCheckTimer()
         print("Autopilot OnListen 시작 🟢")
@@ -76,9 +83,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
     
     private func startLSOFUDPCheckTimer() {
-        lsofUDPCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        lsofUDPCheckTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
             self?.detectMeetingInSession()
-            
         }
     }
     
@@ -87,19 +93,23 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         lsofUDPCheckTimer = nil
     }
     
+    private func resumeLogStream() {
+        self.process?.resume()
+    }
+    
     private func isAppNameWhitelisted(appName: String) -> Bool {
         return WhitelistAppName.allCases.contains { appName.contains($0.rawValue) }
     }
     
     private func detectMeetingInSession() {
-//        let startTime = Date()
+        //        let startTime = Date()
         do {
             let output = try executeLsof()
             parseLsofOutput(output)
-//            print("🏄‍♂️", activeConnections)
+            //            print("🏄‍♂️", activeConnections)
             
             if activeConnections.isEmpty && self.isMeetingInProgress {
-//                print("You were in a Meeting but now ended 🔴")
+                //                print("You were in a Meeting but now ended 🔴")
                 self.isMeetingInProgress = false
                 self.isInMeetingByMic = false
                 self.isInMeetingByWindowTitle = false
@@ -107,11 +117,11 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             }
             
             for entry in activeConnections.values {
-//                print("Entry", entry)
+                //                print("Entry", entry)
                 
                 if isAppNameWhitelisted(appName: entry.appName) {
                     if entry.isConnectionOlderThanNSeconds {
-//                        print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
+                        //                        print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
                         self.isMeetingInProgress = true
                         self.isInMeetingByMic = true
                         self.isInMeetingByWindowTitle = true
@@ -127,9 +137,9 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         }
         
         
-//        let endTime = Date()  // Record the end time after all operations, including executeLsof, are completed
-//        let executionTime = endTime.timeIntervalSince(startTime)
-//        print("Total Execution Time for CoreNetwork: \(executionTime) seconds")
+        //        let endTime = Date()  // Record the end time after all operations, including executeLsof, are completed
+        //        let executionTime = endTime.timeIntervalSince(startTime)
+        //        print("Total Execution Time for CoreNetwork: \(executionTime) seconds")
     }
     
     private func executeLsof() throws -> String {
@@ -139,7 +149,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = ["lsof", "-i", "UDP:40000-69999", "+c", "30"]
         process.standardOutput = pipe
-
+        
         try process.run()
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         return String(data: data, encoding: .utf8) ?? ""
@@ -220,9 +230,9 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             // Perform actions for meeting end
         }
     }
-
-
-
+    
+    
+    
     
     //"com.apple.Safari"
     enum WindowTitles {
@@ -354,7 +364,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             readHandle.readabilityHandler = { fileHandle in
                 let data = fileHandle.availableData
                 if let string = String(data: data, encoding: .utf8), !string.isEmpty {
-//                    print("🏄‍♂️", string)
+                    //                    print("🏄‍♂️", string)
                     DispatchQueue.main.async {
                         if string.contains("Active activity attributions changed to") {
                             let components = string.components(separatedBy: "Active activity attributions changed to")
@@ -408,11 +418,12 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                             }
                         }
                     }
+                    self.process = newProcess
                 }
             }
             
             
-            self.process = newProcess
+            
             
             do {
                 try newProcess.run()
@@ -425,8 +436,10 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
     
     private func stopStream() {
-        DispatchQueue.global(qos: .background).async {
-            self.process?.terminate()
+        guard self.process != nil else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.isLogStreamSuspended = self.process?.suspend() ?? false
         }
     }
 }
