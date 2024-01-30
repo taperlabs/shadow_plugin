@@ -49,7 +49,8 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
         print("config!!!", config)
         let format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .mpeg4AAC
         let channels = NumberOfChannels(rawValue: config["channels"] as? String ?? "") ?? .mono
-        let sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate44_1K
+//        let sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate44_1K
+        let sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate16K
         let filename = config["fileName"] as? String ?? recordingFileName
         let filePath = config["filePath"] as? String ?? recordingFilePath
         print("format 🎤", format)
