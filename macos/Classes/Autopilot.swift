@@ -244,9 +244,10 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         var detectionString: String {
             switch self {
             case .googleMeet: return "Meet -"
-            case .teams: return "Meeting with"
+                //            case .teams: return "Meeting with"
+            case .teams: return "(Meeting) | Microsoft Teams classic"
             case .webex: return "Cisco Webex"
-            case .around: return "Room"
+            case .around: return "Room | Around"
             }
         }
         
@@ -285,10 +286,10 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 print("Fetch Window 2222")
                 guard let content = content else { return }
                 print("Fetch Window 3333")
-                DispatchQueue.main.async {
-                    self?.windows = content.windows
-                    self?.detectInMeeting()
-                }
+                //                DispatchQueue.main.async {
+                self?.windows = content.windows
+                self?.detectInMeeting()
+                //                }
             }
         }
     }
@@ -311,15 +312,19 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                     break
                 } else if title.contains(WindowTitles.teams.detectionString) {
                     self?.isInMeetingByWindowTitle = true
+                    
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.teams.appName
                     break
-                } else if title.contains(WindowTitles.googleMeet.detectionString) {
-                    self?.isInMeetingByWindowTitle = true
-                    foundWindowID = Int(window.windowID)
-                    foundAppName = WindowTitles.googleMeet.appName
-                    googleMeetID = self?.extractGoogleMeetID(from: title)
-                    break
+                } else if let extractedID = self?.extractGoogleMeetID(from: title) {
+                    // Check if title contains the detection string and the extracted ID is in the correct format
+                    if title.contains(WindowTitles.googleMeet.detectionString) && self?.isGoogleMeetFormat(title: extractedID) == true {
+                        self?.isInMeetingByWindowTitle = true
+                        foundWindowID = Int(window.windowID)
+                        foundAppName = WindowTitles.googleMeet.appName
+                        googleMeetID = extractedID
+                        break
+                    }
                 } else if title.contains(WindowTitles.webex.detectionString) {
                     self?.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
@@ -329,6 +334,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                     self?.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.around.appName
+                    break
                 }
             }
             
@@ -364,61 +370,58 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             readHandle.readabilityHandler = { fileHandle in
                 let data = fileHandle.availableData
                 if let string = String(data: data, encoding: .utf8), !string.isEmpty {
-                    //                    print("🏄‍♂️", string)
-                    DispatchQueue.main.async {
-                        if string.contains("Active activity attributions changed to") {
-                            let components = string.components(separatedBy: "Active activity attributions changed to")
-                            if components.count > 1 {
-                                let arrayPart = components[1]
-                                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                                    .trimmingCharacters(in: CharacterSet(charactersIn: "[]\"\n"))
-                                let arrayElements = arrayPart
-                                    .components(separatedBy: ",")
-                                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                                
-                                for app in MicrophoneApp.allValues {
-                                    let appIdentifier = app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-                                    if arrayElements.contains(where: { element in
-                                        element.contains(appIdentifier)
-                                    }) {
-                                        // Special handling for teamsclassic and teamsnew
-                                        if app == .teamsclassic || app == .teamsnew {
-                                            print("Teams Detected")
-                                            self.isInMeetingByMic = true
-                                            self.activeMeetingApp = app
-                                            self.isInMeetingByWindowTitle = true
-                                            
-                                            break
-                                        }
-                                        
-                                        
+                    if string.contains("Active activity attributions changed to") {
+                        let components = string.components(separatedBy: "Active activity attributions changed to")
+                        if components.count > 1 {
+                            let arrayPart = components[1]
+                                .trimmingCharacters(in: .whitespacesAndNewlines)
+                                .trimmingCharacters(in: CharacterSet(charactersIn: "[]\"\n"))
+                            let arrayElements = arrayPart
+                                .components(separatedBy: ",")
+                                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                            
+                            for app in MicrophoneApp.allValues {
+                                let appIdentifier = app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                                if arrayElements.contains(where: { element in
+                                    element.contains(appIdentifier)
+                                }) {
+                                    // Special handling for teamsclassic and teamsnew
+                                    if app == .teamsclassic || app == .teamsnew {
+                                        print("Teams Detected")
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
-                                        print("Active Meeting App", app)
-                                        print("Microphone is in use by \(app)")
-                                        // React to microphone being used by this app
+                                        self.isInMeetingByWindowTitle = true
+                                        
                                         break
                                     }
+                                    
+                                    
+                                    self.isInMeetingByMic = true
+                                    self.activeMeetingApp = app
+                                    print("Active Meeting App", app)
+                                    print("Microphone is in use by \(app)")
+                                    // React to microphone being used by this app
+                                    break
                                 }
-                                
-                                if !arrayElements.contains(where: { element in
-                                    MicrophoneApp.allValues.contains { app in
-                                        element.contains(app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))
-                                    }
-                                }) {
-                                    self.isInMeetingByMic = false
-                                    self.activeMeetingApp = nil
-                                    print("Microphone is no longer in use by listed apps")
-                                    // React to microphone not being used by listed apps
+                            }
+                            
+                            if !arrayElements.contains(where: { element in
+                                MicrophoneApp.allValues.contains { app in
+                                    element.contains(app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))
                                 }
-                                
-                                DispatchQueue.main.async {
-                                    self.updateMeetingStatus()
-                                }
+                            }) {
+                                self.isInMeetingByMic = false
+                                self.activeMeetingApp = nil
+                                print("Microphone is no longer in use by listed apps")
+                                // React to microphone not being used by listed apps
+                            }
+                            
+                            DispatchQueue.main.async {
+                                self.process = newProcess
+                                self.updateMeetingStatus()
                             }
                         }
                     }
-                    self.process = newProcess
                 }
             }
             
@@ -428,9 +431,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             do {
                 try newProcess.run()
             } catch {
-                DispatchQueue.main.async {
-                    print("Error occurred: \(error)")
-                }
+                print("Error occurred: \(error)")
             }
         }
     }
