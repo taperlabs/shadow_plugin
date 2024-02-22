@@ -51,7 +51,9 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         if self.isLogStreamSuspended {
             resumeLogStream()
         } else {
+            
             runStream()
+            
         }
         startWindowCheckTimer()
         startLSOFUDPCheckTimer()
@@ -279,13 +281,13 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
     
     private func fetchWindows() -> Void {
-        print("Fetch Window")
+//        print("Fetch Window")
         //Background Thread for executing the logic
         DispatchQueue.global().async { [weak self] in
             SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
-                print("Fetch Window 2222")
+//                print("Fetch Window 2222")
                 guard let content = content else { return }
-                print("Fetch Window 3333")
+//                print("Fetch Window 3333")
                 //                DispatchQueue.main.async {
                 self?.windows = content.windows
                 self?.detectInMeeting()
