@@ -49,6 +49,11 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription<dynamic>? microphonePermissionSubscription;
   StreamSubscription<dynamic>? screenRecordingPermissionSubscription;
   StreamSubscription<dynamic>? nudgeSubscription;
+  StreamSubscription<dynamic>? micAudioLevelSubscription;
+
+  String dropdownValue = '';
+
+  List<String> audioInputDeviceList = [];
 
 //Configs
   final micConfig = {
@@ -89,6 +94,8 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    getAudioInputDeviceList();
+
     // initPlatformState();
   }
 
@@ -520,16 +527,17 @@ class _MyAppState extends State<MyApp> {
 
   Future startRecording(Future Function() startFunction, Stream<dynamic> eventStream) async {
     Future.delayed(const Duration(seconds: 3), () async {
-      // if (_isRecordingInProgress) {
-      //   print("Recording is already in progress. Ignoring the start command.");
-      //   return;
-      // }
-
-      // _isRecordingInProgress = true;
       try {
         await startFunction();
         print("${startFunction.toString()} called successfully ✅");
-        screenCaptureEventSubscription = eventStream.listen((event) {
+        microphoneEventSubscription = eventStream.listen((event) {
+          handleEvent(event);
+        }, onError: (error) {
+          print(error);
+        });
+
+        micAudioLevelSubscription = _shadowPlugin.micAudioLevelEvents.listen((event) {
+          print("Mic Audio Level Event입니다 $event");
           handleEvent(event);
         }, onError: (error) {
           print(error);
@@ -538,24 +546,6 @@ class _MyAppState extends State<MyApp> {
         print(e);
       }
     });
-
-    // if (_isRecordingInProgress) {
-    //   print("Recording is already in progress. Ignoring the start command.");
-    //   return;
-    // }
-
-    // _isRecordingInProgress = true;
-    // try {
-    //   await startFunction();
-    //   print("${startFunction.toString()} called successfully ✅");
-    //   screenCaptureEventSubscription = eventStream.listen((event) {
-    //     handleEvent(event);
-    //   }, onError: (error) {
-    //     print(error);
-    //   });
-    // } on PlatformException catch (e) {
-    //   print(e);
-    // }
   }
 
   Future stopRecording(Future Function() stopFunction, StreamSubscription<dynamic>? eventSubscription) async {
@@ -571,9 +561,10 @@ class _MyAppState extends State<MyApp> {
   Future startNudging() async {
     try {
       nudgeSubscription = _shadowPlugin.nudgeEvents.listen(
-        (event) {
+        (event) async {
           print("Nudge Event입니다 $event");
           if (event['isInMeeting']) {
+            // await startMicRecording();
             setState(() {
               isInMeeting = "미팅 ✅";
             });
@@ -603,13 +594,42 @@ class _MyAppState extends State<MyApp> {
   }
 
   void handleEvent(dynamic event) {
-    print(event);
-    if (event['type'] == 'screenRecordingStatus' || event['type'] == 'microphoneStatus') {
-      setState(() {
-        _counter = event['elapsedTime'];
-      });
+    // Check if the event is a Map, which indicates a recording status event.
+    if (event is Map<dynamic, dynamic>) {
+      print(event);
+      // Now it's safe to assume event is a map and access its 'type' key.
+      if (event['type'] != null && event['type'] == 'screenRecordingStatus' || event['type'] == 'microphoneStatus') {
+        if (event['elapsedTime'] != null) {
+          setState(() {
+            _counter = event['elapsedTime'];
+          });
+        }
+      }
+    } else if (event is num) {
+      // Assuming microphone levels are sent as numeric values.
+      // Handle the microphone level event.
+      // For example, you might want to display this level in your UI.
+      print('Mic level: $event');
+    } else {
+      // Handle unexpected event format.
+      print('Unexpected event format: $event');
     }
   }
+
+  // void handleEvent(dynamic event) {
+  //   print(event);
+  //   if (event['type'] != null && event['type'] == 'screenRecordingStatus' || event['type'] == 'microphoneStatus' && event['elapsedTime'] != null) {
+  //     setState(() {
+  //       _counter = event['elapsedTime'];
+  //     });
+  //   }
+
+  //   // if (event['type'] == 'screenRecordingStatus' || event['type'] == 'microphoneStatus' && event['elapsedTime'] != null) {
+  //   //   setState(() {
+  //   //     _counter = event['elapsedTime'];
+  //   //   });
+  //   // }
+  // }
 
   Future<void> checkMicPermission() async {
     bool granted = await _shadowPlugin.isMicPermissionGranted();
@@ -624,6 +644,28 @@ class _MyAppState extends State<MyApp> {
   Future<void> getAllScreenRecordingPermissionStatuses() async {
     Map<String, dynamic> result = await _shadowPlugin.getAllScreenPermissionStatuses();
     print("getAllScreenRecordingPermissionStatuses: $result");
+  }
+
+  Future<dynamic> getAudioInputDeviceList() async {
+    var result = await _shadowPlugin.getAudioInputDeviceList();
+
+    // assign the result to the audioInputDeviceList
+    audioInputDeviceList = result.cast<String>();
+    print("initState called $audioInputDeviceList");
+    setState(() {
+      if (audioInputDeviceList.isNotEmpty) {
+        dropdownValue = audioInputDeviceList.first;
+      }
+    });
+
+    print("Audio Input Device List: $audioInputDeviceList");
+  }
+
+  Future<dynamic> setAudioInputDevice(String deviceName) async {
+    print("deviceName:$deviceName");
+
+    var result = await _shadowPlugin.setAudioInputDevice(deviceName);
+    print("Audio Input Device Set: $result");
   }
 
   @override
@@ -651,6 +693,34 @@ class _MyAppState extends State<MyApp> {
               CustomButton("RUN LOOF COMMAND", () => finalLsofTest()),
               CustomButton("Run log stream --predicate", () => runStream()),
               CustomButton("stop log stream --predicate", () => stopStream()),
+              CustomButton("Get Audio Input Devices 🎤", () => getAudioInputDeviceList()),
+              CustomButton("Set Audio Input Devices 🎤", () => setAudioInputDevice("")),
+
+              DropdownButton<String>(
+                value: dropdownValue,
+                icon: const Icon(Icons.arrow_downward),
+                iconSize: 24,
+                elevation: 16,
+                style: const TextStyle(color: Colors.deepPurple),
+                underline: Container(
+                  height: 2,
+                  color: Colors.deepPurpleAccent,
+                ),
+                onChanged: (String? newValue) {
+                  setAudioInputDevice(newValue ?? '');
+
+                  setState(() {
+                    dropdownValue = newValue ?? '';
+                    print('Dropdown selected: $dropdownValue');
+                  });
+                },
+                items: audioInputDeviceList.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
 
               CustomButton(
                   "Request Screen Permission",

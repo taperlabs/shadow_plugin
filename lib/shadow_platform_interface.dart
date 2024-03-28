@@ -44,6 +44,18 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('NudgeEvents has not been implemented.');
   }
 
+  Stream<dynamic> get micAudioLevelEvents {
+    throw UnimplementedError('micAudioLevelEvents has not been implemented.');
+  }
+
+  Future<dynamic> setAudioInputDevice(String deviceName) {
+    throw UnimplementedError('setAudioInputDevice() has not been implemented.');
+  }
+
+  Future<dynamic> getAudioInputDeviceList() {
+    throw UnimplementedError('getDeviceList() has not been implemented.');
+  }
+
   Future<void> deleteFileIfExists(String fileName) {
     throw UnimplementedError('deleteFileIfExists() has not been implemented.');
   }

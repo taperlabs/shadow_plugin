@@ -12,6 +12,16 @@ class Shadow {
 
   Stream<dynamic> get nudgeEvents => ShadowPlatform.instance.nudgeEvents;
 
+  Stream<dynamic> get micAudioLevelEvents => ShadowPlatform.instance.micAudioLevelEvents;
+
+  Future<dynamic> setAudioInputDevice(String deviceName) {
+    return ShadowPlatform.instance.setAudioInputDevice(deviceName);
+  }
+
+  Future<dynamic> getAudioInputDeviceList() {
+    return ShadowPlatform.instance.getAudioInputDeviceList();
+  }
+
   Future<void> deleteFileIfExists(String fileName) {
     return ShadowPlatform.instance.deleteFileIfExists(fileName);
   }

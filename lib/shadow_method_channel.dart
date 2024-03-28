@@ -10,6 +10,7 @@ class MethodChannelShadow extends ShadowPlatform {
   final methodChannel = const MethodChannel('shadow');
   final _micEventChannel = const EventChannel('phoenixMicEventChannel');
   final _screenCaptureEventChannel = const EventChannel('phoenixEventChannel');
+  final _micAudioLevelEventChannel = const EventChannel('micAudioLevelEventChannel');
 
   final _microphonePermissionEventChannel = const EventChannel('phoenixMicrophonePermissionEventChannel');
   final _screenRecordingPermissionEventChannel = const EventChannel('phoenixScreenRecordingPermissionEventChannel');
@@ -32,6 +33,19 @@ class MethodChannelShadow extends ShadowPlatform {
   //Nudge
   @override
   Stream<dynamic> get nudgeEvents => _nudgeEventChannel.receiveBroadcastStream();
+
+  @override
+  Stream<dynamic> get micAudioLevelEvents => _micAudioLevelEventChannel.receiveBroadcastStream('micAudioLevel');
+
+  @override
+  Future<dynamic> setAudioInputDevice(String deviceName) async {
+    return methodChannel.invokeMethod('setAudioInputDevice', {'deviceName': deviceName});
+  }
+
+  @override
+  Future<dynamic> getAudioInputDeviceList() async {
+    return methodChannel.invokeMethod('getAudioInputDeviceList');
+  }
 
   @override
   Future<void> deleteFileIfExists(String fileName) async {

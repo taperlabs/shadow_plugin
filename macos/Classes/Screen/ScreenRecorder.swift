@@ -140,6 +140,7 @@ class ScreenRecorder {
             
             finishAssetWriting(assetWriter: assetWriterSetup.systemAudioAssetWriter)
             finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
+
         } catch let error {
             print(error.localizedDescription)
         }
@@ -159,6 +160,8 @@ class ScreenRecorder {
             
             finishAssetWriting(assetWriter: assetWriterSetup.systemAudioAssetWriter)
             finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
+            stream = nil
+            streamOutput = nil
         } catch let error  {
             print(error.localizedDescription)
         }

@@ -43,6 +43,55 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         case Webex = "WebexHelper"
         case GoTo = "GoTo"
     }
+
+    //"com.apple.Safari"
+    enum WindowTitles {
+        case googleMeet
+        case teams
+        case webex
+        case around
+        
+        var detectionString: String {
+            switch self {
+            case .googleMeet: return "Meet -"
+                //            case .teams: return "Meeting with"
+            case .teams: return "(Meeting) | Microsoft Teams classic"
+            case .webex: return "Cisco Webex"
+            case .around: return "Room | Around"
+            }
+        }
+        
+        var appName: String {
+            switch self {
+            case .googleMeet: return "Google Meet"
+            case .teams: return "Microsoft Teams"
+            case .webex: return "Cisco Webex"
+            case .around: return "Around"
+            }
+        }
+    }
+    
+    //"mic:com.microsoft.teams2" -- Teams New
+    //"mic:com.microsoft.teams" -- Teams Classic
+    
+    //MARK: Webex, discord, slack, zoom, arc, goto는 앱 기반이지만 마이크 역시 같이 체크해야 함.
+    enum MicrophoneApp: String {
+        case chrome = "\"mic:com.google.Chrome\""
+        case safari = "\"mic:com.apple.WebKit.GPU\""
+        case arc = "\"mic:company.thebrowser.Browser\""
+        case edge = "\"mic:com.microsoft.edgemac\""
+        case firefox = "\"mic:org.mozilla.firefox\""
+        case zoom = "\"mic:us.zoom.xos\""
+        case around = "\"mic:co.teamport.around\""
+        case teamsclassic = "\"mic:com.microsoft.teams\""
+        case teamsnew = "\"mic:com.microsoft.teams2\""
+        case slack = "mic:com.tinyspeck.slackmacgap"
+        case discord = "mic:com.hnc.Discord"
+        case webex = "mic:Cisco-Systems.Spark"
+        case goto = "mic:com.logmein.goto"
+        
+        static let allValues = [chrome, safari, arc, edge, firefox, zoom, around, teamsnew, teamsclassic, slack, discord, webex, goto]
+    }
     
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
@@ -51,9 +100,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         if self.isLogStreamSuspended {
             resumeLogStream()
         } else {
-            
             runStream()
-            
         }
         startWindowCheckTimer()
         startLSOFUDPCheckTimer()
@@ -104,39 +151,48 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
     
     private func detectMeetingInSession() {
-        //        let startTime = Date()
-        do {
-            let output = try executeLsof()
-            parseLsofOutput(output)
-            //            print("🏄‍♂️", activeConnections)
-            
-            if activeConnections.isEmpty && self.isMeetingInProgress {
-                //                print("You were in a Meeting but now ended 🔴")
-                self.isMeetingInProgress = false
-                self.isInMeetingByMic = false
-                self.isInMeetingByWindowTitle = false
-                self.updateMeetingStatus()
-            }
-            
-            for entry in activeConnections.values {
-                //                print("Entry", entry)
-                
-                if isAppNameWhitelisted(appName: entry.appName) {
-                    if entry.isConnectionOlderThanNSeconds {
-                        //                        print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
-                        self.isMeetingInProgress = true
-                        self.isInMeetingByMic = true
-                        self.isInMeetingByWindowTitle = true
+        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+            guard let self = self else { return }
+            //let startTime = Date()
+            do {
+                let output = try self.executeLsof()
+                DispatchQueue.main.async {
+                    self.parseLsofOutput(output)
+                    //print("🏄‍♂️", activeConnections)
+                    
+                    if self.activeConnections.isEmpty && self.isMeetingInProgress {
+                        //print("You were in a Meeting but now ended 🔴")
+                        self.isMeetingInProgress = false
+                        self.isInMeetingByMic = false
+                        self.isInMeetingByWindowTitle = false
                         self.updateMeetingStatus()
-                        //Logic
-                    } else {
-                        print("Connection is too short, might not be a meeting")
+                        //Condition met, now end the function block
+                        return
+                    }
+                    
+                    for entry in self.activeConnections.values {
+                        //print("Entry", entry)
+                        
+                        if self.isAppNameWhitelisted(appName: entry.appName) {
+                            if entry.isConnectionOlderThanNSeconds {
+                                //print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
+                                self.isMeetingInProgress = true
+                                self.isInMeetingByMic = true
+                                self.isInMeetingByWindowTitle = true
+                                self.updateMeetingStatus()
+                                //Logic
+                            } else {
+                                print("Connection is too short, might not be a meeting")
+                            }
+                        }
                     }
                 }
+                
+            } catch let error {
+                print("Failed to run lsof: \(error.localizedDescription)")
             }
-        } catch let error {
-            print("Failed to run lsof: \(error.localizedDescription)")
         }
+        
         
         
         //        let endTime = Date()  // Record the end time after all operations, including executeLsof, are completed
@@ -173,9 +229,9 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                     foundPIDs.insert(pid)
                 }
                 
-                // Check against the blacklist
+                // Check pid active connection
                 if activeConnections[pid] == nil {
-                    // New connection detected, add it
+                    // New connection detected, add it to activeConnection
                     let entry = LsofEntry(appName: appName,
                                           port: extractPort(from: matchedLine),
                                           pid: pid,
@@ -233,53 +289,6 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         }
     }
     
-    
-    
-    
-    //"com.apple.Safari"
-    enum WindowTitles {
-        case googleMeet
-        case teams
-        case webex
-        case around
-        
-        var detectionString: String {
-            switch self {
-            case .googleMeet: return "Meet -"
-                //            case .teams: return "Meeting with"
-            case .teams: return "(Meeting) | Microsoft Teams classic"
-            case .webex: return "Cisco Webex"
-            case .around: return "Room | Around"
-            }
-        }
-        
-        var appName: String {
-            switch self {
-            case .googleMeet: return "Google Meet"
-            case .teams: return "Microsoft Teams"
-            case .webex: return "Cisco Webex"
-            case .around: return "Around"
-            }
-        }
-    }
-    
-    //"mic:com.microsoft.teams2" -- Teams New
-    //"mic:com.microsoft.teams" -- Teams Classic
-    
-    enum MicrophoneApp: String {
-        case chrome = "\"mic:com.google.Chrome\""
-        case safari = "\"mic:com.apple.WebKit.GPU\""
-        case arc = "\"mic:company.thebrowser.Browser\""
-        case edge = "\"mic:com.microsoft.edgemac\""
-        case firefox = "\"mic:org.mozilla.firefox\""
-        case zoom = "\"mic:us.zoom.xos\""
-        case around = "\"mic:co.teamport.around\""
-        case teamsclassic = "\"mic:com.microsoft.teams\""
-        case teamsnew = "\"mic:com.microsoft.teams2\""
-        
-        static let allValues = [chrome, safari, arc, edge, firefox, zoom, around, teamsnew, teamsclassic]
-    }
-    
     private func fetchWindows() -> Void {
 //        print("Fetch Window")
         //Background Thread for executing the logic
@@ -288,6 +297,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
 //                print("Fetch Window 2222")
                 guard let content = content else { return }
 //                print("Fetch Window 3333")
+ 
+                
                 //                DispatchQueue.main.async {
                 self?.windows = content.windows
                 self?.detectInMeeting()
@@ -308,7 +319,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             
             for window in unWrappedWindows {
                 guard let title = window.title, let bundleID = window.owningApplication?.bundleIdentifier else { continue }
-                
+         
                 if bundleID == "company.thebrowser.Browser" && self?.isGoogleMeetFormat(title: title) == true {
                     self?.isInMeetingByWindowTitle = true
                     break
@@ -358,9 +369,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         return String(title[match.range])
     }
     
-    
     private func runStream() {
-        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.global(qos: .default).async {
             let newProcess = Process()
             let pipe = Pipe()
             
@@ -372,19 +382,36 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             readHandle.readabilityHandler = { fileHandle in
                 let data = fileHandle.availableData
                 if let string = String(data: data, encoding: .utf8), !string.isEmpty {
+                    print("스트리입니다", string)
                     if string.contains("Active activity attributions changed to") {
                         let components = string.components(separatedBy: "Active activity attributions changed to")
                         if components.count > 1 {
                             let arrayPart = components[1]
                                 .trimmingCharacters(in: .whitespacesAndNewlines)
-                                .trimmingCharacters(in: CharacterSet(charactersIn: "[]\"\n"))
-                            let arrayElements = arrayPart
+                            
+                            // Remove the square brackets and newline characters
+                            let cleanedArrayPart = arrayPart
+                                .trimmingCharacters(in: CharacterSet(charactersIn: "[]\n"))
+                            
+                            // Split the cleaned array part by commas and remove any surrounding whitespace
+                            let arrayElements = cleanedArrayPart
                                 .components(separatedBy: ",")
                                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                             
+                            // Remove the escaped backslashes and double quotes from each element
+                            let cleanedArrayElements = arrayElements.map { element in
+                                let unescapedElement = element
+                                    .replacingOccurrences(of: "\\\"", with: "\"")
+                                    .replacingOccurrences(of: "\\\\", with: "\\")
+                                return unescapedElement.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                            }
+                            
+                            print("Cleaned Array elements ->", cleanedArrayElements)
+                            
                             for app in MicrophoneApp.allValues {
                                 let appIdentifier = app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-                                if arrayElements.contains(where: { element in
+                                print("appIdentifier", appIdentifier, app)
+                                if cleanedArrayElements.contains(where: { element in
                                     element.contains(appIdentifier)
                                 }) {
                                     // Special handling for teamsclassic and teamsnew
@@ -407,7 +434,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                 }
                             }
                             
-                            if !arrayElements.contains(where: { element in
+                            if !cleanedArrayElements.contains(where: { element in
                                 MicrophoneApp.allValues.contains { app in
                                     element.contains(app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))
                                 }
@@ -426,10 +453,6 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                     }
                 }
             }
-            
-            
-            
-            
             do {
                 try newProcess.run()
             } catch {
@@ -437,6 +460,85 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             }
         }
     }
+    
+    
+//    private func runStream() {
+//        DispatchQueue.global(qos: .default).async {
+//            let newProcess = Process()
+//            let pipe = Pipe()
+//            
+//            newProcess.executableURL = URL(fileURLWithPath: "/usr/bin/log")
+//            newProcess.arguments = ["stream", "--predicate", "subsystem == 'com.apple.controlcenter' AND eventMessage CONTAINS 'Active activity attributions changed to'"]
+//            newProcess.standardOutput = pipe
+//            
+//            let readHandle = pipe.fileHandleForReading
+//            readHandle.readabilityHandler = { fileHandle in
+//                let data = fileHandle.availableData
+//                if let string = String(data: data, encoding: .utf8), !string.isEmpty {
+//                    print("스트리입니다", string)
+//                    if string.contains("Active activity attributions changed to") {
+//                        let components = string.components(separatedBy: "Active activity attributions changed to")
+//                        if components.count > 1 {
+//                            let arrayPart = components[1]
+//                                .trimmingCharacters(in: .whitespacesAndNewlines)
+//                                .trimmingCharacters(in: CharacterSet(charactersIn: "[]\"\n"))
+//                            let arrayElements = arrayPart
+//                                .components(separatedBy: ",")
+//                                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+//                            print("Array element ->", arrayElements)
+//                            
+//                            for app in MicrophoneApp.allValues {
+//                                let appIdentifier = app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+//                                print("appIdentifier", appIdentifier, app)
+//                                if arrayElements.contains(where: { element in
+//                                    element.contains(appIdentifier)
+//                                }) {
+//                                    // Special handling for teamsclassic and teamsnew
+//                                    if app == .teamsclassic || app == .teamsnew {
+//                                        print("Teams Detected")
+//                                        self.isInMeetingByMic = true
+//                                        self.activeMeetingApp = app
+//                                        self.isInMeetingByWindowTitle = true
+//                                        
+//                                        break
+//                                    }
+//                                    
+//                                    
+//                                    self.isInMeetingByMic = true
+//                                    self.activeMeetingApp = app
+//                                    print("Active Meeting App", app)
+//                                    print("Microphone is in use by \(app)")
+//                                    // React to microphone being used by this app
+//                                    break
+//                                }
+//                            }
+//                            
+//                            if !arrayElements.contains(where: { element in
+//                                MicrophoneApp.allValues.contains { app in
+//                                    element.contains(app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))
+//                                }
+//                            }) {
+//                                self.isInMeetingByMic = false
+//                                self.activeMeetingApp = nil
+//                                print("Microphone is no longer in use by listed apps")
+//                                // React to microphone not being used by listed apps
+//                            }
+//                            
+//                            DispatchQueue.main.async {
+//                                self.process = newProcess
+//                                self.updateMeetingStatus()
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            do {
+//                try newProcess.run()
+//            } catch {
+//                print("Error occurred: \(error)")
+//            }
+//        }
+//    }
     
     private func stopStream() {
         guard self.process != nil else { return }

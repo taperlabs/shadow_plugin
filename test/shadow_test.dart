@@ -21,7 +21,16 @@ class MockShadowPlatform with MockPlatformInterfaceMixin implements ShadowPlatfo
   Stream<dynamic> get nudgeEvents => Stream.empty();
 
   @override
+  Stream<dynamic> get micAudioLevelEvents => Stream.empty();
+
+  @override
   Future<void> restartApp() async {}
+
+  @override
+  Future<dynamic> setAudioInputDevice(String deviceName) async {}
+
+  @override
+  Future<dynamic> getAudioInputDeviceList() async {}
 
   @override
   Future<void> deleteFileIfExists(String fileName) async {}

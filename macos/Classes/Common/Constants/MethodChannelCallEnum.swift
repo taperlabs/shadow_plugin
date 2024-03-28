@@ -19,6 +19,9 @@ enum MethodChannelCall: String {
     case requestMicPermission = "requestMicPermission"
     case requestScreenPermission = "requestScreenPermission"
     
+    
+    case getAudioInputDeviceList = "getAudioInputDeviceList"
+    case setAudioInputDevice = "setAudioInputDevice"
     case deleteFileIfExists = "deleteFileIfExists"
     
     //System Settings

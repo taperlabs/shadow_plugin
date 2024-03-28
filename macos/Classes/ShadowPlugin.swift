@@ -11,6 +11,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     private static let screenRecordingPermissionEventChannelName = "phoenixScreenRecordingPermissionEventChannel"
     private static let shadowMethodChannelName = "shadow"
     private static let nudgeEventChannelName = "phoenixNudgeEventChannel"
+    private static let micAudioLevelEventsName = "micAudioLevelEventChannel"
     static var screenEventChannel: FlutterEventChannel?
     var micAudioRecording = MicrophoneRecorder()
     var screenRecorder = ScreenRecorder()
@@ -20,6 +21,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
 //    var nudgeHelperClass = NudgeHelper()
 //    var nudgeHelperClass = NudgeService()
     var autopilotClass = Autopilot()
+    let coreAudioHandler = CoreAudioHandler()
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "shadow", binaryMessenger: registrar.messenger)
@@ -27,7 +29,10 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         registrar.addMethodCallDelegate(instance, channel: channel)
         
         let micEventChannel = FlutterEventChannel(name: micEventChannelName, binaryMessenger: registrar.messenger)
+        let micAudioLevelEventChannel = FlutterEventChannel(name: micAudioLevelEventsName, binaryMessenger: registrar.messenger)
+        
         screenEventChannel = FlutterEventChannel(name: eventChannelName, binaryMessenger: registrar.messenger)
+        
         let micPermissionEventChannel = FlutterEventChannel(name: micPermissionEventChannelName, binaryMessenger: registrar.messenger)
         let screenRecordingPermissionEventChannel = FlutterEventChannel(name: screenRecordingPermissionEventChannelName, binaryMessenger: registrar.messenger)
         
@@ -38,6 +43,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
 //        nudgeEventChannel.setStreamHandler(instance.nudgeHelperClass)
         
         micEventChannel.setStreamHandler(instance.micAudioRecording)
+        micAudioLevelEventChannel.setStreamHandler(instance.micAudioRecording)
         
         //Permission Status Event Channel
         micPermissionEventChannel.setStreamHandler(instance.microphonePermissionClass)
@@ -57,7 +63,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             .startMicRecordingWithConfig,
             .startSystemAudioRecordingWithConfig,
             .startSystemAndMicAudioRecordingWithConfig,
-            .deleteFileIfExists
+            .deleteFileIfExists,
+            .setAudioInputDevice
         ]
         
         var argsFromFlutter: [String: Any]? = nil
@@ -67,6 +74,14 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+            
+        case .setAudioInputDevice:
+            setAudioDeviceList(args: argsFromFlutter, result: result)
+            
+        case .getAudioInputDeviceList:
+            let audioDeviceList = coreAudioHandler.getAllAudioInputDevicesByNames()
+            let deviceArray = Array(audioDeviceList)
+            result(deviceArray)
             
         case .getAllScreenPermissionStatuses:
             let statusCGPREFLIGHT = PermissionStatusCheckerHelper.checkScreenRecordingPermission()
@@ -203,5 +218,26 @@ extension ShadowPlugin {
         FileManagerHelper.deleteFileIfExists(at: fileURL)
         
         result("파일 삭제 성공!!!")
+    }
+}
+
+extension ShadowPlugin {
+    public func setAudioDeviceList(args: [String: Any]?, result: @escaping FlutterResult) {
+        guard let args = args else {
+            return
+        }
+        
+        guard let deviceName = args["deviceName"] as? String else {
+            result("Wrong argument passed from Flutter")
+            return
+        }
+        
+        guard let deviceID = coreAudioHandler.getInputDeviceID(fromName: deviceName) else {
+            result("Audio input device does not exist")
+            return
+        }
+        
+        let isChaningDeviceSuccessful = coreAudioHandler.setAudioInputDevice(deviceID: deviceID)
+        result(isChaningDeviceSuccessful)
     }
 }

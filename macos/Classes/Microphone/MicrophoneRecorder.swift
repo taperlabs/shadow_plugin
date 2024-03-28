@@ -3,6 +3,7 @@ import AVFAudio
 import AVFoundation
 import FlutterMacOS
 
+
 // MARK: - Microphone recording class
 final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     
@@ -10,13 +11,20 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     private let recordingFileName = "FlutterMicRecording.m4a"
     private let recordingFilePath = "ApplicationSupportDirectory"
     private var sink: FlutterEventSink?
+    private var micAudioLevelSink: FlutterEventSink?
     private var decibelTimer: Timer?
     private var isRecording = false
     private var timeIndicator = TimeIndicator()
     private let timeIntervalValue = 1.0
+    private var audioMeterTimer: DispatchSourceTimer?
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         sink = events
+        if let args = arguments as? String, args == "micAudioLevel" {
+            // Initialize and start sending audio level events.
+            print(args)
+            micAudioLevelSink = events
+        }
         decibelTimer = Timer.scheduledTimer(timeInterval: timeIntervalValue, target: self, selector: #selector(sendTimeUpdate), userInfo: nil, repeats: true)
         return nil
     }
@@ -40,7 +48,8 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     }
     
     func startMicAudioRecording() {
-        let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
+//        let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
+        let audioSettings = AudioSetting.setAudioConfiguration(format: .pcm, channels: .mono, sampleRate: .rate16K)
         setupAndStartRecording(with: audioSettings, filename: recordingFileName, filePath: recordingFilePath)
     }
     
@@ -48,6 +57,7 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     func startMicAudioRecording(withConfig config: [String: Any]) {
         print("config!!!", config)
         let format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .mpeg4AAC
+//        let format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .pcm
         let channels = NumberOfChannels(rawValue: config["channels"] as? String ?? "") ?? .mono
 //        let sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate44_1K
         let sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate16K
@@ -90,6 +100,7 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
             }
             
             audioRecorder?.isMeteringEnabled = true
+            startAudioMeterUpdates()
             
         } catch {
             print("Error setting up audio recorder: \(error)")
@@ -104,6 +115,7 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
         audioRecorder?.isMeteringEnabled = false
         isRecording = false
         timeIndicator.stop()
+        stopAudioMeterUpdates()
     }
     
     private func setMicRecordingSettings(format: AudioFormatOption,
@@ -115,6 +127,36 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
             AVNumberOfChannelsKey: channels.channelCount,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
+    }
+    
+    private func startAudioMeterUpdates() {
+        audioMeterTimer = DispatchSource.makeTimerSource(queue: DispatchQueue.main)
+        audioMeterTimer?.schedule(deadline: .now(), repeating: .milliseconds(100))
+        audioMeterTimer?.setEventHandler { [weak self] in
+            guard let self = self else { return }
+            self.updateAudioMeters()
+        }
+        audioMeterTimer?.resume()
+    }
+    
+    private func stopAudioMeterUpdates() {
+        audioMeterTimer?.cancel()
+        audioMeterTimer = nil
+    }
+    
+    func updateAudioMeters() {
+        guard let recorder = audioRecorder else { return }
+        
+        recorder.updateMeters()
+        
+        let averagePower = recorder.averagePower(forChannel: 0)
+        let peakPower = recorder.peakPower(forChannel: 0)
+        
+        micAudioLevelSink?(peakPower)
+        
+        
+        print("average Power : \(averagePower)")
+        print("peak Power : \(peakPower)")
     }
 }
 
