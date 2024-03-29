@@ -648,6 +648,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<dynamic> getAudioInputDeviceList() async {
     var result = await _shadowPlugin.getAudioInputDeviceList();
+    print("AudioDeviceList result type: ${result.runtimeType} $result");
 
     // assign the result to the audioInputDeviceList
     audioInputDeviceList = result.cast<String>();
