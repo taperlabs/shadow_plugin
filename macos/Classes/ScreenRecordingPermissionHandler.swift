@@ -63,48 +63,48 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
         }
     }
     
-//    private static func canRecordScreen() -> Bool {
-//        guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] else {
-//            print("Failed to fetch window information")
-//            return false
-//        }
-//        
-//        print("Total windows fetched: \(windows.count)")
-//        
-//        for (index, window) in windows.enumerated() {
-//            print("Details of window \(index + 1): \(window)")
-//            if let windowName = window[kCGWindowName as String] as? String {
-//                print("Window name: \(windowName)")
-//                return true
-//            } else {
-//                print("This window doesn't have a name or the name is inaccessible.")
-//            }
-//        }
-//        
-//        return false
-//    }
-    
     private static func canRecordScreen() -> Bool {
         guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] else {
             print("Failed to fetch window information")
             return false
         }
         
-        print("Total windows fetcheds: \(windows.count)")
+        print("Total windows fetched: \(windows.count)")
         
         for (index, window) in windows.enumerated() {
             print("Details of window \(index + 1): \(window)")
             if let windowName = window[kCGWindowName as String] as? String {
                 print("Window name: \(windowName)")
+                return true
             } else {
                 print("This window doesn't have a name or the name is inaccessible.")
             }
         }
         
-        return windows.allSatisfy({ window in
-            window[kCGWindowName as String] as? String != nil
-        })
+        return false
     }
+    
+//    private static func canRecordScreen() -> Bool {
+//        guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] else {
+//            print("Failed to fetch window information")
+//            return false
+//        }
+//        
+//        print("Total windows fetcheds: \(windows.count)")
+//        
+//        for (index, window) in windows.enumerated() {
+//            print("Details of window \(index + 1): \(window)")
+//            if let windowName = window[kCGWindowName as String] as? String {
+//                print("Window name: \(windowName)")
+//            } else {
+//                print("This window doesn't have a name or the name is inaccessible.")
+//            }
+//        }
+//        
+//        return windows.allSatisfy({ window in
+//            window[kCGWindowName as String] as? String != nil
+//        })
+//    }
 }
 
 
