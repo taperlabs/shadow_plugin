@@ -14,6 +14,10 @@ class Shadow {
 
   Stream<dynamic> get micAudioLevelEvents => ShadowPlatform.instance.micAudioLevelEvents;
 
+  Future<dynamic> getDefaultAudioInputDevice() {
+    return ShadowPlatform.instance.getDefaultAudioInputDevice();
+  }
+
   Future<dynamic> setAudioInputDevice(String deviceName) {
     return ShadowPlatform.instance.setAudioInputDevice(deviceName);
   }

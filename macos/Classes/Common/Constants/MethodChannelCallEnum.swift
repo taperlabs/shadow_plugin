@@ -22,6 +22,8 @@ enum MethodChannelCall: String {
     
     case getAudioInputDeviceList = "getAudioInputDeviceList"
     case setAudioInputDevice = "setAudioInputDevice"
+    case getDefaultAudioInputDevice = "getDefaultAudioInputDevice"
+    
     case deleteFileIfExists = "deleteFileIfExists"
     
     //System Settings

@@ -5,6 +5,28 @@ import CoreAudio
 class CoreAudioHandler {
     var deviceListWithStringNames: Set<String> = Set<String>()
     
+    func getDefaultAudioInputDevice() -> AudioDeviceID? {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultInputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain)
+        
+        
+        var deviceID = AudioDeviceID()
+        var dataSize = UInt32(MemoryLayout.size(ofValue: deviceID))
+        
+        let result = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &propertyAddress,
+            0,
+            nil,
+            &dataSize,
+            &deviceID)
+        
+        return result == noErr ? deviceID : nil
+    }
+
+    
     func getInputDeviceID(fromName name: String) -> AudioDeviceID? {
         let allDevices = getAllAudioInputDevices()
         for device in allDevices {

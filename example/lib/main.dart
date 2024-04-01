@@ -669,6 +669,11 @@ class _MyAppState extends State<MyApp> {
     print("Audio Input Device Set: $result");
   }
 
+  Future<dynamic> getAudioInputDevice() async {
+    var result = await _shadowPlugin.getDefaultAudioInputDevice();
+    print("Audio Input Device: $result");
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -691,9 +696,10 @@ class _MyAppState extends State<MyApp> {
                         _shadowPlugin.requestMicPermission,
                         _shadowPlugin.microphonePermissionEvents,
                       )),
-              CustomButton("RUN LOOF COMMAND", () => finalLsofTest()),
-              CustomButton("Run log stream --predicate", () => runStream()),
-              CustomButton("stop log stream --predicate", () => stopStream()),
+              // CustomButton("RUN LOOF COMMAND", () => finalLsofTest()),
+              // CustomButton("Run log stream --predicate", () => runStream()),
+              // CustomButton("stop log stream --predicate", () => stopStream()),
+              CustomButton("Get Current Default Audio Input Device", () => getAudioInputDevice()),
               CustomButton("Get Audio Input Devices 🎤", () => getAudioInputDeviceList()),
               CustomButton("Set Audio Input Devices 🎤", () => setAudioInputDevice("")),
 
@@ -734,8 +740,8 @@ class _MyAppState extends State<MyApp> {
                 () => stopRequestingPermission(microphonePermissionSubscription),
               ),
               CustomButton(
-                "임시 테스트 마이크",
-                () => startMicRecording(),
+                "get  screen recording all permissions button",
+                () => getAllScreenRecordingPermissionStatuses(),
               ),
               CustomButton(
                 "Stop Screen Recording Permission Request Stream 버튼",

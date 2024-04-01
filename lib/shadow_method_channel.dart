@@ -38,6 +38,11 @@ class MethodChannelShadow extends ShadowPlatform {
   Stream<dynamic> get micAudioLevelEvents => _micAudioLevelEventChannel.receiveBroadcastStream('micAudioLevel');
 
   @override
+  Future<dynamic> getDefaultAudioInputDevice() async {
+    return methodChannel.invokeMethod('getDefaultAudioInputDevice');
+  }
+
+  @override
   Future<dynamic> setAudioInputDevice(String deviceName) async {
     return methodChannel.invokeMethod('setAudioInputDevice', {'deviceName': deviceName});
   }

@@ -74,6 +74,9 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+        
+        case .getDefaultAudioInputDevice:
+            getDefaultAudioInputDevice(result: result)
             
         case .setAudioInputDevice:
             setAudioDeviceList(args: argsFromFlutter, result: result)
@@ -239,5 +242,15 @@ extension ShadowPlugin {
         
         let isChaningDeviceSuccessful = coreAudioHandler.setAudioInputDevice(deviceID: deviceID)
         result(isChaningDeviceSuccessful)
+    }
+    
+    public func getDefaultAudioInputDevice(result: @escaping FlutterResult) {
+        guard let currentAudioInputDeviceID = coreAudioHandler.getDefaultAudioInputDevice() else {
+            result("Current audio input device ID does not exist")
+            return
+        }
+        let currentAudioInputDeviceName = coreAudioHandler.getDeviceName(deviceID: currentAudioInputDeviceID)
+        
+        result(currentAudioInputDeviceName)
     }
 }
