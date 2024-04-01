@@ -139,7 +139,7 @@ class CoreAudioHandler {
 
         if result == noErr {
             if let deviceName = String(cString: name, encoding: .utf8) {
-                return deviceName + "마이크"
+                return deviceName
             }
         }
 
