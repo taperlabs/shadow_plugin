@@ -131,20 +131,76 @@ class CoreAudioHandler {
             mElement: kAudioObjectPropertyElementMain)
 
         var dataSize: UInt32 = 0
-        var result = AudioObjectGetPropertyDataSize(deviceID, &propertyAddress, 0, nil, &dataSize)
-        guard result == noErr else { return "Unknown Device" }
+        let sizeResult = AudioObjectGetPropertyDataSize(deviceID, &propertyAddress, 0, nil, &dataSize)
+        guard sizeResult == noErr else { return "Unknown Device" }
 
-        var name = [CChar](repeating: 0, count: Int(dataSize))
-        result = AudioObjectGetPropertyData(deviceID, &propertyAddress, 0, nil, &dataSize, &name)
-
-        if result == noErr {
-            if let deviceName = String(cString: name, encoding: .utf8) {
-                return deviceName
+        // Allocate buffer based on dataSize with a small safety margin
+//        var nameBuffer = [UInt8](repeating: 0, count: Int(dataSize) + 1) // +1 for safety
+        var nameBuffer = [UInt8](repeating: 0, count: 256) // +1 for safety
+        var actualDataSize = UInt32(nameBuffer.count) // Assume initial size is correct
+        let dataResult = AudioObjectGetPropertyData(deviceID, &propertyAddress, 0, nil, &actualDataSize, &nameBuffer)
+        if dataResult == noErr {
+            // Convert the buffer to a String
+            if let deviceName = String(bytes: nameBuffer, encoding: .utf8) {
+                return deviceName.trimmingCharacters(in: .controlCharacters)
             }
         }
 
         return "Unknown Device"
     }
+
+
+
+    
+
+//    func getDeviceName(deviceID: AudioDeviceID) -> String {
+//        var propertyAddress = AudioObjectPropertyAddress(
+//            mSelector: kAudioDevicePropertyDeviceName,
+//            mScope: kAudioObjectPropertyScopeGlobal,
+//            mElement: kAudioObjectPropertyElementMain)
+//
+//        var dataSize: UInt32 = 0
+//        let sizeResult = AudioObjectGetPropertyDataSize(deviceID, &propertyAddress, 0, nil, &dataSize)
+//        guard sizeResult == noErr else { return "Unknown Device" }
+//        print("dataSize", dataSize)
+//        
+//        var nameBuffer = [UInt8](repeating: 0, count: 256) // Use a larger buffer size
+//        var actualDataSize = UInt32(nameBuffer.count)
+//        let dataResult = AudioObjectGetPropertyData(deviceID, &propertyAddress, 0, nil, &actualDataSize, &nameBuffer)
+//        if dataResult == noErr {
+//            nameBuffer[Int(actualDataSize)] = 0
+//            if let deviceName = String(bytes: nameBuffer, encoding: .utf8) {
+//                return deviceName.trimmingCharacters(in: .controlCharacters)
+//            }
+//        }
+//
+//
+//        return "Unknown Device"
+//    }
+
+
+    
+//    func getDeviceName(deviceID: AudioDeviceID) -> String {
+//        var propertyAddress = AudioObjectPropertyAddress(
+//            mSelector: kAudioDevicePropertyDeviceName,
+//            mScope: kAudioObjectPropertyScopeGlobal,
+//            mElement: kAudioObjectPropertyElementMain)
+//
+//        var dataSize: UInt32 = 0
+//        var result = AudioObjectGetPropertyDataSize(deviceID, &propertyAddress, 0, nil, &dataSize)
+//        guard result == noErr else { return "Unknown Device" }
+//
+//        var name = [CChar](repeating: 0, count: Int(dataSize))
+//        result = AudioObjectGetPropertyData(deviceID, &propertyAddress, 0, nil, &dataSize, &name)
+//
+//        if result == noErr {
+//            if let deviceName = String(cString: name, encoding: .utf8) {
+//                return deviceName
+//            }
+//        }
+//
+//        return "Unknown Device"
+//    }
     
     
 //    func getDeviceName(deviceID: AudioDeviceID) -> String {
