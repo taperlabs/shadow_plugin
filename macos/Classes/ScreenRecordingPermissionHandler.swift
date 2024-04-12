@@ -3,6 +3,7 @@ import Foundation
 import AVFoundation
 import CoreGraphics
 import FlutterMacOS
+import ScreenCaptureKit
 
 //MARK: - Screen Recording permission handler class
 public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHandler {
@@ -18,7 +19,7 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
     }
     
     public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
-        print("OnListen for ScreenRecording이 불렸습니다!!!")
+        print("OnListen for ScreenRecording permission called")
         self.eventSink = eventSink
         self.startTimer(eventSink: eventSink)
         return nil
@@ -63,16 +64,64 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
         }
     }
     
+    private static func canRecordScreen() -> Bool {
+        let runningApplication = NSRunningApplication.current
+        let processIdentifier = runningApplication.processIdentifier
+
+        guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID)
+            as? [[String: AnyObject]] else
+        {
+            assertionFailure("Invalid window info")
+            return false
+        }
+
+        for window in windows {
+            // Get information for each window
+            guard let windowProcessIdentifier = (window[String(kCGWindowOwnerPID)] as? Int).flatMap(pid_t.init) else {
+                assertionFailure("Invalid window info")
+                continue
+            }
+
+            // Don't check windows owned by this process
+            if windowProcessIdentifier == processIdentifier {
+                continue
+            }
+
+            // Get process information for each window
+            guard let windowRunningApplication = NSRunningApplication(processIdentifier: windowProcessIdentifier) else {
+                // Ignore processes we don't have access to, such as WindowServer, which manages the windows named
+                // "Menubar" and "Backstop Menubar"
+                continue
+            }
+
+            if window[String(kCGWindowName)] as? String != nil {
+                if windowRunningApplication.executableURL?.lastPathComponent == "Dock" {
+                    // Ignore the Dock, which provides the desktop picture
+                    continue
+                } else {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+    
+    
+
+
+
+    
 //    private static func canRecordScreen() -> Bool {
 //        guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] else {
 //            print("Failed to fetch window information")
 //            return false
 //        }
 //        
-//        print("Total windows fetched: \(windows.count)")
+////        print("Total windows fetched: \(windows.count)")
 //        
 //        for (index, window) in windows.enumerated() {
-//            print("Details of window \(index + 1): \(window)")
+////            print("Details of window \(index + 1): \(window)")
 //            if let windowName = window[kCGWindowName as String] as? String {
 //                print("Window name: \(windowName)")
 //                return true
@@ -84,27 +133,35 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
 //        return false
 //    }
     
-    private static func canRecordScreen() -> Bool {
-        guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] else {
-            print("Failed to fetch window information")
-            return false
-        }
-        
-        print("Total windows fetcheds: \(windows.count)")
-        
-        for (index, window) in windows.enumerated() {
-            print("Details of window \(index + 1): \(window)")
-            if let windowName = window[kCGWindowName as String] as? String {
-                print("Window name: \(windowName)")
-            } else {
-                print("This window doesn't have a name or the name is inaccessible.")
-            }
-        }
-        
-        return windows.allSatisfy({ window in
-            window[kCGWindowName as String] as? String != nil
-        })
-    }
+//    private static func canRecordScreen() -> Bool {
+//        guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] else {
+//            print("Failed to fetch window information")
+//            return false
+//        }
+//        
+////        print("Total windows fetcheds: \(windows.count)")
+//        let hasAccess = CGPreflightScreenCaptureAccess()
+//        
+//        print("CGPreflihgtCheck \(hasAccess)")
+//        
+//        for (index, window) in windows.enumerated() {
+////            print("Details of window \(index + 1): \(window)")
+//            if let windowOwnerName = window[kCGWindowOwnerName as String] as? String {
+////                print("window Owner name: \(windowOwnerName)")
+//            }
+////            
+////            if let windowName = window[kCGWindowName as String] as? String {
+////                print("Window name: \(windowName)")
+////            } else {
+////                print("This window, \(window) doesn't have a name or the name is inaccessible.")
+////            }
+//        }
+//        
+//        return windows.allSatisfy({ window in
+//            window[kCGWindowName as String] as? String != nil
+//        })
+//    }
+    
 }
 
 
