@@ -35,6 +35,9 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     
     private var isLogStreamSuspended: Bool = false
     
+    private(set) var scAPICallCounter: Int = 0
+    private let scAPICallCounterThreshold: Int = 2
+    
     enum WhitelistAppName: String, CaseIterable {
         case Around = "Around"
         case Discord = "Discord"
@@ -289,14 +292,29 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         }
     }
     
+    private func checkAPIResponse() {
+        if self.scAPICallCounter > self.scAPICallCounterThreshold {
+            print("API did not respond in time, taking corrective action...")
+            self.eventSink?(["isSCError": true])
+        }
+    }
+    
     private func fetchWindows() -> Void {
-//        print("Fetch Window")
+        print("Fetch Window")
+        self.scAPICallCounter += 1
         //Background Thread for executing the logic
         DispatchQueue.global().async { [weak self] in
             SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
-//                print("Fetch Window 2222")
+                print("Fetch Window 2222")
+                if let error = error {
+                    self?.scAPICallCounter = 0
+                    print(error.localizedDescription)
+                }
                 guard let content = content else { return }
-//                print("Fetch Window 3333")
+                print("Fetch Window 3333")
+                DispatchQueue.main.async {
+                    self?.scAPICallCounter = 0
+                }
  
                 
                 //                DispatchQueue.main.async {
@@ -304,6 +322,10 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 self?.detectInMeeting()
                 //                }
             }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.checkAPIResponse()
         }
     }
     
