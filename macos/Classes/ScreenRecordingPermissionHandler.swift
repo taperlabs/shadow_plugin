@@ -9,6 +9,9 @@ import ScreenCaptureKit
 public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHandler {
     private var eventSink: FlutterEventSink?
     private var timer: Timer?
+    private var scAPICallCount: Int = 0
+    private let scAPICallCounterThreshold = 2
+    private var isSCError: Bool = false
     
     var isScreenRecordingGranted: Bool {
         return Self.canRecordScreen()
@@ -16,6 +19,36 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
     
     deinit {
         stopTimer()
+    }
+    
+    private func checkAPIResponse() {
+        if self.scAPICallCount > self.scAPICallCounterThreshold {
+            print("API did not respond in time, taking corrective action...")
+            self.isSCError = true
+        }
+    }
+    
+    private func fetchWindows() -> Void {
+        print("Fetch Window for ScreenRecording Permission")
+        self.scAPICallCount += 1
+        DispatchQueue.global().async { [weak self] in
+            SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
+                print("Fetch Window for ScreenRecording Permission inside a closure")
+                if let error = error {
+                    self?.scAPICallCount = 0
+                    print(error.localizedDescription)
+                }
+                guard let content = content else { return }
+                print("Fetch Window for ScreenRecording Permission inside a closure 2")
+                DispatchQueue.main.async {
+                    self?.scAPICallCount = 0
+                }
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.checkAPIResponse()
+        }
     }
     
     public func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
@@ -35,13 +68,15 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            let status = Self.canRecordScreen()
-            eventSink(status)
+            self.fetchWindows()
+            let canRecordstatus = Self.canRecordScreen()
+            eventSink(["canRecord": canRecordstatus, "isSCError": self.isSCError])
         }
     }
     
     private func stopTimer() {
         timer?.invalidate()
+        timer = nil
     }
     
     //    func requestScreenRecordingPermission() {
