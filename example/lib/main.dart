@@ -638,6 +638,11 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> checkScreenPermission() async {
     bool granted = await _shadowPlugin.isScreenPermissionGranted();
+    _shadowPlugin.screenCaptureKitBugEvents.listen((event) {
+      print("Screen Capture Kit Bug Event입니다 $event");
+    }, onError: (error) {
+      print(error);
+    });
     print("Screen Permission: $granted");
   }
 

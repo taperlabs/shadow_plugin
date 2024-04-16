@@ -15,6 +15,7 @@ class MethodChannelShadow extends ShadowPlatform {
   final _microphonePermissionEventChannel = const EventChannel('phoenixMicrophonePermissionEventChannel');
   final _screenRecordingPermissionEventChannel = const EventChannel('phoenixScreenRecordingPermissionEventChannel');
   final _nudgeEventChannel = const EventChannel('phoenixNudgeEventChannel');
+  final _screenCaptureKitBugEventChannel = const EventChannel('screenCaptureKitBugEventChannel');
 
   //Recording Event Streams
   @override
@@ -38,7 +39,7 @@ class MethodChannelShadow extends ShadowPlatform {
   Stream<dynamic> get micAudioLevelEvents => _micAudioLevelEventChannel.receiveBroadcastStream('micAudioLevel');
 
   @override
-  Stream<dynamic> get screenCaptureKitBugEvents => _screenCaptureEventChannel.receiveBroadcastStream('screenCaptureKitBug');
+  Stream<dynamic> get screenCaptureKitBugEvents => _screenCaptureKitBugEventChannel.receiveBroadcastStream();
 
   @override
   Future<dynamic> getDefaultAudioInputDevice() async {

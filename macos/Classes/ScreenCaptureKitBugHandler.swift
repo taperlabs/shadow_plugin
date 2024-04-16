@@ -48,6 +48,7 @@ final class ScreenCaptureKitBugHandler: NSObject, FlutterStreamHandler {
         if self.scAPICallCount > self.scAPICallCounterThreshold {
             print("API did not respond in time, taking corrective action...")
             self.isSCError = true
+            eventSink?(["isSCError": self.isSCError])
         }
     }
     

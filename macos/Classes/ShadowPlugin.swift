@@ -12,7 +12,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     private static let shadowMethodChannelName = "shadow"
     private static let nudgeEventChannelName = "phoenixNudgeEventChannel"
     private static let micAudioLevelEventsName = "micAudioLevelEventChannel"
-    private static let screenCaptureKitBugEventsName = "screenCaptureKitBugEvents"
+    private static let screenCaptureKitBugEventsName = "screenCaptureKitBugEventChannel"
     static var screenEventChannel: FlutterEventChannel?
     var micAudioRecording = MicrophoneRecorder()
     var screenRecorder = ScreenRecorder()
@@ -37,9 +37,10 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         
         let micPermissionEventChannel = FlutterEventChannel(name: micPermissionEventChannelName, binaryMessenger: registrar.messenger)
         let screenRecordingPermissionEventChannel = FlutterEventChannel(name: screenRecordingPermissionEventChannelName, binaryMessenger: registrar.messenger)
-        let screenCaptureKitBugEventChannel = FlutterEventChannel(name: screenCaptureKitBugEventsName, binaryMessenger: registrar.messenger)
         
-        screenRecordingPermissionEventChannel.setStreamHandler(instance.screenCaptureKitBugEventsClass)
+        
+        let screenCaptureKitBugEventChannel = FlutterEventChannel(name: screenCaptureKitBugEventsName, binaryMessenger: registrar.messenger)
+        screenCaptureKitBugEventChannel.setStreamHandler(instance.screenCaptureKitBugEventsClass)
         
 //        let nudgeEventChannel = FlutterEventChannel(name: nudgeEventChannelName, binaryMessenger: registrar.messenger)
         let autopilotEventChannel = FlutterEventChannel(name: nudgeEventChannelName, binaryMessenger: registrar.messenger)
