@@ -38,6 +38,9 @@ class MethodChannelShadow extends ShadowPlatform {
   Stream<dynamic> get micAudioLevelEvents => _micAudioLevelEventChannel.receiveBroadcastStream('micAudioLevel');
 
   @override
+  Stream<dynamic> get screenCaptureKitBugEvents => _screenCaptureEventChannel.receiveBroadcastStream('screenCaptureKitBug');
+
+  @override
   Future<dynamic> getDefaultAudioInputDevice() async {
     return methodChannel.invokeMethod('getDefaultAudioInputDevice');
   }

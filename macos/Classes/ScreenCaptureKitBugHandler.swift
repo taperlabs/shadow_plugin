@@ -3,16 +3,21 @@ import ScreenCaptureKit
 import FlutterMacOS
 
 //MARK: SCBug Handler (Closure Bug)
-final class SCBugHandler: NSObject, FlutterStreamHandler {
+final class ScreenCaptureKitBugHandler: NSObject, FlutterStreamHandler {
     private(set) var scAPICallCount: Int = 0
     private let scAPICallCounterThreshold: Int = 2
     private var windowCheckTimer: Timer?
     private(set) var isSCError: Bool = false
     private var eventSink: FlutterEventSink?
     
+    deinit {
+        self.resetAllVariables()
+    }
+    
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         print("SCBug Handler Event On 🟢")
         self.eventSink = events
+        self.startWindowCheckTimer()
         return nil
     }
     
@@ -58,7 +63,7 @@ final class SCBugHandler: NSObject, FlutterStreamHandler {
                 }
                 guard let content = content else { return }
                 print("Fetch Window for ScreenRecording Permission inside a closure 2")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                DispatchQueue.main.async {
                     self?.scAPICallCount = 0
                 }
             }

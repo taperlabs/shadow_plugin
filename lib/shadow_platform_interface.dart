@@ -48,6 +48,10 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('micAudioLevelEvents has not been implemented.');
   }
 
+  Stream<dynamic> get screenCaptureKitBugEvents {
+    throw UnimplementedError('scBugEvents has not been implemented.');
+  }
+
   Future<dynamic> getDefaultAudioInputDevice() {
     throw UnimplementedError('getDefaultAudioInputDevice() has not been implemented.');
   }

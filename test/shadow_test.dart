@@ -24,6 +24,9 @@ class MockShadowPlatform with MockPlatformInterfaceMixin implements ShadowPlatfo
   Stream<dynamic> get micAudioLevelEvents => Stream.empty();
 
   @override
+  Stream<dynamic> get screenCaptureKitBugEvents => Stream.empty();
+
+  @override
   Future<void> restartApp() async {}
 
   @override

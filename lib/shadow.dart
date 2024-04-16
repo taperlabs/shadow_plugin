@@ -14,6 +14,8 @@ class Shadow {
 
   Stream<dynamic> get micAudioLevelEvents => ShadowPlatform.instance.micAudioLevelEvents;
 
+  Stream<dynamic> get screenCaptureKitBugEvents => ShadowPlatform.instance.screenCaptureKitBugEvents;
+
   Future<dynamic> getDefaultAudioInputDevice() {
     return ShadowPlatform.instance.getDefaultAudioInputDevice();
   }
