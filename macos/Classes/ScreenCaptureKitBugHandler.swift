@@ -57,17 +57,17 @@ final class ScreenCaptureKitBugHandler: NSObject, FlutterStreamHandler {
     }
     
     private func fetchWindows() -> Void {
-        print("Fetch Window for ScreenRecording Permission")
+        print("SC Bug Handler 1")
         self.scAPICallCount += 1
         DispatchQueue.global().async { [weak self] in
             SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
-                print("SC inside a closure")
+//                print("SC inside a closure")
                 if let error = error {
                     self?.scAPICallCount = 0
                     print(error.localizedDescription)
                 }
                 guard let content = content else { return }
-                print("SC inside a closure 2")
+//                print("SC inside a closure 2")
                 DispatchQueue.main.async {
                     self?.scAPICallCount = 0
                 }

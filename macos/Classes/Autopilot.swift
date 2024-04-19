@@ -298,17 +298,17 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
 
     private func fetchWindows() -> Void {
-        print("SC")
+//        print("SC")
         //Background Thread for executing the logic
         DispatchQueue.global().async { [weak self] in
             SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
-                print("SC 2222")
+//                print("SC 2222")
                 if let error = error {
                     print(error.localizedDescription)
                     ShadowLogger.shared.log("SC Error occured: \(error.localizedDescription)")
                 }
                 guard let content = content else { return }
-                print("SC 3333")
+//                print("SC 3333")
                 //                DispatchQueue.main.async {
                 self?.windows = content.windows
                 self?.detectInMeeting()
