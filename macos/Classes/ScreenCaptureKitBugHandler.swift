@@ -18,10 +18,13 @@ final class ScreenCaptureKitBugHandler: NSObject, FlutterStreamHandler {
         print("SCBug Handler Event On 🟢")
         self.eventSink = events
         self.startWindowCheckTimer()
+        ShadowLogger.shared.log("SC Bug Handler ON")
         return nil
     }
     
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        print("SCBug Handler Event Off 🔴")
+        ShadowLogger.shared.log("SC Bug Handler Off")
         self.resetAllVariables()
         return nil
     }
@@ -49,6 +52,7 @@ final class ScreenCaptureKitBugHandler: NSObject, FlutterStreamHandler {
             print("API did not respond in time, taking corrective action...")
             self.isSCError = true
             eventSink?(["isSCError": self.isSCError])
+            ShadowLogger.shared.log("ScreenCaptureKit Bug Detected :\(isSCError)")
         }
     }
     
@@ -57,13 +61,13 @@ final class ScreenCaptureKitBugHandler: NSObject, FlutterStreamHandler {
         self.scAPICallCount += 1
         DispatchQueue.global().async { [weak self] in
             SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
-                print("Fetch Window for ScreenRecording Permission inside a closure")
+                print("SC inside a closure")
                 if let error = error {
                     self?.scAPICallCount = 0
                     print(error.localizedDescription)
                 }
                 guard let content = content else { return }
-                print("Fetch Window for ScreenRecording Permission inside a closure 2")
+                print("SC inside a closure 2")
                 DispatchQueue.main.async {
                     self?.scAPICallCount = 0
                 }

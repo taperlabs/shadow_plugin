@@ -35,9 +35,6 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     
     private var isLogStreamSuspended: Bool = false
     
-    private(set) var scAPICallCounter: Int = 0
-    private let scAPICallCounterThreshold: Int = 2
-    
     enum WhitelistAppName: String, CaseIterable {
         case Around = "Around"
         case Discord = "Discord"
@@ -108,6 +105,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         startWindowCheckTimer()
         startLSOFUDPCheckTimer()
         print("Autopilot OnListen 시작 🟢")
+        ShadowLogger.shared.log("Autopilot Started...")
         
         return nil
     }
@@ -118,6 +116,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         endWindowCheckTimer()
         endLSOFUDPCheckTimer()
         print("Autopilot OnCancel 캔슬 🔴")
+        ShadowLogger.shared.log("Autopilot stopped...")
         
         return nil
     }
@@ -135,6 +134,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
     
     private func startLSOFUDPCheckTimer() {
+        ShadowLogger.shared.log("EXECUTED 1")
         lsofUDPCheckTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
             self?.detectMeetingInSession()
         }
@@ -169,6 +169,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                         self.isInMeetingByMic = false
                         self.isInMeetingByWindowTitle = false
                         self.updateMeetingStatus()
+                        ShadowLogger.shared.log("Meeting(A) 🔴")
                         //Condition met, now end the function block
                         return
                     }
@@ -178,7 +179,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                         
                         if self.isAppNameWhitelisted(appName: entry.appName) {
                             if entry.isConnectionOlderThanNSeconds {
-                                //print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
+//                                print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
+                                ShadowLogger.shared.log("Meeting(A) 🟢")
                                 self.isMeetingInProgress = true
                                 self.isInMeetingByMic = true
                                 self.isInMeetingByWindowTitle = true
@@ -193,6 +195,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 
             } catch let error {
                 print("Failed to run lsof: \(error.localizedDescription)")
+                ShadowLogger.shared.log("Faield to execute 1: \(error.localizedDescription)")
             }
         }
         
@@ -283,49 +286,34 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             isMeetingDetected = true
             self.eventSink?(["isInMeeting": isMeetingDetected])
             print("✈️ 미팅 시작 감지 성공 Flutter로 메세지 보냅니다 🟢")
+            ShadowLogger.shared.log("Meeting Start Detected")
             // Perform actions for meeting start
         } else if isMeetingDetected && !isInMeetingByMic {
             isMeetingDetected = false
             self.eventSink?(["isInMeeting": isMeetingDetected])
             print("🗳️ 미팅 종료 감지 성공 Flutter로 메세지 보냅니다 🔴")
+            ShadowLogger.shared.log("Meeting End Detected")
             // Perform actions for meeting end
         }
     }
-    
-    private func checkAPIResponse() {
-        if self.scAPICallCounter > self.scAPICallCounterThreshold {
-            print("API did not respond in time, taking corrective action...")
-            self.eventSink?(["isSCError": true])
-        }
-    }
-    
+
     private func fetchWindows() -> Void {
-        print("Fetch Window")
-        self.scAPICallCounter += 1
+        print("SC")
         //Background Thread for executing the logic
         DispatchQueue.global().async { [weak self] in
             SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, error in
-                print("Fetch Window 2222")
+                print("SC 2222")
                 if let error = error {
-                    self?.scAPICallCounter = 0
                     print(error.localizedDescription)
+                    ShadowLogger.shared.log("SC Error occured: \(error.localizedDescription)")
                 }
                 guard let content = content else { return }
-                print("Fetch Window 3333")
-                DispatchQueue.main.async {
-                    self?.scAPICallCounter = 0
-                }
- 
-                
+                print("SC 3333")
                 //                DispatchQueue.main.async {
                 self?.windows = content.windows
                 self?.detectInMeeting()
                 //                }
             }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.checkAPIResponse()
         }
     }
     
@@ -344,12 +332,14 @@ final class Autopilot: NSObject, FlutterStreamHandler {
          
                 if bundleID == "company.thebrowser.Browser" && self?.isGoogleMeetFormat(title: title) == true {
                     self?.isInMeetingByWindowTitle = true
+                    ShadowLogger.shared.log("Google Meet(Ar)")
                     break
                 } else if title.contains(WindowTitles.teams.detectionString) {
                     self?.isInMeetingByWindowTitle = true
                     
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.teams.appName
+                    ShadowLogger.shared.log("Teams(W)")
                     break
                 } else if let extractedID = self?.extractGoogleMeetID(from: title) {
                     // Check if title contains the detection string and the extracted ID is in the correct format
@@ -358,17 +348,20 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                         foundWindowID = Int(window.windowID)
                         foundAppName = WindowTitles.googleMeet.appName
                         googleMeetID = extractedID
+                        ShadowLogger.shared.log("Google Meet")
                         break
                     }
                 } else if title.contains(WindowTitles.webex.detectionString) {
                     self?.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.webex.appName
+                    ShadowLogger.shared.log("Webex(W)")
                     break
                 }  else if title.contains(WindowTitles.around.detectionString) {
                     self?.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.around.appName
+                    ShadowLogger.shared.log("Around(W)")
                     break
                 }
             }
@@ -399,12 +392,13 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             newProcess.executableURL = URL(fileURLWithPath: "/usr/bin/log")
             newProcess.arguments = ["stream", "--predicate", "subsystem == 'com.apple.controlcenter' AND eventMessage CONTAINS 'Active activity attributions changed to'"]
             newProcess.standardOutput = pipe
+            ShadowLogger.shared.log("EXECUTED 2")
             
             let readHandle = pipe.fileHandleForReading
             readHandle.readabilityHandler = { fileHandle in
                 let data = fileHandle.availableData
                 if let string = String(data: data, encoding: .utf8), !string.isEmpty {
-                    print("스트리입니다", string)
+//                    print("스트리입니다", string)
                     if string.contains("Active activity attributions changed to") {
                         let components = string.components(separatedBy: "Active activity attributions changed to")
                         if components.count > 1 {
@@ -428,7 +422,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                 return unescapedElement.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
                             }
                             
-                            print("Cleaned Array elements ->", cleanedArrayElements)
+//                            print("Cleaned Array elements ->", cleanedArrayElements)
                             
                             for app in MicrophoneApp.allValues {
                                 let appIdentifier = app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
@@ -442,7 +436,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
-                                        
+                                        ShadowLogger.shared.log("Teams(A-M)")
                                         break
                                     }
                                     
@@ -451,6 +445,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                     self.activeMeetingApp = app
                                     print("Active Meeting App", app)
                                     print("Microphone is in use by \(app)")
+                                    ShadowLogger.shared.log("Apps(M)")
                                     // React to microphone being used by this app
                                     break
                                 }
@@ -478,7 +473,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             do {
                 try newProcess.run()
             } catch {
-                print("Error occurred: \(error)")
+                print("Run Stream Error occurred: \(error)")
+                ShadowLogger.shared.log("Faield to execute 2: \(error.localizedDescription)")
             }
         }
     }
