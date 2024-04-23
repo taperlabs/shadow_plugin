@@ -65,6 +65,7 @@ final class ScreenCaptureKitBugHandler: NSObject, FlutterStreamHandler {
                 if let error = error {
                     self?.scAPICallCount = 0
                     print(error.localizedDescription)
+                    ShadowLogger.shared.log("SC BUG FW ERROR - \(error.localizedDescription)")
                 }
                 guard let content = content else { return }
 //                print("SC inside a closure 2")

@@ -94,6 +94,7 @@ class ScreenRecorder {
         setupStreamOutput()
         try setupStream(with: filtered, config: streamConfig)
         try await initiateCapture()
+        ShadowLogger.shared.log("SC StartCapture EXECUTED")
     }
     
     private func setupStreamOutput() {
@@ -162,8 +163,10 @@ class ScreenRecorder {
             finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
             stream = nil
             streamOutput = nil
+            ShadowLogger.shared.log("STOP SC EXECUTED")
         } catch let error  {
             print(error.localizedDescription)
+            ShadowLogger.shared.log("Stop SC Error: \(error.localizedDescription)")
         }
         print("Stop Capture() Completed")
     }
@@ -178,9 +181,11 @@ class ScreenRecorder {
         case .writing:
             writer.finishWriting {
                 print("Finished writing to output file at:", writer.outputURL)
+                ShadowLogger.shared.log("Finished Writing output file")
             }
         case .failed:
             print("Asset writer failed with error: \(writer.error?.localizedDescription ?? "Unknown error")")
+            ShadowLogger.shared.log("AS Error .failed: \(writer.error?.localizedDescription ?? "Unknown error")")
         case .completed:
             print("AssetWriter Status: Completed successfully")
         case .cancelled:

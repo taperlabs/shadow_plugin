@@ -92,6 +92,7 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         //Error Handler
         print("didStopWithError -> ❌",error)
+        ShadowLogger.shared.log("didStopWithError \(error.localizedDescription)")
         guard let recorder = recorder else { return }
         
         recorder.stopCaptureForError()
@@ -128,6 +129,7 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
             
             guard let audioData = timestampledSampleBuffer else {
                 print("Audio data does not exist")
+                ShadowLogger.shared.log("Audio data does not Exist")
                 return
             }
             
@@ -135,6 +137,7 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
             //            audioInput.append(realSamplBuffer)
             
         @unknown default:
+            ShadowLogger.shared.log("Encountered unknown stream output type: \(type)")
             fatalError("Encountered unknown stream output type: \(type)")
         }
     }

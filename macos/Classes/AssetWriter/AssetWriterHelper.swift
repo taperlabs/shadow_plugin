@@ -50,6 +50,8 @@ class AssetWriterHelper {
         print("sampleRate", sampleRate)
         print("file Name", filename)
         
+        ShadowLogger.shared.log("format - \(format), channels - \(channels), - sampleRate - \(sampleRate), filePath - \(filePath)")
+        
         //System Audio Output URL 설정 + Nil Check
         guard let audioOutputURL = FileManagerHelper.getURL(for: filename, in: filePath) else {
             print("audioOutputURL을 가져오는데 실패하였습니다.")
@@ -78,6 +80,7 @@ class AssetWriterHelper {
             
         } catch  {
             print("AVAssetWriter initalizer 실패", error)
+            ShadowLogger.shared.log("AVAsset Init failed \(error.localizedDescription)")
         }
     }
         
@@ -86,6 +89,7 @@ class AssetWriterHelper {
         
         guard let outputURL = FileManagerHelper.getURL(for: "FlutterSCCapture.m4a", in: "ApplicationSupportDirectory") else {
             print("audioOutputURL을 가져오는데 실패하였습니다.")
+            ShadowLogger.shared.log("failed to get audioOutputURL")
             return
         }
         
@@ -123,6 +127,8 @@ class AssetWriterHelper {
             assetWriter?.startSession(atSourceTime: CMTime.zero)
         } catch {
             print("Could not initialize AVAssetWriter: \(error)")
+            
+            ShadowLogger.shared.log("Failed to initialize AVAsset - \(error.localizedDescription)")
         }
     }
 }

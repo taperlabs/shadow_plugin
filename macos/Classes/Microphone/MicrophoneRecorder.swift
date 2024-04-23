@@ -104,6 +104,7 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
             
         } catch {
             print("Error setting up audio recorder: \(error)")
+            ShadowLogger.shared.log("MicrophoneRecorder Error: \(error.localizedDescription)")
         }
     }
     
