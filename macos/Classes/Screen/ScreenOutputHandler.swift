@@ -93,7 +93,10 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
         //Error Handler
         print("didStopWithError -> ❌",error)
         ShadowLogger.shared.log("didStopWithError \(error.localizedDescription)")
-        guard let recorder = recorder else { return }
+        guard let recorder = recorder else {
+            ShadowLogger.shared.log("didStopWithError - Recorder nil")
+            return
+        }
         
         recorder.stopCaptureForError()
     }
