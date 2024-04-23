@@ -141,6 +141,8 @@ class ScreenRecorder {
             
             finishAssetWriting(assetWriter: assetWriterSetup.systemAudioAssetWriter)
             finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
+            
+            ShadowLogger.shared.log("Capture Erro Handler Method Called")
 
         } catch let error {
             print(error.localizedDescription)
