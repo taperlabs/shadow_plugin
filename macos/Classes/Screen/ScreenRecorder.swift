@@ -156,8 +156,8 @@ class ScreenRecorder {
             
             finishAssetWriting(assetWriter: assetWriterSetup.systemAudioAssetWriter)
             finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
-            stream = nil
-            streamOutput = nil
+//            stream = nil
+//            streamOutput = nil
             ShadowLogger.shared.log("STOP SC EXECUTED")
         } catch let error  {
             print(error.localizedDescription)

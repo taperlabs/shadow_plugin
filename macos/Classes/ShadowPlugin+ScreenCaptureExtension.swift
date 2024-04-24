@@ -18,7 +18,11 @@ extension ShadowPlugin {
                 
                 if captureEngineStreamOutput == nil {
                     guard let screenEventChannel = ShadowPlugin.screenEventChannel,
-                          let screenRecorderOutput = screenRecorder.streamOutput else { return }
+                          let screenRecorderOutput = screenRecorder.streamOutput else {
+                        ShadowLogger.shared.log("screenRecorderOutput \(screenRecorder)")
+                            return
+                    }
+                    ShadowLogger.shared.log("captureEngineStreamOutput == nil")
                     
                     captureEngineStreamOutput = screenRecorderOutput
                     screenEventChannel.setStreamHandler(captureEngineStreamOutput)
