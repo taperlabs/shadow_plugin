@@ -135,18 +135,11 @@ class ScreenRecorder {
     }
     
     func stopCaptureForError() {
-        do {
             streamOutput?.stopSendingStatus()
             timeIndicator.stop()
-            
             finishAssetWriting(assetWriter: assetWriterSetup.systemAudioAssetWriter)
             finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
-            
-            ShadowLogger.shared.log("Capture Erro Handler Method Called")
-
-        } catch let error {
-            print(error.localizedDescription)
-        }
+            ShadowLogger.shared.log("stopCaptureForError Called")
     }
     
     
@@ -176,6 +169,7 @@ class ScreenRecorder {
      private func finishAssetWriting(assetWriter: AVAssetWriter?) {
         guard let writer = assetWriter else {
             print("AssetWriter is nil")
+            ShadowLogger.shared.log("AssetWriter nil")
             return
         }
         
@@ -192,8 +186,10 @@ class ScreenRecorder {
             print("AssetWriter Status: Completed successfully")
         case .cancelled:
             print("AssetWriter Status: Cancelled")
+            ShadowLogger.shared.log("AS Error .cancelled")
         case .unknown:
             print("AssetWriter Status: Unknown")
+            ShadowLogger.shared.log("AS Error .Unknown")
         @unknown default:
             print("AssetWriter Status: Encountered unknown status")
         }

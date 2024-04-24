@@ -208,6 +208,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
 //MARK: - MethodChannel Call Error Handling extension
 extension ShadowPlugin {
     public func handleError(error: Error, result: @escaping FlutterResult) {
+        ShadowLogger.shared.log("Failed to handle Stop SC error called - \(error.localizedDescription)")
         result(FlutterError(code: "UNAVAILABLE",
                             message: "Failed to handle method call",
                             details: error.localizedDescription))

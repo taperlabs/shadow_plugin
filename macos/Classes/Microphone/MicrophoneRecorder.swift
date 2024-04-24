@@ -48,8 +48,8 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     }
     
     func startMicAudioRecording() {
-//        let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
-        let audioSettings = AudioSetting.setAudioConfiguration(format: .pcm, channels: .mono, sampleRate: .rate16K)
+        let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
+//        let audioSettings = AudioSetting.setAudioConfiguration(format: .pcm, channels: .mono, sampleRate: .rate16K)
         setupAndStartRecording(with: audioSettings, filename: recordingFileName, filePath: recordingFilePath)
     }
     

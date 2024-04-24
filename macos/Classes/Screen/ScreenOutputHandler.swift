@@ -104,7 +104,10 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
     //ScreenCapture Stream Output
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
         // Return early if the sample buffer is invalid.
-        guard sampleBuffer.isValid else { return }
+        guard sampleBuffer.isValid else {
+            ShadowLogger.shared.log("SampleBuffer - \(sampleBuffer.isValid)")
+            return
+        }
         
         switch type {
         case .screen:
@@ -127,6 +130,7 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
             //systemAudioInput에 AudioBuffer 쓰기
             guard let systemAudioInput = recorder.assetWriterSetup.systemAudioInput, systemAudioInput.isReadyForMoreMediaData else {
                 print("System Audio Recording Not Ready")
+                ShadowLogger.shared.log("System Audio Recording Not Ready")
                 return
             }
             

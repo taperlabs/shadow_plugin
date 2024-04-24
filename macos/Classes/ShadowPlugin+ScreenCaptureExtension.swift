@@ -28,6 +28,7 @@ extension ShadowPlugin {
                 //                captureEngineStreamOutput = screenRecorderOutput
                 //                screenEventChannel.setStreamHandler(captureEngineStreamOutput)
                 result("스크린 녹화 시작")
+                ShadowLogger.shared.log("Start SC For System Sound")
             } catch {
                 handleError(error: error, result: result)
             }

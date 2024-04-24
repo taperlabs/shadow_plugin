@@ -10,6 +10,8 @@ extension ShadowPlugin {
             return
         }
         
+        ShadowLogger.shared.log("MIC Config - \(micAudioConfig), SYS Config - \(systemAudioConfig)")
+        
 //        print("여기는 인사이드 입니다 1111 \(type(of: systemAudioConfig))", systemAudioConfig)
 //        print("여기는 인사이드 입니다 1111 \(type(of: micAudioConfig))", micAudioConfig)
         
@@ -65,8 +67,10 @@ extension ShadowPlugin {
                 try await screenRecorder.stopCapture()
                 micAudioRecording.stopMicAudioRecording()
                 result("스크린 녹화 중지")
+                ShadowLogger.shared.log("handleStopSystemAudioAndMicRecording called")
             } catch {
                 handleError(error: error, result: result)
+                ShadowLogger.shared.log("Stop Sys + Mic Recording Handler - \(error.localizedDescription)")
             }
         }
         
