@@ -440,6 +440,15 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         break
                                     }
                                     
+                                    if app == .zoom {
+                                        print("Zoom Detected")
+                                        self.isInMeetingByMic = true
+                                        self.activeMeetingApp = app
+                                        self.isInMeetingByWindowTitle = true
+                                        ShadowLogger.shared.log("Z(A-M)")
+                                        break
+                                    }
+                                    
                                     
                                     self.isInMeetingByMic = true
                                     self.activeMeetingApp = app
