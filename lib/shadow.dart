@@ -16,6 +16,10 @@ class Shadow {
 
   Stream<dynamic> get screenCaptureKitBugEvents => ShadowPlatform.instance.screenCaptureKitBugEvents;
 
+  Future<void> startShadowServer() {
+    return ShadowPlatform.instance.startShadowServer();
+  }
+
   Future<dynamic> getDefaultAudioInputDevice() {
     return ShadowPlatform.instance.getDefaultAudioInputDevice();
   }

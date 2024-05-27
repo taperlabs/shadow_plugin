@@ -80,7 +80,10 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
-        
+            
+        case .startShadowServer:
+            print("startShadowServer 불렸다")
+            startShadowServer(result: result)
         case .getDefaultAudioInputDevice:
             getDefaultAudioInputDevice(result: result)
             
@@ -261,3 +264,18 @@ extension ShadowPlugin {
         result(currentAudioInputDeviceName)
     }
 }
+
+extension ShadowPlugin {
+    public func startShadowServer(result: @escaping FlutterResult) {
+        let shadowServerApp = ShadowServerHandler()
+        let appbundleID = "com.taperlabs.shadowServer"
+        let isServerRunning = shadowServerApp.isAppRunning(bundleIdentifier: appbundleID)
+        
+        if isServerRunning {
+            result("App already running")
+            return
+        }
+        shadowServerApp.launchShadowServer()
+    }
+}
+
