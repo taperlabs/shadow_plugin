@@ -42,18 +42,18 @@ final class ShadowServerHandler {
             print(app.localizedName ?? "Unknown application")
             
             // Attempt to terminate cleanly
-            app.terminate()
+            app.forceTerminate()
             
             // Allow some time for the app to terminate gracefully
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                if app.isTerminated {
-                    print("Application terminated successfully")
-                } else {
-                    // Fallback to force termination
-                    app.forceTerminate()
-                    print("Application forcibly terminated")
-                }
-            }
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+//                if app.isTerminated {
+//                    print("Application terminated successfully")
+//                } else {
+//                    // Fallback to force termination
+//                    app.forceTerminate()
+//                    print("Application forcibly terminated")
+//                }
+//            }
         } else {
             print("Application is not running")
         }

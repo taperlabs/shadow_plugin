@@ -99,6 +99,12 @@ class _MyAppState extends State<MyApp> {
     // initPlatformState();
   }
 
+  @override
+  void dispose() {
+    _shadowPlugin.stopShadowServer();
+    super.dispose();
+  }
+
   runStream() async {
     // Dart uses Futures and Streams for asynchronous operations
     var newProcess = await Process.start('/usr/bin/log', [
@@ -683,6 +689,10 @@ class _MyAppState extends State<MyApp> {
     await _shadowPlugin.startShadowServer();
   }
 
+  Future<void> stopShadowServer() async {
+    await _shadowPlugin.stopShadowServer();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -801,7 +811,7 @@ class _MyAppState extends State<MyApp> {
               ),
               CustomButton(
                 "Start Shadow Server",
-                () => startShadowServer(),
+                () => stopShadowServer(),
               )
               // ... [rest of the buttons]
             ],
