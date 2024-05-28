@@ -52,6 +52,10 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('scBugEvents has not been implemented.');
   }
 
+  Future<void> stopShadowServer() {
+    throw UnimplementedError('stopShadowServer() has not been implemented.');
+  }
+
   Future<void> startShadowServer() {
     throw UnimplementedError('startShadowServer() has not been implemented.');
   }

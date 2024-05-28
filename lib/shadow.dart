@@ -16,6 +16,10 @@ class Shadow {
 
   Stream<dynamic> get screenCaptureKitBugEvents => ShadowPlatform.instance.screenCaptureKitBugEvents;
 
+  Future<void> stopShadowServer() {
+    return ShadowPlatform.instance.stopShadowServer();
+  }
+
   Future<void> startShadowServer() {
     return ShadowPlatform.instance.startShadowServer();
   }

@@ -30,6 +30,9 @@ class MockShadowPlatform with MockPlatformInterfaceMixin implements ShadowPlatfo
   Future<void> restartApp() async {}
 
   @override
+  Future<void> stopShadowServer() async {}
+
+  @override
   Future<void> startShadowServer() async {}
 
   @override

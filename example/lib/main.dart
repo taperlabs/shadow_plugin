@@ -679,6 +679,10 @@ class _MyAppState extends State<MyApp> {
     print("Audio Input Device: $result");
   }
 
+  Future<void> startShadowServer() async {
+    await _shadowPlugin.startShadowServer();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -794,6 +798,10 @@ class _MyAppState extends State<MyApp> {
               CustomButton(
                 "Cancel Nudging",
                 () => cancelNudging(),
+              ),
+              CustomButton(
+                "Start Shadow Server",
+                () => startShadowServer(),
               )
               // ... [rest of the buttons]
             ],

@@ -42,6 +42,11 @@ class MethodChannelShadow extends ShadowPlatform {
   Stream<dynamic> get screenCaptureKitBugEvents => _screenCaptureKitBugEventChannel.receiveBroadcastStream();
 
   @override
+  Future<void> stopShadowServer() async {
+    return methodChannel.invokeMethod('stopShadowServer');
+  }
+
+  @override
   Future<void> startShadowServer() async {
     return methodChannel.invokeMethod('startShadowServer');
   }

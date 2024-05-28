@@ -81,6 +81,10 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         
         switch method {
             
+        case .stopShadowServer:
+            print("stopShadowServer 불렸다")
+            stopShadowServer(result: result)
+            
         case .startShadowServer:
             print("startShadowServer 불렸다")
             startShadowServer(result: result)
@@ -265,6 +269,7 @@ extension ShadowPlugin {
     }
 }
 
+//MARK: Shadow Server
 extension ShadowPlugin {
     public func startShadowServer(result: @escaping FlutterResult) {
         let shadowServerApp = ShadowServerHandler()
@@ -276,6 +281,19 @@ extension ShadowPlugin {
             return
         }
         shadowServerApp.launchShadowServer()
+    }
+    
+    public func stopShadowServer(result: @escaping FlutterResult) {
+        let shadowServerApp = ShadowServerHandler()
+        let appBundleID = "com.taperlabs.shadowServer"
+        shadowServerApp.terminateApp(bundleIdentifier: appBundleID)
+    }
+    
+    public func checkIsShadowServerRunning(result: @escaping FlutterResult) {
+        let shadowServerApp = ShadowServerHandler()
+        let appBundleID = "com.taperlabs.shadowServer"
+        let isServerRunning = shadowServerApp.isAppRunning(bundleIdentifier: appBundleID)
+        result(isServerRunning)
     }
 }
 

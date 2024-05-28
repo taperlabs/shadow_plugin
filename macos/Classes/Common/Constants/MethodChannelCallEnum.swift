@@ -4,6 +4,7 @@ import Foundation
 enum MethodChannelCall: String {
     //Shadow App
     case startShadowServer = "startShadowServer"
+    case stopShadowServer = "stopShadowServer"
     
     //System Audio Only
     case startSystemAudioRecordingWithConfig = "startSystemAudioRecordingWithConfig"
