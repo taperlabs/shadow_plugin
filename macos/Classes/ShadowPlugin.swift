@@ -273,26 +273,24 @@ extension ShadowPlugin {
 extension ShadowPlugin {
     public func startShadowServer(result: @escaping FlutterResult) {
         let shadowServerApp = ShadowServerHandler()
-        let appbundleID = "com.taperlabs.shadowServer"
-        let isServerRunning = shadowServerApp.isAppRunning(bundleIdentifier: appbundleID)
         
-        if isServerRunning {
+        if shadowServerApp.isAppRunning() {
             result("App already running")
             return
         }
         shadowServerApp.launchShadowServer()
+        result("App launched successfully")
     }
     
     public func stopShadowServer(result: @escaping FlutterResult) {
         let shadowServerApp = ShadowServerHandler()
-        let appBundleID = "com.taperlabs.shadowServer"
-        shadowServerApp.terminateApp(bundleIdentifier: appBundleID)
+        shadowServerApp.terminateApp()
+        result("App termination requested")
     }
     
     public func checkIsShadowServerRunning(result: @escaping FlutterResult) {
         let shadowServerApp = ShadowServerHandler()
-        let appBundleID = "com.taperlabs.shadowServer"
-        let isServerRunning = shadowServerApp.isAppRunning(bundleIdentifier: appBundleID)
+        let isServerRunning = shadowServerApp.isAppRunning()
         result(isServerRunning)
     }
 }

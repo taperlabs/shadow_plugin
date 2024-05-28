@@ -2,51 +2,28 @@ import Foundation
 import Cocoa
 
 final class ShadowServerHandler {
+    private let appBundleID = "com.taperlabs.shadowServer"
+    private let appName = "ShadowServer.app"
+    private let applicationSupportPath = "com.taperlabs.shadow"
     
-    func isAppRunning(bundleIdentifier: String) -> Bool {
-        let runningApps = NSWorkspace.shared.runningApplications
-        return runningApps.contains { $0.bundleIdentifier == bundleIdentifier }
+    private var appPathURL: URL? {
+        let fileManager = FileManager.default
+        let urls = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        guard let applicationSupportURL = urls.first else { return nil }
+        return applicationSupportURL.appendingPathComponent(applicationSupportPath).appendingPathComponent(appName)
     }
-
-    func terminateApp(bundleIdentifier: String) {
+    
+    func isAppRunning() -> Bool {
         let runningApps = NSWorkspace.shared.runningApplications
-        if let app = runningApps.first(where: { $0.bundleIdentifier == bundleIdentifier }) {
-            print(app.localizedName)
-            app.forceTerminate()
-            print("Application terminated successfully")
-        } else {
-            print("Application is not running")
-        }
+        return runningApps.contains { $0.bundleIdentifier == appBundleID }
     }
     
     func launchShadowServer() {
-        let fileManager = FileManager.default
-        let urls = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-        
-//        guard let directory = FileManager.SearchPathDirectory.from(string: "ApplicationSupportDirectory") else {
-//            print("No Application Support Directory found")
-//            return
-//        }
-//        
-//        guard let directoryURL = fileManager.urls(for: directory, in: .userDomainMask).first else {
-//            print("Unable to find directory URL")
-//            return
-//        }
-        
-        print("url - \(urls)")
-        
-        guard let applicationSupportURL = urls.first else {
+        guard let appPathURL = appPathURL else {
             print("Could not find Application Support directory")
             return
         }
         
-        print("applicationSupportURL --> \(applicationSupportURL)")
-        
-        let appName = "ShadowServer.app"
-        let appPathURL = applicationSupportURL.appendingPathComponent("com.taperlabs.shadow").appendingPathComponent(appName)
-        
-        print("appPathURL --> \(appPathURL)")
-
         let workspace = NSWorkspace.shared
         let configuration = NSWorkspace.OpenConfiguration()
         
@@ -56,6 +33,29 @@ final class ShadowServerHandler {
             } else {
                 print("Application launched successfully")
             }
+        }
+    }
+    
+    func terminateApp() {
+        let runningApps = NSWorkspace.shared.runningApplications
+        if let app = runningApps.first(where: { $0.bundleIdentifier == appBundleID }) {
+            print(app.localizedName ?? "Unknown application")
+            
+            // Attempt to terminate cleanly
+            app.terminate()
+            
+            // Allow some time for the app to terminate gracefully
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                if app.isTerminated {
+                    print("Application terminated successfully")
+                } else {
+                    // Fallback to force termination
+                    app.forceTerminate()
+                    print("Application forcibly terminated")
+                }
+            }
+        } else {
+            print("Application is not running")
         }
     }
 }
