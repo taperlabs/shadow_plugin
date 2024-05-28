@@ -284,6 +284,12 @@ extension ShadowPlugin {
     
     public func stopShadowServer(result: @escaping FlutterResult) {
         let shadowServerApp = ShadowServerHandler()
+        
+        if !shadowServerApp.isAppRunning() {
+            result("App is not running")
+            return
+        }
+        
         shadowServerApp.terminateApp()
         result("App termination requested")
     }

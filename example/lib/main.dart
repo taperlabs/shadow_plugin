@@ -101,6 +101,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
+    print("dispose called !!!!@!@!@!@");
     _shadowPlugin.stopShadowServer();
     super.dispose();
   }
@@ -811,6 +812,10 @@ class _MyAppState extends State<MyApp> {
               ),
               CustomButton(
                 "Start Shadow Server",
+                () => startShadowServer(),
+              ),
+              CustomButton(
+                "Stop Shadow Server",
                 () => stopShadowServer(),
               )
               // ... [rest of the buttons]
