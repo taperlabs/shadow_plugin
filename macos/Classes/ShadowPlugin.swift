@@ -276,6 +276,7 @@ extension ShadowPlugin {
         
         if shadowServerApp.isAppRunning() {
             result("App already running")
+            ShadowLogger.shared.log("App already running - \(shadowServerApp.isAppRunning())")
             return
         }
         shadowServerApp.launchShadowServer()
@@ -287,6 +288,7 @@ extension ShadowPlugin {
         
         if !shadowServerApp.isAppRunning() {
             result("App is not running")
+            ShadowLogger.shared.log("App is not running - \(shadowServerApp.isAppRunning())")
             return
         }
         

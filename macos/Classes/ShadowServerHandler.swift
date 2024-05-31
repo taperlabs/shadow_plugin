@@ -32,6 +32,7 @@ final class ShadowServerHandler {
                 print("Failed to launch application: \(error)")
             } else {
                 print("Application launched successfully")
+                ShadowLogger.shared.log("Application launched successfully")
             }
         }
     }
@@ -43,6 +44,7 @@ final class ShadowServerHandler {
             
             // Attempt to terminate cleanly
             app.forceTerminate()
+            ShadowLogger.shared.log("App termination requested")
             
             // Allow some time for the app to terminate gracefully
 //            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
