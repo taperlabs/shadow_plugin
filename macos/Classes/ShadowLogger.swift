@@ -26,7 +26,7 @@ final class ShadowLogger {
         // Append the specific folder path for 'com.taperlabs.shadow', then a 'logs' subfolder
         let folderURL = documentDirectory
             .appendingPathComponent("com.taperlabs.shadow")
-            .appendingPathComponent("s_logs")
+            .appendingPathComponent("logs")
 
         // Get the current date in the desired format for file naming
         let dateStamp = formatDate(with: .dateOnly)
