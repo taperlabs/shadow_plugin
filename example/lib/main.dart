@@ -687,7 +687,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> startShadowServer() async {
-    await _shadowPlugin.startShadowServer();
+    final response = await _shadowPlugin.startShadowServer();
+    print("Shadow Server Response: $response");
   }
 
   Future<void> stopShadowServer() async {

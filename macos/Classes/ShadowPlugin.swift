@@ -279,8 +279,7 @@ extension ShadowPlugin {
             ShadowLogger.shared.log("App already running - \(shadowServerApp.isAppRunning())")
             return
         }
-        shadowServerApp.launchShadowServer()
-        result("App launched successfully")
+        shadowServerApp.launchShadowServer(result: result)
     }
     
     public func stopShadowServer(result: @escaping FlutterResult) {

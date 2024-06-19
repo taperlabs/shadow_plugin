@@ -20,7 +20,7 @@ class Shadow {
     return ShadowPlatform.instance.stopShadowServer();
   }
 
-  Future<void> startShadowServer() {
+  Future<dynamic> startShadowServer() {
     return ShadowPlatform.instance.startShadowServer();
   }
 

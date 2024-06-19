@@ -1,5 +1,6 @@
 import Foundation
 import Cocoa
+import FlutterMacOS
 
 final class ShadowServerHandler {
     private let appBundleID = "com.taperlabs.shadowServer"
@@ -18,7 +19,7 @@ final class ShadowServerHandler {
         return runningApps.contains { $0.bundleIdentifier == appBundleID }
     }
     
-    func launchShadowServer() {
+    func launchShadowServer(result: @escaping FlutterResult) {
         guard let appPathURL = appPathURL else {
             print("Could not find Application Support directory")
             return
@@ -30,9 +31,11 @@ final class ShadowServerHandler {
         workspace.openApplication(at: appPathURL, configuration: configuration) { (app, error) in
             if let error = error {
                 print("Failed to launch application: \(error)")
+                result("failed")
                 ShadowLogger.shared.log("Failed to launch Shadow Server: \(error.localizedDescription)")
             } else {
                 print("Application launched successfully")
+                result("success")
                 ShadowLogger.shared.log("Application launched successfully")
             }
         }

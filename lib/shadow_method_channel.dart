@@ -47,7 +47,7 @@ class MethodChannelShadow extends ShadowPlatform {
   }
 
   @override
-  Future<void> startShadowServer() async {
+  Future<dynamic> startShadowServer() async {
     return methodChannel.invokeMethod('startShadowServer');
   }
 

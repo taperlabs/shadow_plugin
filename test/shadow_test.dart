@@ -33,7 +33,7 @@ class MockShadowPlatform with MockPlatformInterfaceMixin implements ShadowPlatfo
   Future<void> stopShadowServer() async {}
 
   @override
-  Future<void> startShadowServer() async {}
+  Future<dynamic> startShadowServer() async {}
 
   @override
   Future<dynamic> getDefaultAudioInputDevice() async {}
