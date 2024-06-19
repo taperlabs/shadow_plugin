@@ -4,7 +4,7 @@ import FlutterMacOS
 
 final class ShadowServerHandler {
     private let appBundleID = "com.taperlabs.shadowServer"
-    private let appName = "ShadowServer.app"
+    private let appName = "ShadowHelper.app"
     private let applicationSupportPath = "com.taperlabs.shadow"
     
     private var appPathURL: URL? {
