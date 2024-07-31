@@ -24,7 +24,8 @@ class AssetWriterHelper {
     
     //System Audio만 셋업
     func setUpSystemAudioAssetWriter(withConfig config: [String: Any]? = nil) {
-        let systemAudioFileName = "FlutterSystemAudio.m4a"
+//        let systemAudioFileName = "FlutterSystemAudio.m4a"
+        let systemAudioFileName = "FlutterSystemAudio.wav"
         let defaultFilePath = "ApplicationSupportDirectory"
         let format: AudioFormatOption
         let channels: NumberOfChannels
@@ -32,13 +33,15 @@ class AssetWriterHelper {
         let filename: String
         let filePath: String
         if let config = config {
-            format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .mpeg4AAC
+//            format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .mpeg4AAC
+            format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .pcm
             channels = NumberOfChannels(rawValue: config["channels"] as? String ?? "") ?? .mono
             sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate16K
             filename = config["fileName"] as? String ?? systemAudioFileName
             filePath = config["filePath"] as? String ?? defaultFilePath
         } else {
-            format = .mpeg4AAC
+//            format = .mpeg4AAC
+            format = .pcm
             channels = .mono
             sampleRate = .rate16K
             filename = systemAudioFileName
@@ -63,7 +66,7 @@ class AssetWriterHelper {
         
         do {
             //AssetWriter Setting
-            systemAudioAssetWriter = try AVAssetWriter(outputURL: audioOutputURL, fileType: .m4a)
+            systemAudioAssetWriter = try AVAssetWriter(outputURL: audioOutputURL, fileType: .wav)
             
             // AudioOuput Setting
             let audioOutputSettings = AudioSetting.setAudioConfiguration(format: format, channels: channels, sampleRate: sampleRate)

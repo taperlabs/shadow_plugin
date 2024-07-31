@@ -15,14 +15,38 @@ struct AudioSetting {
     static func setAudioConfiguration(format: AudioFormatOption,
                                       channels: NumberOfChannels,
                                       sampleRate: SampleRateOption) -> [String: Any] {
-        return [
+        var settings: [String: Any] = [
             AVFormatIDKey: format.formatID,
             AVSampleRateKey: sampleRate.sampleRate,
-            AVNumberOfChannelsKey: channels.channelCount,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            AVNumberOfChannelsKey: channels.channelCount
         ]
+        
+        if format == .pcm {
+            settings[AVLinearPCMIsBigEndianKey] = false
+            settings[AVLinearPCMIsFloatKey] = false
+            settings[AVLinearPCMBitDepthKey] = 16
+            settings[AVLinearPCMIsNonInterleaved] = false
+        } else {
+            settings[AVEncoderAudioQualityKey] = AVAudioQuality.high.rawValue
+        }
+        
+        return settings
     }
 }
+
+
+//struct AudioSetting {
+//    static func setAudioConfiguration(format: AudioFormatOption,
+//                                      channels: NumberOfChannels,
+//                                      sampleRate: SampleRateOption) -> [String: Any] {
+//        return [
+//            AVFormatIDKey: format.formatID,
+//            AVSampleRateKey: sampleRate.sampleRate,
+//            AVNumberOfChannelsKey: channels.channelCount,
+//            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+//        ]
+//    }
+//}
 
 struct RestartApplication {
     static func relaunch(afterDelay seconds: TimeInterval = 0.5) -> Never {

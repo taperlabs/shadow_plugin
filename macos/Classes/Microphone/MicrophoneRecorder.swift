@@ -8,7 +8,7 @@ import FlutterMacOS
 final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     
     private var audioRecorder: AVAudioRecorder?
-    private let recordingFileName = "FlutterMicRecording.m4a"
+    private let recordingFileName = "FlutterMicRecording.wav"
     private let recordingFilePath = "ApplicationSupportDirectory"
     private var sink: FlutterEventSink?
     private var micAudioLevelSink: FlutterEventSink?
@@ -48,16 +48,16 @@ final class MicrophoneRecorder: NSObject, FlutterStreamHandler {
     }
     
     func startMicAudioRecording() {
-        let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
-//        let audioSettings = AudioSetting.setAudioConfiguration(format: .pcm, channels: .mono, sampleRate: .rate16K)
+//        let audioSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
+        let audioSettings = AudioSetting.setAudioConfiguration(format: .pcm, channels: .mono, sampleRate: .rate16K)
         setupAndStartRecording(with: audioSettings, filename: recordingFileName, filePath: recordingFilePath)
     }
     
     
     func startMicAudioRecording(withConfig config: [String: Any]) {
         print("config!!!", config)
-        let format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .mpeg4AAC
-//        let format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .pcm
+//        let format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .mpeg4AAC
+        let format = AudioFormatOption(rawValue: config["format"] as? String ?? "") ?? .pcm
         let channels = NumberOfChannels(rawValue: config["channels"] as? String ?? "") ?? .mono
 //        let sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate44_1K
         let sampleRate = SampleRateOption(rawValue: config["sampleRate"] as? String ?? "") ?? .rate16K
