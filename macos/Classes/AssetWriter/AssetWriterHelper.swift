@@ -66,7 +66,7 @@ class AssetWriterHelper {
         
         do {
             //AssetWriter Setting
-            systemAudioAssetWriter = try AVAssetWriter(outputURL: audioOutputURL, fileType: .wav)
+            systemAudioAssetWriter = try AVAssetWriter(outputURL: audioOutputURL, fileType: .m4a)
             
             // AudioOuput Setting
             let audioOutputSettings = AudioSetting.setAudioConfiguration(format: format, channels: channels, sampleRate: sampleRate)
