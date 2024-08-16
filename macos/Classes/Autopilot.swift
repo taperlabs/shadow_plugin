@@ -1,6 +1,7 @@
 import Foundation
 import ScreenCaptureKit
 import FlutterMacOS
+import RegexBuilder
 
 struct LsofEntry {
     let appName: String
@@ -317,48 +318,46 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         }
     }
     
-    private func detectInMeeting() -> Void {
+    private func detectInMeeting() {
         guard let unWrappedWindows = self.windows else { return }
         DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
             
             var foundWindowID: Int?
             var foundAppName: String?
-            var googleMeetID: String?
             
-            self?.isInMeetingByWindowTitle = false
+            self.isInMeetingByWindowTitle = false
             
             for window in unWrappedWindows {
-                guard let title = window.title, let bundleID = window.owningApplication?.bundleIdentifier else { continue }
-         
-                if bundleID == "company.thebrowser.Browser" && self?.isGoogleMeetFormat(title: title) == true {
-                    self?.isInMeetingByWindowTitle = true
+                guard let title = window.title,
+                      let bundleID = window.owningApplication?.bundleIdentifier else { continue }
+                
+                if bundleID == "company.thebrowser.Browser" && self.isGoogleMeetFormat(title: title) {
+                    print("Arc browser Google Meet test \(title)")
+                    self.isInMeetingByWindowTitle = true
                     ShadowLogger.shared.log("W --- AR")
                     break
                 } else if title.contains(WindowTitles.teams.detectionString) {
-                    self?.isInMeetingByWindowTitle = true
-                    
+                    self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.teams.appName
                     ShadowLogger.shared.log("W --- 1")
                     break
-                } else if let extractedID = self?.extractGoogleMeetID(from: title) {
-                    // Check if title contains the detection string and the extracted ID is in the correct format
-                    if title.contains(WindowTitles.googleMeet.detectionString) && self?.isGoogleMeetFormat(title: extractedID) == true {
-                        self?.isInMeetingByWindowTitle = true
-                        foundWindowID = Int(window.windowID)
-                        foundAppName = WindowTitles.googleMeet.appName
-                        googleMeetID = extractedID
-                        ShadowLogger.shared.log("W --- 2")
-                        break
-                    }
+                } else if self.isGoogleMeetTitleForChrome(title) {
+                    print("Google Meet Title For Chrome check! ✅ \(title)")
+                    self.isInMeetingByWindowTitle = true
+                    foundWindowID = Int(window.windowID)
+                    foundAppName = WindowTitles.googleMeet.appName
+                    ShadowLogger.shared.log("W --- 2")
+                    break
                 } else if title.contains(WindowTitles.webex.detectionString) {
-                    self?.isInMeetingByWindowTitle = true
+                    self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.webex.appName
                     ShadowLogger.shared.log("W --- 3")
                     break
-                }  else if title.contains(WindowTitles.around.detectionString) {
-                    self?.isInMeetingByWindowTitle = true
+                } else if title.contains(WindowTitles.around.detectionString) {
+                    self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.around.appName
                     ShadowLogger.shared.log("W --- 4")
@@ -367,9 +366,73 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             }
             
             DispatchQueue.main.async {
-                self?.updateMeetingStatus()  // Call the update method here
+                self.updateMeetingStatus()  // Call the update method here
             }
         }
+    }
+    
+//    private func detectInMeeting() -> Void {
+//        guard let unWrappedWindows = self.windows else { return }
+//        DispatchQueue.global().async { [weak self] in
+//            
+//            var foundWindowID: Int?
+//            var foundAppName: String?
+//            var googleMeetID: String?
+//            
+//            self?.isInMeetingByWindowTitle = false
+//            
+//            for window in unWrappedWindows {
+//                guard let title = window.title, let bundleID = window.owningApplication?.bundleIdentifier else { continue }
+//         
+//                if bundleID == "company.thebrowser.Browser" && self?.isGoogleMeetFormat(title: title) == true {
+//                    self?.isInMeetingByWindowTitle = true
+//                    ShadowLogger.shared.log("W --- AR")
+//                    break
+//                } else if title.contains(WindowTitles.teams.detectionString) {
+//                    self?.isInMeetingByWindowTitle = true
+//                    
+//                    foundWindowID = Int(window.windowID)
+//                    foundAppName = WindowTitles.teams.appName
+//                    ShadowLogger.shared.log("W --- 1")
+//                    break
+//                } else if let extractedID = self?.extractGoogleMeetID(from: title) {
+//                    // Check if title contains the detection string and the extracted ID is in the correct format
+//                    if title.contains(WindowTitles.googleMeet.detectionString) && self?.isGoogleMeetFormat(title: extractedID) == true {
+//                        self?.isInMeetingByWindowTitle = true
+//                        foundWindowID = Int(window.windowID)
+//                        foundAppName = WindowTitles.googleMeet.appName
+//                        googleMeetID = extractedID
+//                        ShadowLogger.shared.log("W --- 2")
+//                        break
+//                    }
+//                } else if title.contains(WindowTitles.webex.detectionString) {
+//                    self?.isInMeetingByWindowTitle = true
+//                    foundWindowID = Int(window.windowID)
+//                    foundAppName = WindowTitles.webex.appName
+//                    ShadowLogger.shared.log("W --- 3")
+//                    break
+//                }  else if title.contains(WindowTitles.around.detectionString) {
+//                    self?.isInMeetingByWindowTitle = true
+//                    foundWindowID = Int(window.windowID)
+//                    foundAppName = WindowTitles.around.appName
+//                    ShadowLogger.shared.log("W --- 4")
+//                    break
+//                }
+//            }
+//            
+//            DispatchQueue.main.async {
+//                self?.updateMeetingStatus()  // Call the update method here
+//            }
+//        }
+//    }
+    
+    private func isGoogleMeetTitleForChrome(_ title: String) -> Bool {
+        let pattern = Regex {
+            "Meet - "
+            OneOrMore(.any)
+        }
+        
+        return title.wholeMatch(of: pattern) != nil
     }
     
     private func isGoogleMeetFormat(title: String) -> Bool {
