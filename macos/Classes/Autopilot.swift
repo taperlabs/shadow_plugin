@@ -333,7 +333,6 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                       let bundleID = window.owningApplication?.bundleIdentifier else { continue }
                 
                 if bundleID == "company.thebrowser.Browser" && self.isGoogleMeetFormat(title: title) {
-                    print("Arc browser Google Meet test \(title)")
                     self.isInMeetingByWindowTitle = true
                     ShadowLogger.shared.log("W --- AR")
                     break
@@ -344,7 +343,6 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                     ShadowLogger.shared.log("W --- 1")
                     break
                 } else if self.isGoogleMeetTitleForChrome(title) {
-                    print("Google Meet Title For Chrome check! ✅ \(title)")
                     self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.googleMeet.appName
