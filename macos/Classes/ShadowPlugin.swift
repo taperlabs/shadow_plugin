@@ -103,6 +103,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             let statusCGPREFLIGHT = PermissionStatusCheckerHelper.checkScreenRecordingPermission()
             let statusCGWINDOW = screenRecordingPermissionClass.isScreenRecordingGranted
             let response: [String: Any] = ["statusCGPREFLIGHT": statusCGPREFLIGHT, "statusCGWINDOW": statusCGWINDOW]
+            print("getAllScreenPermissionStatuses \(response)")
             result(response)
             
         case .restartApp:

@@ -510,6 +510,15 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         break
                                     }
                                     
+                                    if app == .arc {
+                                        print("arc detected")
+                                        self.isInMeetingByMic = true
+                                        self.activeMeetingApp = app
+                                        self.isInMeetingByWindowTitle = true
+                                        ShadowLogger.shared.log("ARC(A-M)")
+                                        break
+                                    }
+                                    
                                     
                                     self.isInMeetingByMic = true
                                     self.activeMeetingApp = app

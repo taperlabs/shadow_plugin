@@ -203,17 +203,34 @@ class ScreenRecorder {
             fatalError("stream Config nill")
         }
         
-        //Audio Capture
+        // Audio Capture
         streamConfig.capturesAudio = true
         
-        //Width & Height
-        streamConfig.width = 1920
-        streamConfig.height = 1080
+        // Use a minimal but reasonable resolution
+        streamConfig.width = 128
+        streamConfig.height = 72
+        
+        // Use a standard low frame rate to maintain sync
+        streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: 30) // 30 FPS
+        
+        // Queue depth can remain minimal since video is not important
+        streamConfig.queueDepth = 3
         
         streamConfig.scalesToFit = true
-        // Optimizing Performance
-        streamConfig.queueDepth = 6
-        streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: 60)
+        
+
+        
+        //Audio Capture
+//        streamConfig.capturesAudio = true
+//        
+//        //Width & Height
+//        streamConfig.width = 1920
+//        streamConfig.height = 1080
+//        
+//        streamConfig.scalesToFit = true
+//        // Optimizing Performance
+//        streamConfig.queueDepth = 6
+//        streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: 60)
         
     }
     

@@ -36,6 +36,7 @@ public final class ScreenRecordingPermissionHandler: NSObject, FlutterStreamHand
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             let canRecordstatus = Self.canRecordScreen()
+            print("리코드 할 수 있습니다 \(Self.canRecordScreen())")
             eventSink(canRecordstatus)
         }
     }
