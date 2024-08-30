@@ -655,6 +655,9 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> getAllScreenRecordingPermissionStatuses() async {
     Map<String, dynamic> result = await _shadowPlugin.getAllScreenPermissionStatuses();
+    setState(() {
+      _micPermissionStatus = result['micPermissionStatus'].toString();
+    });
     print("getAllScreenRecordingPermissionStatuses: $result");
   }
 
