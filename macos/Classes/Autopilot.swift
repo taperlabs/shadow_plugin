@@ -155,50 +155,50 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
     
     private func detectMeetingInSession() {
-        ////        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
-        //            guard let self = self else { return }
-        //let startTime = Date()
-        do {
-            let output = try self.executeLsof()
-            DispatchQueue.main.async {
-                self.parseLsofOutput(output)
-                //print("🏄‍♂️", activeConnections)
-                
-                if self.activeConnections.isEmpty && self.isMeetingInProgress {
-                    //print("You were in a Meeting but now ended 🔴")
-                    self.isMeetingInProgress = false
-                    self.isInMeetingByMic = false
-                    self.isInMeetingByWindowTitle = false
-                    self.updateMeetingStatus()
-                    ShadowLogger.shared.log("M-A 0")
-                    //Condition met, now end the function block
-                    return
-                }
-                
-                for entry in self.activeConnections.values {
-                    //print("Entry", entry)
+        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+            guard let self = self else { return }
+            //let startTime = Date()
+            do {
+                let output = try self.executeLsof()
+                DispatchQueue.main.async {
+                    self.parseLsofOutput(output)
+                    //print("🏄‍♂️", activeConnections)
                     
-                    if self.isAppNameWhitelisted(appName: entry.appName) {
-                        if entry.isConnectionOlderThanNSeconds {
-                            //                                print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
-                            ShadowLogger.shared.log("M-A 1")
-                            self.isMeetingInProgress = true
-                            self.isInMeetingByMic = true
-                            self.isInMeetingByWindowTitle = true
-                            self.updateMeetingStatus()
-                            //Logic
-                        } else {
-                            print("Connection is too short, might not be a meeting")
+                    if self.activeConnections.isEmpty && self.isMeetingInProgress {
+                        //print("You were in a Meeting but now ended 🔴")
+                        self.isMeetingInProgress = false
+                        self.isInMeetingByMic = false
+                        self.isInMeetingByWindowTitle = false
+                        self.updateMeetingStatus()
+                        ShadowLogger.shared.log("M-A 0")
+                        //Condition met, now end the function block
+                        return
+                    }
+                    
+                    for entry in self.activeConnections.values {
+                        //print("Entry", entry)
+                        
+                        if self.isAppNameWhitelisted(appName: entry.appName) {
+                            if entry.isConnectionOlderThanNSeconds {
+                                print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
+                                ShadowLogger.shared.log("M-A 1")
+                                self.isMeetingInProgress = true
+                                self.isInMeetingByMic = true
+                                self.isInMeetingByWindowTitle = true
+                                self.updateMeetingStatus()
+                                //Logic
+                            } else {
+                                print("Connection is too short, might not be a meeting")
+                            }
                         }
                     }
                 }
+                
+            } catch let error {
+                print("Failed to run ls execute 1: \(error.localizedDescription)")
+                ShadowLogger.shared.log("Failed to execute 1: \(error.localizedDescription)")
             }
-            
-        } catch let error {
-            print("Failed to run ls execute 1: \(error.localizedDescription)")
-            ShadowLogger.shared.log("Failed to execute 1: \(error.localizedDescription)")
         }
-        //        }
         
         
         
