@@ -353,6 +353,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 guard let title = window.title,
                       let bundleID = window.owningApplication?.bundleIdentifier else { continue }
                 
+//                print("Window Title - \(title), bundleID - \(bundleID)")
+                
                 if bundleID == "company.thebrowser.Browser" && self.isGoogleMeetFormat(title: title) {
                     self.isInMeetingByWindowTitle = true
                     ShadowLogger.shared.log("W --- AR")
@@ -446,12 +448,25 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     //    }
     
     private func isGoogleMeetTitleForChrome(_ title: String) -> Bool {
-        let pattern = Regex {
-            "Meet - "
-            OneOrMore(.any)
-        }
+//        let pattern = Regex {
+//            "Google Meet - Meet - "
+//            OneOrMore(.any)
+//        }
+//        let pattern = Regex { "Meet -"}
+//        return title.firstMatch(of: pattern) != nil
         
-        return title.wholeMatch(of: pattern) != nil
+//        let pattern = Regex {
+//            Anchor.startOfLine
+//            ChoiceOf {
+//                "Google Meet - Meet - "
+//                "Meet - "
+//            }
+//            ZeroOrMore(.any)
+//        }
+//        
+//        return title.firstMatch(of: pattern) != nil
+//        return title.wholeMatch(of: pattern) != nil
+        return title.hasPrefix("Google Meet - Meet - ") || title.hasPrefix("Meet - ")
     }
     
     private func isGoogleMeetFormat(title: String) -> Bool {
@@ -545,7 +560,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                     self.activeMeetingApp = app
                                     print("Active Meeting App", app)
                                     print("Microphone is in use by \(app)")
-                                    ShadowLogger.shared.log("A(M)")
+                                    ShadowLogger.shared.log("\(app) - A(M)")
                                     // React to microphone being used by this app
                                     break
                                 }
