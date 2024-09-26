@@ -36,6 +36,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     
     private var isLogStreamSuspended: Bool = false
     
+    private let stateQueue = DispatchQueue(label: "com.yourapp.autopilot.stateQueue")
+    
     enum WhitelistAppName: String, CaseIterable {
         case Around = "Around"
         case Discord = "Discord"
@@ -94,9 +96,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         static let allValues = [chrome, safari, arc, edge, firefox, zoom, around, teamsnew, teamsclassic, slack, discord, webex, goto]
     }
     
-    
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
-        
         self.eventSink = events
         if self.isLogStreamSuspended {
             resumeLogStream()
@@ -124,7 +124,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     
     // Start a timer to check window titles every second
     private func startWindowCheckTimer() {
-        windowCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        windowCheckTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             self?.fetchWindows()
         }
     }
@@ -304,18 +304,25 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
     
     private func updateMeetingStatus() {
-        if isInMeetingByMic && isInMeetingByWindowTitle && !isMeetingDetected {
-            isMeetingDetected = true
-            self.eventSink?(["isInMeeting": isMeetingDetected])
-            print("✈️ 미팅 시작 감지 성공 Flutter로 메세지 보냅니다 🟢")
-            ShadowLogger.shared.log("U -- MSD")
-            // Perform actions for meeting start
-        } else if isMeetingDetected && !isInMeetingByMic {
-            isMeetingDetected = false
-            self.eventSink?(["isInMeeting": isMeetingDetected])
-            print("🗳️ 미팅 종료 감지 성공 Flutter로 메세지 보냅니다 🔴")
-            ShadowLogger.shared.log("U -- MED")
-            // Perform actions for meeting end
+        stateQueue.sync {
+            // Update and check isInMeetingByMic and isInMeetingByWindowTitle
+            // Ensure that updates are thread-safe
+            print("isInMeetingByMic - \(isInMeetingByMic), isInMeetingByWindowTitle - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
+            
+            if isInMeetingByMic && isInMeetingByWindowTitle && !isMeetingDetected {
+                isMeetingDetected = true
+                self.eventSink?(["isInMeeting": isMeetingDetected])
+                print("✈️ 미팅 시작 감지 성공 Flutter로 메세지 보냅니다 🟢")
+                ShadowLogger.shared.log("U -- MSD")
+                // Perform actions for meeting start
+            } else if isMeetingDetected && !isInMeetingByMic {
+                isMeetingDetected = false
+                isInMeetingByWindowTitle = false
+                self.eventSink?(["isInMeeting": isMeetingDetected])
+                print("🗳️ 미팅 종료 감지 성공 Flutter로 메세지 보냅니다 🔴")
+                ShadowLogger.shared.log("U -- MED")
+                // Perform actions for meeting end
+            }
         }
     }
     
@@ -331,17 +338,17 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 }
                 guard let content = content else { return }
                 //                print("SC 3333")
-                //                DispatchQueue.main.async {
-                self?.windows = content.windows
-                self?.detectInMeeting()
-                //                }
+                DispatchQueue.main.async {
+                    self?.windows = content.windows
+                    self?.detectInMeeting()
+                }
             }
         }
     }
     
     private func detectInMeeting() {
         guard let unWrappedWindows = self.windows else { return }
-        DispatchQueue.global().async { [weak self] in
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
             var foundWindowID: Int?
@@ -353,13 +360,20 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 guard let title = window.title,
                       let bundleID = window.owningApplication?.bundleIdentifier else { continue }
                 
-//                print("Window Title - \(title), bundleID - \(bundleID)")
+                //                print("Window Title - \(title), bundleID - \(bundleID)")
                 
                 if bundleID == "company.thebrowser.Browser" && self.isGoogleMeetFormat(title: title) {
                     self.isInMeetingByWindowTitle = true
                     ShadowLogger.shared.log("W --- AR")
                     break
-                } else if title.contains(WindowTitles.teams.detectionString) {
+                } else if self.detectTeamsWebWindowTitle(title) {
+                    self.isInMeetingByWindowTitle = true
+                    foundWindowID = Int(window.windowID)
+                    foundAppName = WindowTitles.teams.appName
+                    ShadowLogger.shared.log("W --- 1")
+                    break
+                }
+                else if title.contains(WindowTitles.teams.detectionString) {
                     self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.teams.appName
@@ -447,25 +461,49 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     //        }
     //    }
     
-    private func isGoogleMeetTitleForChrome(_ title: String) -> Bool {
-//        let pattern = Regex {
-//            "Google Meet - Meet - "
-//            OneOrMore(.any)
-//        }
-//        let pattern = Regex { "Meet -"}
-//        return title.firstMatch(of: pattern) != nil
+    private func detectTeamsWebWindowTitle(_ input: String) -> Bool {
+        // Split the input string by " | "
+        let components = input.components(separatedBy: " | ")
+        //        print("components - \(components)")
         
-//        let pattern = Regex {
-//            Anchor.startOfLine
-//            ChoiceOf {
-//                "Google Meet - Meet - "
-//                "Meet - "
-//            }
-//            ZeroOrMore(.any)
-//        }
-//        
-//        return title.firstMatch(of: pattern) != nil
-//        return title.wholeMatch(of: pattern) != nil
+        // Check if we have at least 2 components (start and end)
+        guard components.count >= 2 else {
+            return false
+        }
+        
+        // Check if it starts with "Chat" or "Calendar"
+        guard components.first == "Chat" || components.first == "Calendar" else {
+            return false
+        }
+        
+        // Check if it ends with "Microsoft Teams"
+        guard components.contains("Microsoft Teams") else {
+            return false
+        }
+        
+        // If we've passed all checks, it's a match
+        return true
+    }
+    
+    private func isGoogleMeetTitleForChrome(_ title: String) -> Bool {
+        //        let pattern = Regex {
+        //            "Google Meet - Meet - "
+        //            OneOrMore(.any)
+        //        }
+        //        let pattern = Regex { "Meet -"}
+        //        return title.firstMatch(of: pattern) != nil
+        
+        //        let pattern = Regex {
+        //            Anchor.startOfLine
+        //            ChoiceOf {
+        //                "Google Meet - Meet - "
+        //                "Meet - "
+        //            }
+        //            ZeroOrMore(.any)
+        //        }
+        //
+        //        return title.firstMatch(of: pattern) != nil
+        //        return title.wholeMatch(of: pattern) != nil
         return title.hasPrefix("Google Meet - Meet - ") || title.hasPrefix("Meet - ")
     }
     
@@ -495,7 +533,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             readHandle.readabilityHandler = { fileHandle in
                 let data = fileHandle.availableData
                 if let string = String(data: data, encoding: .utf8), !string.isEmpty {
-                    //                    print("스트리입니다", string)
+//                    print("스트리입니다", string)
                     if string.contains("Active activity attributions changed to") {
                         let components = string.components(separatedBy: "Active activity attributions changed to")
                         if components.count > 1 {
