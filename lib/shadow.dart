@@ -16,6 +16,22 @@ class Shadow {
 
   Stream<dynamic> get screenCaptureKitBugEvents => ShadowPlatform.instance.screenCaptureKitBugEvents;
 
+  Stream<dynamic> get multiWindowEvents => ShadowPlatform.instance.multiWindowEvents;
+
+  Future<void> startListening({
+    Map<String, dynamic>? listeningConfig,
+  }) {
+    return ShadowPlatform.instance.startListening(listeningConfig: listeningConfig);
+  }
+
+  Future<void> sendHotKeyEvent(String key, List<String> modifiers) {
+    return ShadowPlatform.instance.sendHotKeyEvent(key, modifiers);
+  }
+
+  Future<void> createNewWindow() {
+    return ShadowPlatform.instance.createNewWindow();
+  }
+
   Future<void> stopShadowServer() {
     return ShadowPlatform.instance.stopShadowServer();
   }

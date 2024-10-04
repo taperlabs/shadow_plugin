@@ -52,6 +52,24 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('scBugEvents has not been implemented.');
   }
 
+  Stream<dynamic> get multiWindowEvents {
+    throw UnimplementedError('multiWindowEvents has not been implemented.');
+  }
+
+  Future<void> startListening({
+    Map<String, dynamic>? listeningConfig,
+  }) {
+    throw UnimplementedError('startListening() has not been implemented.');
+  }
+
+  Future<void> sendHotKeyEvent(String key, List<String> modifiers) {
+    throw UnimplementedError('sendHotKeyEvent() has not been implemented.');
+  }
+
+  Future<void> createNewWindow() {
+    throw UnimplementedError('createNewWindow() has not been implemented.');
+  }
+
   Future<void> stopShadowServer() {
     throw UnimplementedError('stopShadowServer() has not been implemented.');
   }

@@ -4,7 +4,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shadow/shadow.dart';
+import 'package:shadow/shadow_platform_interface.dart';
 
 void main() {
   runApp(const MyApp());
@@ -51,6 +53,8 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription<dynamic>? nudgeSubscription;
   StreamSubscription<dynamic>? micAudioLevelSubscription;
 
+  StreamSubscription<dynamic>? multiWindowEventStreamSubscription;
+
   String dropdownValue = '';
 
   List<String> audioInputDeviceList = [];
@@ -91,9 +95,12 @@ class _MyAppState extends State<MyApp> {
   List processList = [];
   Process? process;
 
+  late HotKey _hotKey;
+
   @override
   void initState() {
     super.initState();
+    _setupHotkey();
     getAudioInputDeviceList();
 
     // initPlatformState();
@@ -103,7 +110,28 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     print("dispose called !!!!@!@!@!@");
     _shadowPlugin.stopShadowServer();
+    hotKeyManager.unregister(_hotKey);
     super.dispose();
+  }
+
+  void _setupHotkey() async {
+    _hotKey = HotKey(
+      key: PhysicalKeyboardKey.keyS,
+      modifiers: [HotKeyModifier.control, HotKeyModifier.meta],
+      scope: HotKeyScope.system,
+    );
+
+    await hotKeyManager.register(
+      _hotKey,
+      keyDownHandler: (hotKey) async {
+        print('Hotkey pressed: ${hotKey.identifier}, ${hotKey.physicalKey.debugName}, ${hotKey.scope} ${hotKey.modifiers}');
+        final key = hotKey.physicalKey.debugName!;
+        final modifiers = hotKey.modifiers!.map((modifier) => modifier.toString()).toList();
+        print('key: $key');
+        await _shadowPlugin.sendHotKeyEvent(key, modifiers);
+        //Send event to Swift
+      },
+    );
   }
 
   runStream() async {
@@ -128,6 +156,18 @@ class _MyAppState extends State<MyApp> {
 
   void stopStream() {
     process?.kill();
+  }
+
+  createNewWindow() async {
+    try {
+      print('Creating new window 호출');
+      await _shadowPlugin.createNewWindow();
+      multiWindowEventStreamSubscription = _shadowPlugin.multiWindowEvents.listen((event) {
+        print('event: $event');
+      });
+    } on PlatformException {
+      print('Failed to create new window.');
+    }
   }
 
   finalLsofTest() async {
@@ -714,6 +754,9 @@ class _MyAppState extends State<MyApp> {
               Text('$_micPermissionStatus', style: Theme.of(context).textTheme.headlineMedium),
               Text('$_isScreenRecordingPermissionGranted', style: Theme.of(context).textTheme.headlineMedium),
               Text('$isInMeeting', style: Theme.of(context).textTheme.headlineMedium),
+
+              CustomButton("Create createNewWindow", () => createNewWindow()),
+
               CustomButton(
                   "Request Microhpone Permission",
                   () => requestMicPermissionWithEvents(

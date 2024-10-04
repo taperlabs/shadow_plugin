@@ -13,6 +13,14 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     private static let nudgeEventChannelName = "phoenixNudgeEventChannel"
     private static let micAudioLevelEventsName = "micAudioLevelEventChannel"
     private static let screenCaptureKitBugEventsName = "screenCaptureKitBugEventChannel"
+    
+    private static let multiWindowEventChannelName = "multiWindowEventChannel"
+    private var windowManager: WindowManager?
+    private var listeningViewModel: ListeningViewModel?
+    static var multiWindowEventChannel: FlutterEventChannel?
+    private var registrar: FlutterPluginRegistrar?
+    private static var instance: ShadowPlugin?
+    
     static var screenEventChannel: FlutterEventChannel?
     var micAudioRecording = MicrophoneRecorder()
     var screenRecorder = ScreenRecorder()
@@ -25,9 +33,106 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     let coreAudioHandler = CoreAudioHandler()
     let screenCaptureKitBugEventsClass = ScreenCaptureKitBugHandler()
     
+    func isFontAvailable(_ fontName: String) -> Bool {
+        let fontFamilyNames = NSFontManager.shared.availableFontFamilies
+        let fontNames = NSFontManager.shared.availableMembers(ofFontFamily: fontName)?.map { $0[0] as! String } ?? []
+        
+        print("Available font families: \(fontFamilyNames)")
+        print("Available font names for family '\(fontName)': \(fontNames)")
+        
+        return NSFont(name: fontName, size: 12) != nil
+    }
+    
+    private func handleCreateNewWindow(call: FlutterMethodCall , result: @escaping FlutterResult) {
+        if windowManager == nil {
+            windowManager = WindowManager.shared
+        }
+        var args: [String: Any]
+        
+        if let args = call.arguments as? [String: Any] {
+            print("setup")
+        }
+        
+        guard let args = call.arguments as? [String: Any] else {
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments for sendHotKeyEvent", details: nil))
+            return
+        }
+        
+        print("아규먼트!! \(args)")
+        
+        let key = args["key"] as? String
+        let modifiers = args["modifiers"] as? [String]
+        let username = args["username"] as? String
+        let uuid = args["uuid"] as? String
+  
+        guard let registrar = registrar else {
+            result(FlutterError(code: "UNAVAILABLE", message: "Registrar not available", details: nil))
+            return
+        }
+        
+        // Use the existing listeningViewModel or create a new one if nil
+        if windowManager?.listeningViewModel == nil {
+            let newListeningVM = ListeningViewModel()
+            if !loadAssets(registrar: registrar, listeningVM: newListeningVM) {
+                result(FlutterError(code: "ASSET_LOADING_FAILED", message: "Failed to load assets", details: nil))
+                return
+            }
+            windowManager?.setListeningViewModel(listeningViewModel: newListeningVM)
+            ShadowPlugin.multiWindowEventChannel?.setStreamHandler(newListeningVM)
+            if let username = username, let uuid = uuid {
+                print("Username: \(username), UUID: \(uuid)")
+                newListeningVM.setupRecordingProperties(userName: username, uuid: uuid)
+            } else {
+                print("Username or UUID not provided")
+            }
+        }
+        
+        guard let newListeningVM = windowManager?.listeningViewModel else {
+            result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
+            return
+        }
+        
+        if WindowManager.shared.currentWindow == nil {
+            windowManager?.createWindow()
+        } else {
+            if newListeningVM.isRecording {
+                print("녹화중")
+                newListeningVM.stopMicRecording()
+                newListeningVM.isRecording = false
+                WindowManager.shared.currentWindow?.close()
+            } else {
+                print("녹화아님")
+                newListeningVM.renderListeningView()
+                WindowManager.shared.moveWindowToBottomLeft()
+            }
+        }
+
+  
+//        windowManager?.createWindow()
+        newListeningVM.sendEvent("New window created")
+        result(nil)
+    }
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "shadow", binaryMessenger: registrar.messenger)
         let instance = ShadowPlugin()
+        
+        instance.registrar = registrar
+        multiWindowEventChannel = FlutterEventChannel(name: multiWindowEventChannelName, binaryMessenger: registrar.messenger)
+        let windowManager = WindowManager.shared
+        instance.windowManager = windowManager
+        
+        guard let app = NSApplication.shared.delegate as? FlutterAppDelegate else {
+            debugPrint("failed to find flutter main window, application delegate is not FlutterAppDelegate")
+            return
+        }
+        guard let window = app.mainFlutterWindow else {
+            debugPrint("failed to find flutter main window")
+            return
+        }
+        
+        print("app - \(app), window - \(window)")
+        
         registrar.addMethodCallDelegate(instance, channel: channel)
         
         let micEventChannel = FlutterEventChannel(name: micEventChannelName, binaryMessenger: registrar.messenger)
@@ -80,6 +185,16 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+            
+        case .startListening:
+            print("Start Listening")
+            handleCreateNewWindow(call: call, result: result)
+            
+        case .sendHotKeyEvent:
+            handleCreateNewWindow(call: call, result: result)
+        
+        case .createNewWindow:
+            print("Createw New Window")
             
         case .stopShadowServer:
             print("stopShadowServer 불렸다")
@@ -237,6 +352,101 @@ extension ShadowPlugin {
         FileManagerHelper.deleteFileIfExists(at: fileURL)
         
         result("파일 삭제 성공!!!")
+    }
+}
+
+extension ShadowPlugin {
+    struct AssetPaths {
+        let heart: String
+        let lottie: String
+        let font: String
+        let done: String
+        let cancel: String
+        let minimize: String
+    }
+    
+    func loadAssets(registrar: FlutterPluginRegistrar, listeningVM: ListeningViewModel) -> Bool {
+        let bundlePath = Bundle.main.bundlePath
+        let fileManager = FileManager.default
+        
+        let assetPaths = AssetPaths(
+            heart: registrar.lookupKey(forAsset: "assets/heart.png"),
+            lottie: registrar.lookupKey(forAsset: "assets/loading_white.json"),
+            font: registrar.lookupKey(forAsset: "assets/Inter-Regular.ttf"),
+            done: registrar.lookupKey(forAsset: "assets/done.svg"),
+            cancel: registrar.lookupKey(forAsset: "assets/cancel.svg"),
+            minimize: registrar.lookupKey(forAsset: "assets/minimize.svg")
+        )
+        
+        let fullPaths = AssetPaths(
+            heart: "\(bundlePath)/\(assetPaths.heart)",
+            lottie: "\(bundlePath)/\(assetPaths.lottie)",
+            font: "\(bundlePath)/\(assetPaths.font)",
+            done: "\(bundlePath)/\(assetPaths.done)",
+            cancel: "\(bundlePath)/\(assetPaths.cancel)",
+            minimize: "\(bundlePath)/\(assetPaths.minimize)"
+        )
+
+        // Check if files exist
+        for (assetName, path) in [
+            ("Font", fullPaths.font),
+            ("Lottie", fullPaths.lottie),
+            ("Done", fullPaths.done)
+        ] {
+            if fileManager.fileExists(atPath: path) {
+//                print("\(assetName) file exists at path: \(path)")
+            } else {
+//                print("\(assetName) file does not exist at path: \(path)")
+                return false
+            }
+        }
+        
+        // Register font
+        if !registerFont(at: fullPaths.font) {
+            return false
+        }
+        
+        // Update ViewModel paths
+        listeningVM.updateLottiePath(fullPaths.lottie)
+        listeningVM.updateDonePath(fullPaths.done)
+        listeningVM.updateCancelPath(fullPaths.cancel)
+        listeningVM.updateMinimizePath(fullPaths.minimize)
+        
+        // Load image
+        if let image = NSImage(contentsOfFile: fullPaths.heart) {
+            print("Image loaded successfully!")
+            listeningVM.updateImagePath(fullPaths.heart)
+        } else {
+            print("Failed to load image.")
+            return false
+        }
+        
+        return true
+    }
+    
+    private func registerFont(at path: String) -> Bool {
+        guard let fontData = NSData(contentsOfFile: path),
+              let dataProvider = CGDataProvider(data: fontData),
+              let font = CGFont(dataProvider) else {
+            print("Couldn't create font from file: \(path)")
+            return false
+        }
+        
+        var error: Unmanaged<CFError>?
+        guard CTFontManagerRegisterGraphicsFont(font, &error) else {
+            print("Error registering font: \(error.debugDescription)")
+            return false
+        }
+        
+        let fontName = "Inter-Regular"
+        if isFontAvailable(fontName) {
+            print("Font '\(fontName)' is available")
+        } else {
+            print("Font '\(fontName)' is not available")
+            return false
+        }
+        
+        return true
     }
 }
 

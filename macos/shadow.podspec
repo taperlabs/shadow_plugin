@@ -17,6 +17,8 @@ A new Flutter plugin project.
   s.source_files     = 'Classes/**/*'
   s.dependency 'FlutterMacOS'
 
+  s.dependency 'lottie-ios'
+
   s.platform = :osx, '13.0'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'

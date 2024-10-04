@@ -12,6 +12,8 @@ class MethodChannelShadow extends ShadowPlatform {
   final _screenCaptureEventChannel = const EventChannel('phoenixEventChannel');
   final _micAudioLevelEventChannel = const EventChannel('micAudioLevelEventChannel');
 
+  final _multiWindowEventChannel = const EventChannel('multiWindowEventChannel');
+
   final _microphonePermissionEventChannel = const EventChannel('phoenixMicrophonePermissionEventChannel');
   final _screenRecordingPermissionEventChannel = const EventChannel('phoenixScreenRecordingPermissionEventChannel');
   final _nudgeEventChannel = const EventChannel('phoenixNudgeEventChannel');
@@ -40,6 +42,34 @@ class MethodChannelShadow extends ShadowPlatform {
 
   @override
   Stream<dynamic> get screenCaptureKitBugEvents => _screenCaptureKitBugEventChannel.receiveBroadcastStream();
+
+  @override
+  Stream<dynamic> get multiWindowEvents => _multiWindowEventChannel.receiveBroadcastStream();
+
+  @override
+  Future<void> startListening({
+    Map<String, dynamic>? listeningConfig,
+  }) async {
+    final arguments = {
+      'listeningConfig': listeningConfig,
+    };
+    return methodChannel.invokeMethod('startListening', arguments);
+  }
+
+  @override
+  Future<void> sendHotKeyEvent(String key, List<String> modifiers) async {
+    // Passing arguments as a Map
+    final arguments = <String, dynamic>{
+      'key': key,
+      'modifiers': modifiers,
+    };
+    await methodChannel.invokeMethod('sendHotKeyEvent', arguments);
+  }
+
+  @override
+  Future<void> createNewWindow() async {
+    return methodChannel.invokeMethod('createNewWindow');
+  }
 
   @override
   Future<void> stopShadowServer() async {

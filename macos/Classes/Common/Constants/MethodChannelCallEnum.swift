@@ -2,6 +2,11 @@ import Foundation
 
 //MARK: - MethodChannel Call 상수
 enum MethodChannelCall: String {
+    //Multi Window
+    case startListening = "startListening"
+    case createNewWindow = "createNewWindow"
+    case sendHotKeyEvent = "sendHotKeyEvent"
+    
     //Shadow App
     case startShadowServer = "startShadowServer"
     case stopShadowServer = "stopShadowServer"
