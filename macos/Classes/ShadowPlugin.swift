@@ -357,7 +357,6 @@ extension ShadowPlugin {
 
 extension ShadowPlugin {
     struct AssetPaths {
-        let heart: String
         let lottie: String
         let font: String
         let done: String
@@ -370,16 +369,14 @@ extension ShadowPlugin {
         let fileManager = FileManager.default
         
         let assetPaths = AssetPaths(
-            heart: registrar.lookupKey(forAsset: "assets/heart.png"),
-            lottie: registrar.lookupKey(forAsset: "assets/loading_white.json"),
-            font: registrar.lookupKey(forAsset: "assets/Inter-Regular.ttf"),
-            done: registrar.lookupKey(forAsset: "assets/done.svg"),
-            cancel: registrar.lookupKey(forAsset: "assets/cancel.svg"),
-            minimize: registrar.lookupKey(forAsset: "assets/minimize.svg")
+            lottie: registrar.lookupKey(forAsset: "assets/lotties/loading_white.json"),
+            font: registrar.lookupKey(forAsset: "assets/fonts/Inter-Regular.ttf"),
+            done: registrar.lookupKey(forAsset: "assets/images/icon/listening/done.svg"),
+            cancel: registrar.lookupKey(forAsset: "assets/images/icon/listening/cancel.svg"),
+            minimize: registrar.lookupKey(forAsset: "assets/images/icon/listening/minimize.svg")
         )
         
         let fullPaths = AssetPaths(
-            heart: "\(bundlePath)/\(assetPaths.heart)",
             lottie: "\(bundlePath)/\(assetPaths.lottie)",
             font: "\(bundlePath)/\(assetPaths.font)",
             done: "\(bundlePath)/\(assetPaths.done)",
