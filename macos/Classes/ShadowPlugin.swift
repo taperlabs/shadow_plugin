@@ -409,15 +409,6 @@ extension ShadowPlugin {
         listeningVM.updateCancelPath(fullPaths.cancel)
         listeningVM.updateMinimizePath(fullPaths.minimize)
         
-        // Load image
-        if let image = NSImage(contentsOfFile: fullPaths.heart) {
-            print("Image loaded successfully!")
-            listeningVM.updateImagePath(fullPaths.heart)
-        } else {
-            print("Failed to load image.")
-            return false
-        }
-        
         return true
     }
     
