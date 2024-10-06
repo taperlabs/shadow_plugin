@@ -78,7 +78,7 @@ struct RealListeningView: View {
                                     .transition(.scale)
                                     .animation(.easeInOut)
                                     .onAppear {
-                                        startCountdown()
+                                        vm.startCountdown()
                                     }
                             } else {
                                 ProgressiveFillShadowLogo(fillLevel: CGFloat(vm.noiseLevel), fillColor: Color.primaryColor)
@@ -94,7 +94,6 @@ struct RealListeningView: View {
                             Button(action: {
                                 // Done action + Close Main Window
                                 vm.stopMicRecording()
-                                //                                RealWindowManager.shared.closeWindow()
                                 WindowManager.shared.currentWindow?.close()
                             }) {
                                 if let donePath = vm.donePath, let doneImage = NSImage(contentsOfFile: donePath) {
@@ -105,8 +104,13 @@ struct RealListeningView: View {
                             }
                             .buttonStyle(PlainButtonStyle())
                             .frame(width: 30, height: 30)
+                            .disabled(vm.countdownNumber != nil)
+                            .opacity(vm.countdownNumber != nil ? 0.5 : 1.0)
+                            .foregroundColor(vm.countdownNumber != nil ? .gray : .primary)
+                            
                             Text("Done")
                                 .font(.caption)
+                                .opacity(vm.countdownNumber != nil ? 0.5 : 1.0)
                         }
                         
                         VStack {
@@ -156,7 +160,7 @@ struct RealListeningView: View {
         }
         .onAppear(perform: {
             print("real listening View appeared")
-            startCountdownRecording()
+            vm.startCountdownRecording()
             vm.setAudioDeviceListener()
         })
         .onDisappear(perform: {
@@ -167,33 +171,6 @@ struct RealListeningView: View {
         .ignoresSafeArea(.all)
     }
     
-    /// Initiates the countdown before starting recording
-    func startCountdownRecording() {
-        countdownNumber = 3
-    }
-    
-    /// Handles the countdown logic
-    func startCountdown() {
-        // Ensure only one timer is running
-        countdownTimer?.cancel()
-        
-        // Create a Timer publisher that emits every second
-        countdownTimer = Timer.publish(every: 1.0, on: .main, in: .common)
-            .autoconnect()
-            .sink { _ in
-                if let current = countdownNumber {
-                    if current > 1 {
-                        countdownNumber = current - 1
-                    } else {
-                        countdownNumber = nil
-                        countdownTimer?.cancel()
-                        countdownTimer = nil
-                        // Start recording after countdown
-                        vm.startMicRecording()
-                    }
-                }
-            }
-    }
     
     func formatTime(_ time: TimeInterval) -> String {
         let totalSeconds = Int(time)

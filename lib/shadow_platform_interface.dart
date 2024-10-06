@@ -56,6 +56,10 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('multiWindowEvents has not been implemented.');
   }
 
+  Future<void> stopListening() {
+    throw UnimplementedError('stopListening() has not been implemented.');
+  }
+
   Future<void> startListening({
     Map<String, dynamic>? listeningConfig,
   }) {
@@ -66,7 +70,9 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('sendHotKeyEvent() has not been implemented.');
   }
 
-  Future<void> createNewWindow() {
+  Future<void> createNewWindow({
+    Map<String, dynamic>? listeningConfig,
+  }) {
     throw UnimplementedError('createNewWindow() has not been implemented.');
   }
 

@@ -4,6 +4,7 @@ import Foundation
 enum MethodChannelCall: String {
     //Multi Window
     case startListening = "startListening"
+    case stopListening = "stopListening"
     case createNewWindow = "createNewWindow"
     case sendHotKeyEvent = "sendHotKeyEvent"
     

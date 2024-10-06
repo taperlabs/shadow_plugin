@@ -11,11 +11,11 @@ final class ScreenCaptureService: NSObject, ObservableObject {
     private let systemAudioQueue = DispatchQueue(label: "systemAudioQueue")
     private let videoQueue = DispatchQueue(label: "videoQueue")
     
-    func startCapture() async throws {
+    func startCapture(name: String) async throws {
         // Set up the output file URL
         let fileManager = FileManager.default
-        let downloadsURL = fileManager.urls(for: .downloadsDirectory, in: .userDomainMask).first!
-        let outputURL = downloadsURL.appendingPathComponent("systemAudio.m4a")
+        let downloadsURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let outputURL = downloadsURL.appendingPathComponent("systemAudio-\(name).m4a")
 
         // Remove existing file if necessary
         if fileManager.fileExists(atPath: outputURL.path) {
@@ -24,6 +24,7 @@ final class ScreenCaptureService: NSObject, ObservableObject {
 
         // Initialize AVAssetWriter
         assetWriter = try AVAssetWriter(outputURL: outputURL, fileType: .m4a)
+        let audioOutputSettings = AudioSetting.setAudioConfiguration(format: .mpeg4AAC, channels: .mono, sampleRate: .rate16K)
         
         // Set up audio input settings
         let audioSettings: [String: Any] = [
@@ -33,7 +34,7 @@ final class ScreenCaptureService: NSObject, ObservableObject {
             AVEncoderBitRateKey: 128000
         ]
         
-        audioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: audioSettings)
+        audioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: audioOutputSettings)
         audioInput?.expectsMediaDataInRealTime = true
         
         // Add audio input to asset writer

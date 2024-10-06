@@ -47,6 +47,11 @@ class MethodChannelShadow extends ShadowPlatform {
   Stream<dynamic> get multiWindowEvents => _multiWindowEventChannel.receiveBroadcastStream();
 
   @override
+  Future<void> stopListening() async {
+    return methodChannel.invokeMethod('stopListening');
+  }
+
+  @override
   Future<void> startListening({
     Map<String, dynamic>? listeningConfig,
   }) async {
@@ -67,8 +72,13 @@ class MethodChannelShadow extends ShadowPlatform {
   }
 
   @override
-  Future<void> createNewWindow() async {
-    return methodChannel.invokeMethod('createNewWindow');
+  Future<void> createNewWindow({
+    Map<String, dynamic>? listeningConfig,
+  }) async {
+    final arguments = {
+      'listeningConfig': listeningConfig,
+    };
+    return methodChannel.invokeMethod('createNewWindow', arguments);
   }
 
   @override

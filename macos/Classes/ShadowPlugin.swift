@@ -27,8 +27,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     var captureEngineStreamOutput: ScreenRecorderOutputHandler?
     var microphonePermissionClass = MicrophonePermissionStreamHandler()
     var screenRecordingPermissionClass = ScreenRecordingPermissionHandler()
-//    var nudgeHelperClass = NudgeHelper()
-//    var nudgeHelperClass = NudgeService()
+    //    var nudgeHelperClass = NudgeHelper()
+    //    var nudgeHelperClass = NudgeService()
     var autopilotClass = Autopilot()
     let coreAudioHandler = CoreAudioHandler()
     let screenCaptureKitBugEventsClass = ScreenCaptureKitBugHandler()
@@ -37,20 +37,26 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let fontFamilyNames = NSFontManager.shared.availableFontFamilies
         let fontNames = NSFontManager.shared.availableMembers(ofFontFamily: fontName)?.map { $0[0] as! String } ?? []
         
-        print("Available font families: \(fontFamilyNames)")
-        print("Available font names for family '\(fontName)': \(fontNames)")
+        //        print("Available font families: \(fontFamilyNames)")
+        //        print("Available font names for family '\(fontName)': \(fontNames)")
         
         return NSFont(name: fontName, size: 12) != nil
     }
     
-    private func handleCreateNewWindow(call: FlutterMethodCall , result: @escaping FlutterResult) {
+    private func handleStopListening(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let listeningVM = windowManager?.listeningViewModel else {
+            result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
+            return
+        }
+        
+        listeningVM.stopMicRecording()
+        listeningVM.isRecording = false
+        WindowManager.shared.currentWindow?.close()
+    }
+    
+    private func handleStartListening(call: FlutterMethodCall, result: @escaping FlutterResult) {
         if windowManager == nil {
             windowManager = WindowManager.shared
-        }
-        var args: [String: Any]
-        
-        if let args = call.arguments as? [String: Any] {
-            print("setup")
         }
         
         guard let args = call.arguments as? [String: Any] else {
@@ -58,13 +64,17 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             return
         }
         
-        print("아규먼트!! \(args)")
+        guard let listeningConfig = args["listeningConfig"] as? [String: Any] else {
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments for sendHotKeyEvent", details: nil))
+            return
+        }
         
-        let key = args["key"] as? String
-        let modifiers = args["modifiers"] as? [String]
-        let username = args["username"] as? String
-        let uuid = args["uuid"] as? String
-  
+        let userName = listeningConfig["userName"] as? String ?? ""
+        let key = listeningConfig["key"] as? Int ?? 0
+        let modifiers = listeningConfig["modifiers"] as? Int ?? 0
+        let uuid = listeningConfig["uuid"] as? String ?? ""
+        
+        
         guard let registrar = registrar else {
             result(FlutterError(code: "UNAVAILABLE", message: "Registrar not available", details: nil))
             return
@@ -79,12 +89,6 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             }
             windowManager?.setListeningViewModel(listeningViewModel: newListeningVM)
             ShadowPlugin.multiWindowEventChannel?.setStreamHandler(newListeningVM)
-            if let username = username, let uuid = uuid {
-                print("Username: \(username), UUID: \(uuid)")
-                newListeningVM.setupRecordingProperties(userName: username, uuid: uuid)
-            } else {
-                print("Username or UUID not provided")
-            }
         }
         
         guard let newListeningVM = windowManager?.listeningViewModel else {
@@ -92,8 +96,11 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             return
         }
         
+        newListeningVM.setupRecordingProperties(userName: userName, micFileName: uuid, sysFileName: uuid)
+        
+        
         if WindowManager.shared.currentWindow == nil {
-            windowManager?.createWindow()
+            windowManager?.createWindow(with: "listening")
         } else {
             if newListeningVM.isRecording {
                 print("녹화중")
@@ -106,10 +113,71 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
                 WindowManager.shared.moveWindowToBottomLeft()
             }
         }
-
-  
-//        windowManager?.createWindow()
-        newListeningVM.sendEvent("New window created")
+        result(nil)
+    }
+    
+    private func handleCreateNewWindow(call: FlutterMethodCall , result: @escaping FlutterResult) {
+        if windowManager == nil {
+            windowManager = WindowManager.shared
+        }
+        
+        guard let args = call.arguments as? [String: Any] else {
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments for sendHotKeyEvent", details: nil))
+            return
+        }
+        
+        guard let listeningConfig = args["listeningConfig"] as? [String: Any] else {
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid listeningConfig value", details: nil))
+            return
+        }
+        let username = listeningConfig["userName"] as? String ?? ""
+        let key = listeningConfig["key"] as? Int ?? 0
+        let modifiers = listeningConfig["modifiers"] as? Int ?? 0
+        let uuid = listeningConfig["uuid"] as? String ?? ""
+        
+        guard let registrar = registrar else {
+            result(FlutterError(code: "UNAVAILABLE", message: "Registrar not available", details: nil))
+            return
+        }
+        
+        // Use the existing listeningViewModel or create a new one if nil
+        if windowManager?.listeningViewModel == nil {
+            let newListeningVM = ListeningViewModel()
+            if !loadAssets(registrar: registrar, listeningVM: newListeningVM) {
+                result(FlutterError(code: "ASSET_LOADING_FAILED", message: "Failed to load assets", details: nil))
+                return
+            }
+            // Set the new ViewModel and update the event channel
+            windowManager?.setListeningViewModel(listeningViewModel: newListeningVM)
+            if let eventChannel = ShadowPlugin.multiWindowEventChannel {
+                eventChannel.setStreamHandler(newListeningVM)
+            } else {
+                print("Warning: eventChannel is nil, unable to set stream handler")
+            }
+            
+        }
+        
+        guard let newListeningVM = windowManager?.listeningViewModel else {
+            result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
+            return
+        }
+        
+        newListeningVM.setupRecordingProperties(userName: username, micFileName: uuid, sysFileName: uuid)
+        
+        if WindowManager.shared.currentWindow == nil {
+            windowManager?.createWindow(with: "preview")
+        } else {
+            if newListeningVM.isRecording {
+                print("녹화중")
+                newListeningVM.stopMicRecording()
+                newListeningVM.isRecording = false
+                WindowManager.shared.currentWindow?.close()
+            } else {
+                print("녹화아님")
+                newListeningVM.renderListeningView()
+                WindowManager.shared.moveWindowToBottomLeft()
+            }
+        }
         result(nil)
     }
     
@@ -147,11 +215,11 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let screenCaptureKitBugEventChannel = FlutterEventChannel(name: screenCaptureKitBugEventsName, binaryMessenger: registrar.messenger)
         screenCaptureKitBugEventChannel.setStreamHandler(instance.screenCaptureKitBugEventsClass)
         
-//        let nudgeEventChannel = FlutterEventChannel(name: nudgeEventChannelName, binaryMessenger: registrar.messenger)
+        //        let nudgeEventChannel = FlutterEventChannel(name: nudgeEventChannelName, binaryMessenger: registrar.messenger)
         let autopilotEventChannel = FlutterEventChannel(name: nudgeEventChannelName, binaryMessenger: registrar.messenger)
         autopilotEventChannel.setStreamHandler(instance.autopilotClass)
         
-//        nudgeEventChannel.setStreamHandler(instance.nudgeHelperClass)
+        //        nudgeEventChannel.setStreamHandler(instance.nudgeHelperClass)
         
         micEventChannel.setStreamHandler(instance.micAudioRecording)
         micAudioLevelEventChannel.setStreamHandler(instance.micAudioRecording)
@@ -188,13 +256,17 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             
         case .startListening:
             print("Start Listening")
-            handleCreateNewWindow(call: call, result: result)
+            handleStartListening(call: call, result: result)
+            
+        case .stopListening:
+            print("Stop Listening")
+            handleStopListening(call: call, result: result)
             
         case .sendHotKeyEvent:
             handleCreateNewWindow(call: call, result: result)
-        
+            
         case .createNewWindow:
-            print("Createw New Window")
+            handleCreateNewWindow(call: call, result: result)
             
         case .stopShadowServer:
             print("stopShadowServer 불렸다")
@@ -383,7 +455,7 @@ extension ShadowPlugin {
             cancel: "\(bundlePath)/\(assetPaths.cancel)",
             minimize: "\(bundlePath)/\(assetPaths.minimize)"
         )
-
+        
         // Check if files exist
         for (assetName, path) in [
             ("Font", fullPaths.font),
@@ -391,9 +463,9 @@ extension ShadowPlugin {
             ("Done", fullPaths.done)
         ] {
             if fileManager.fileExists(atPath: path) {
-//                print("\(assetName) file exists at path: \(path)")
+                //                print("\(assetName) file exists at path: \(path)")
             } else {
-//                print("\(assetName) file does not exist at path: \(path)")
+                //                print("\(assetName) file does not exist at path: \(path)")
                 return false
             }
         }

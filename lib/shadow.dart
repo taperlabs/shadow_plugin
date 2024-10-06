@@ -18,6 +18,10 @@ class Shadow {
 
   Stream<dynamic> get multiWindowEvents => ShadowPlatform.instance.multiWindowEvents;
 
+  Future<void> stopListening() {
+    return ShadowPlatform.instance.stopListening();
+  }
+
   Future<void> startListening({
     Map<String, dynamic>? listeningConfig,
   }) {
@@ -28,8 +32,10 @@ class Shadow {
     return ShadowPlatform.instance.sendHotKeyEvent(key, modifiers);
   }
 
-  Future<void> createNewWindow() {
-    return ShadowPlatform.instance.createNewWindow();
+  Future<void> createNewWindow({
+    Map<String, dynamic>? listeningConfig,
+  }) {
+    return ShadowPlatform.instance.createNewWindow(listeningConfig: listeningConfig);
   }
 
   Future<void> stopShadowServer() {

@@ -103,8 +103,8 @@ final class WindowManager: NSObject, NSWindowDelegate {
         print("Hotkey pressed in AppDelegate")
     }
     
-    func createWindow() {
-        print("Creating a new window...")
+    func createWindow(with viewState: String) {
+        print("Creating a new window... with \(viewState)")
         
         DispatchQueue.main.async {
             let newWindowId = self.nextWindowId
@@ -113,26 +113,19 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 self.currentWindow = nil
             }
             
-            // Initialize listeningViewModel if it's nil
-             if self.listeningViewModel == nil {
-                 print("Creating a new window... 111")
-                 self.listeningViewModel = ListeningViewModel()
-                 self.setListeningViewModel(listeningViewModel: self.listeningViewModel!)
-             }
-            
             guard let listeningVM = self.listeningViewModel else {
                 print("ListeningViewModel is not available.")
                 return
             }
             
             var newWindow = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 650, height: 300),
+                contentRect: NSRect(x: 0, y: 0, width: 600, height: 300),
                 styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false,
                 screen: .main
             )
-
+            
             newWindow.level = .floating
             newWindow.orderFront(nil)
             newWindow.titlebarSeparatorStyle = .none
@@ -146,30 +139,53 @@ final class WindowManager: NSObject, NSWindowDelegate {
             newWindow.delegate = self
             
             newWindow.isReleasedWhenClosed = false
-
+            
             let resizeWindow: (CGSize) -> Void = { [weak self] newSize in
                 self?.resizeWindow(to: newSize, window: newWindow)
             }
             
-            let preListeningView = PreListeningView(vm: listeningVM)
-                .environment(\.resizeWindow, resizeWindow)
-            
-            let hostingView = NSHostingView(rootView: preListeningView)
-            newWindow.contentView = hostingView
-           
-            
-            self.currentWindow = newWindow
-//            self.windows[newWindowId] = newWindow
-            print("Assigned newWindow to windows with ID \(newWindowId).")
-            // Center the window on screen
-            if let screen = NSScreen.main {
-                let screenFrame = screen.frame
-                let windowSize = newWindow.frame.size
-                let xPos = screenFrame.midX - windowSize.width / 2
-                let yPos = screenFrame.midY - windowSize.height / 2
-                newWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+            if viewState == "preview" {
+                let preListeningView = PreListeningView(vm: listeningVM)
+                    .environment(\.resizeWindow, resizeWindow)
+                let hostingView = NSHostingView(rootView: preListeningView)
+                newWindow.contentView = hostingView
+            } else {
+                let listeningView = RealListeningView(vm: listeningVM)
+                let hostingView = NSHostingView(rootView: listeningView)
+                newWindow.contentView = hostingView
             }
             
+      
+            
+            
+            self.currentWindow = newWindow
+            //            self.windows[newWindowId] = newWindow
+            print("Assigned newWindow to windows with ID \(newWindowId).")
+            // Center the window on screen
+            
+            
+            if viewState == "preview" {
+                if let screen = NSScreen.main {
+                    let screenFrame = screen.frame
+                    let windowSize = newWindow.frame.size
+                    let xPos = screenFrame.midX - windowSize.width / 2
+                    let yPos = screenFrame.midY - windowSize.height / 2
+                    newWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+                }
+            } else {
+                if let screen = NSScreen.main {
+                    let screenFrame = screen.frame
+                    let windowSize = newWindow.frame.size
+                    
+                    // Calculate the bottom-left position
+                    let xPos = screenFrame.minX + 50
+                    let yPos = screenFrame.minY + 50
+                    
+                    // Set the window's new position
+                    newWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+                }
+            }
+
             print("New window has been created and configured with ID \(newWindowId).")
         }
     }

@@ -32,7 +32,19 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     @Published var inputDevices: [AudioDevice] = []
     
     @Published var username: String?
-    @Published var uuid: String?
+    @Published var micFileName: String?
+    @Published var sysFileName: String?
+    
+    @Published var viewState: String? {
+        didSet {
+            sendEvent(viewState!)
+        }
+    }
+    
+    @Published var countdownNumber: Int? = nil
+    @Published var countdownTimer: AnyCancellable? = nil
+    @Published var isCountdownActive: Bool = false
+    private var shouldStartRecording: Bool = false
     
     // Computed property to get the name of the default input device
     var defaultInputDeviceName: String {
@@ -42,21 +54,86 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         }
         return "Unknown Device"
     }
-
+    
     override init() {
         super.init()
         setupSubscriptions()
     }
     
     deinit {
-        print("ListeningViewModel deinitialized")
+        print("ListeningViewModel deinitialized 🦊")
     }
     
-    func setupRecordingProperties(userName: String, uuid: String) {
-        self.username = userName
-        self.uuid = uuid
+    func startCountdownRecording() {
+        countdownNumber = 3
+        isCountdownActive = true
+        shouldStartRecording = true
+        startCountdown()
     }
-  
+    
+    func startCountdown() {
+        // Ensure only one timer is running
+        countdownTimer?.cancel()
+        
+        // Create a Timer publisher that emits every second
+        countdownTimer = Timer.publish(every: 1.0, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self = self, self.isCountdownActive else { return }
+                
+                if let current = self.countdownNumber {
+                    if current > 1 {
+                        self.countdownNumber = current - 1
+                    } else {
+                        self.finishCountdown()
+                    }
+                }
+            }
+    }
+    
+    private func finishCountdown() {
+        self.countdownNumber = nil
+        self.countdownTimer?.cancel()
+        self.countdownTimer = nil
+        self.isCountdownActive = false
+        
+        if self.shouldStartRecording && WindowManager.shared.currentWindow != nil {
+            self.startMicRecording()
+        } else {
+            self.shouldStartRecording = false
+        }
+    }
+    
+    func stopMicRecording() {
+        screenCaptureService.stopCapture()
+        microphoneService.stopRecording()
+        showListeningView = false
+        shouldStartRecording = false
+        isCountdownActive = false
+        countdownTimer?.cancel()
+        countdownNumber = nil
+    }
+    
+    // Call this method when the window is about to close
+    func cancelRecording() {
+        isRecording = false
+        shouldStartRecording = false
+        isCountdownActive = false
+        countdownTimer?.cancel()
+        countdownNumber = nil
+    }
+    
+    func updateViewState(view viewState: String) {
+        self.viewState = viewState
+        print("뷰 스테이트 -- \(self.viewState)")
+    }
+    
+    func setupRecordingProperties(userName: String, micFileName: String, sysFileName: String) {
+        self.username = userName
+        self.micFileName = micFileName
+        self.sysFileName = sysFileName
+    }
+    
     func renderListeningView() {
         self.showListeningView = true
         self.isRecording = true
@@ -67,7 +144,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             .receive(on: RunLoop.main)
             .assign(to: \.currentTime, on: self)
             .store(in: &cancellables)
-
+        
         microphoneService.$isRecording
             .receive(on: RunLoop.main)
             .assign(to: \.isRecording, on: self)
@@ -93,11 +170,11 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         $isRecording
             .receive(on: RunLoop.main)
             .sink { [weak self] newValue in
-                self?.sendEvent(["isRecording": newValue])
+                self?.sendEvent(["isRecording": newValue, "viewState": self?.viewState])
             }
             .store(in: &cancellables)
     }
-
+    
     func buttonClicked() {
         print("Button clicked via global hotkey!")
         sendEvent("Button Clicked!!!")
@@ -123,12 +200,12 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         self.imagePath = path
     }
     
-
+    
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         print("onListen!!!")
         self.eventSink = events
-//        sendEvent("Test event from Swift!!!")
+        //        sendEvent("Test event from Swift!!!")
         return nil
     }
     
@@ -152,20 +229,21 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     
     func setDefaultAudioInputDevice(with name: String)  {
         if let audioDeviceID = coreAudioService.getInputDeviceID(fromName: name) {
-           let _ = coreAudioService.setDefaultAudioInputDevice(deviceID: audioDeviceID)
+            coreAudioService.setDefaultAudioInputDevice(deviceID: audioDeviceID)
         }
     }
     
     func startMicRecording() {
-        Task {
-            try await screenCaptureService.startCapture()
+        guard let sysFileName = sysFileName,
+              let micFileName = micFileName else {
+            print("No File Name Given")
+            return
         }
-        microphoneService.startRecording()
-    }
-    
-    func stopMicRecording() {
-        screenCaptureService.stopCapture()
-        microphoneService.stopRecording()
-        showListeningView = false
+        
+        Task {
+            try await screenCaptureService.startCapture(name: sysFileName)
+        }
+        
+        microphoneService.startRecording(name: micFileName)
     }
 }

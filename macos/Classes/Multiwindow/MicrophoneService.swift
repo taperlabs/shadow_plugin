@@ -12,13 +12,13 @@ final class MicrophoneService: NSObject, ObservableObject {
     @Published private(set) var noiseLevel: Float = 0.0
 
     /// Starts recording audio from the microphone.
-    func startRecording() {
+    func startRecording(name: String) {
         // Request microphone permission
         AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
             guard let self = self else { return }
             if granted {
                 DispatchQueue.main.async {
-                    self.setupAndStartRecording()
+                    self.setupAndStartRecording(name: name)
                 }
             } else {
                 print("Microphone permission not granted")
@@ -27,7 +27,7 @@ final class MicrophoneService: NSObject, ObservableObject {
     }
 
     /// Sets up and starts the recording.
-    private func setupAndStartRecording() {
+    private func setupAndStartRecording(name: String) {
         // Get audio settings
         let settings = AudioSetting.setAudioConfiguration(
             format: .mpeg4AAC,
@@ -36,7 +36,7 @@ final class MicrophoneService: NSObject, ObservableObject {
         )
 
         // Create a unique file name
-        let fileName = "Recording_\(Date().timeIntervalSince1970).m4a"
+        let fileName = "Recording_\(name).m4a"
         let documentsDirectory = FileManager.default.urls(
             for: .downloadsDirectory,
             in: .userDomainMask

@@ -57,8 +57,11 @@ struct PreListeningView: View {
                                     .foregroundColor(.primaryColor)
                             }
                             .buttonStyle(PlainButtonStyle())
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.primaryColor, lineWidth: 1)
+                            )
                             .background(Color.primaryColor.opacity(0.1))
-                            .border(Color.primaryColor)
                             .padding(.bottom, 20)
                             .frame(width: 200, height: 30)
 

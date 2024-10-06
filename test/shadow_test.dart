@@ -30,13 +30,16 @@ class MockShadowPlatform with MockPlatformInterfaceMixin implements ShadowPlatfo
   Stream<dynamic> get multiWindowEvents => Stream.empty();
 
   @override
+  Future<void> stopListening() async {}
+
+  @override
   Future<void> startListening({Map<String, dynamic>? listeningConfig}) async {}
 
   @override
   Future<void> sendHotKeyEvent(String key, List<String> modifiers) async {}
 
   @override
-  Future<void> createNewWindow() async {}
+  Future<void> createNewWindow({Map<String, dynamic>? listeningConfig}) async {}
 
   @override
   Future<void> restartApp() async {}
