@@ -7,6 +7,12 @@ enum WindowNames: String, CaseIterable {
     case preListening = "preListening"
 }
 
+enum WindowState: Int {
+    case closed = 0
+    case preListening = 1
+    case listening = 2
+}
+
 final class WindowManager: NSObject, NSWindowDelegate {
     // Singleton instance
     static let shared = WindowManager()
@@ -24,6 +30,16 @@ final class WindowManager: NSObject, NSWindowDelegate {
     
     deinit {
         print("Window Manager has been deinitialized.")
+    }
+    
+    private func updateWindowState(_ state: WindowState, isRecording: Bool) {
+        let eventData: [String: Any] = [
+            "windowState": state.rawValue,
+            "isRecording": isRecording
+        ]
+        
+        print("updateWindowState 불렸습니다~~ \(eventData)")
+        listeningViewModel?.sendEvent(eventData)
     }
     
     // Setup method to initialize or update the listeningViewModel
@@ -149,10 +165,12 @@ final class WindowManager: NSObject, NSWindowDelegate {
                     .environment(\.resizeWindow, resizeWindow)
                 let hostingView = NSHostingView(rootView: preListeningView)
                 newWindow.contentView = hostingView
+                self.updateWindowState(.preListening, isRecording: false)
             } else {
                 let listeningView = RealListeningView(vm: listeningVM)
                 let hostingView = NSHostingView(rootView: listeningView)
                 newWindow.contentView = hostingView
+                self.updateWindowState(.listening, isRecording: true)
             }
             
       
@@ -185,6 +203,8 @@ final class WindowManager: NSObject, NSWindowDelegate {
                     newWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
                 }
             }
+            
+         
 
             print("New window has been created and configured with ID \(newWindowId).")
         }
@@ -240,6 +260,7 @@ extension WindowManager {
     func windowWillClose(_ notification: Notification) {
         print("Window is closing")
         self.currentWindow = nil
+        self.updateWindowState(.closed, isRecording: true)
         self.listeningViewModel = nil
     }
     

@@ -140,10 +140,11 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         print("뷰 스테이트 -- \(self.viewState)")
     }
     
-    func setupRecordingProperties(userName: String, micFileName: String, sysFileName: String) {
+    func setupRecordingProperties(userName: String, micFileName: String, sysFileName: String, isAudioSaveOn: Bool) {
         self.username = userName
         self.micFileName = micFileName
         self.sysFileName = sysFileName
+        self.isAudioSaveOn = isAudioSaveOn
     }
     
     func renderListeningView() {

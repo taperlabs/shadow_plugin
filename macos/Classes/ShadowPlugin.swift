@@ -54,68 +54,6 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         WindowManager.shared.currentWindow?.close()
     }
     
-    private func handleStartListening(call: FlutterMethodCall, result: @escaping FlutterResult) {
-        if windowManager == nil {
-            windowManager = WindowManager.shared
-        }
-        
-        guard let args = call.arguments as? [String: Any] else {
-            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments for sendHotKeyEvent", details: nil))
-            return
-        }
-        
-        guard let listeningConfig = args["listeningConfig"] as? [String: Any] else {
-            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments for sendHotKeyEvent", details: nil))
-            return
-        }
-        
-        let userName = listeningConfig["userName"] as? String ?? ""
-        let key = listeningConfig["key"] as? Int ?? 0
-        let modifiers = listeningConfig["modifiers"] as? Int ?? 0
-        let uuid = listeningConfig["uuid"] as? String ?? ""
-        
-        
-        guard let registrar = registrar else {
-            result(FlutterError(code: "UNAVAILABLE", message: "Registrar not available", details: nil))
-            return
-        }
-        
-        // Use the existing listeningViewModel or create a new one if nil
-        if windowManager?.listeningViewModel == nil {
-            let newListeningVM = ListeningViewModel()
-            if !loadAssets(registrar: registrar, listeningVM: newListeningVM) {
-                result(FlutterError(code: "ASSET_LOADING_FAILED", message: "Failed to load assets", details: nil))
-                return
-            }
-            windowManager?.setListeningViewModel(listeningViewModel: newListeningVM)
-            ShadowPlugin.multiWindowEventChannel?.setStreamHandler(newListeningVM)
-        }
-        
-        guard let newListeningVM = windowManager?.listeningViewModel else {
-            result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
-            return
-        }
-        
-        newListeningVM.setupRecordingProperties(userName: userName, micFileName: uuid, sysFileName: uuid)
-        
-        
-        if WindowManager.shared.currentWindow == nil {
-            windowManager?.createWindow(with: "listening")
-        } else {
-            if newListeningVM.isRecording {
-                print("녹화중")
-                newListeningVM.stopMicRecording()
-                newListeningVM.isRecording = false
-                WindowManager.shared.currentWindow?.close()
-            } else {
-                print("녹화아님")
-                newListeningVM.renderListeningView()
-                WindowManager.shared.moveWindowToBottomLeft()
-            }
-        }
-        result(nil)
-    }
-    
     private func handleCreateNewWindow(call: FlutterMethodCall , result: @escaping FlutterResult) {
         if windowManager == nil {
             windowManager = WindowManager.shared
@@ -143,6 +81,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let uuid = listeningConfig["uuid"] as? String ?? ""
         let micFileName = listeningConfig["micFileName"] as? String ?? ""
         let sysFileName = listeningConfig["sysFileName"] as? String ?? ""
+        let isAudioSaveOn = listeningConfig["isAudioSaveOn"] as? Bool ?? false
         
         guard let registrar = registrar else {
             result(FlutterError(code: "UNAVAILABLE", message: "Registrar not available", details: nil))
@@ -171,10 +110,11 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             return
         }
         
-        newListeningVM.setupRecordingProperties(userName: username, micFileName: micFileName, sysFileName: sysFileName)
+        newListeningVM.setupRecordingProperties(userName: username, micFileName: micFileName, sysFileName: sysFileName, isAudioSaveOn: isAudioSaveOn)
         
         if WindowManager.shared.currentWindow == nil {
-            windowManager?.createWindow(with: "preview")
+            let windowType = call.method == "startListening" ? "listening" : "preview"
+            windowManager?.createWindow(with: windowType)
         } else {
             if newListeningVM.isRecording {
                 print("녹화중")
@@ -198,6 +138,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         multiWindowEventChannel = FlutterEventChannel(name: multiWindowEventChannelName, binaryMessenger: registrar.messenger)
         let windowManager = WindowManager.shared
         instance.windowManager = windowManager
+        
         
         guard let app = NSApplication.shared.delegate as? FlutterAppDelegate else {
             debugPrint("failed to find flutter main window, application delegate is not FlutterAppDelegate")
@@ -262,19 +203,22 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
-            
+        
+        case .cancelListening:
+            print("Cancel Listening")
+
         case .startListening:
             print("Start Listening")
-            handleStartListening(call: call, result: result)
+            handleCreateNewWindow(call: call, result: result)
             
         case .stopListening:
             print("Stop Listening")
             handleStopListening(call: call, result: result)
-            
-        case .sendHotKeyEvent:
+
+        case .createNewWindow:
             handleCreateNewWindow(call: call, result: result)
             
-        case .createNewWindow:
+        case .sendHotKeyEvent:
             handleCreateNewWindow(call: call, result: result)
             
         case .stopShadowServer:

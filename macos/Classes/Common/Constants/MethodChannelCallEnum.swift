@@ -3,6 +3,7 @@ import Foundation
 //MARK: - MethodChannel Call 상수
 enum MethodChannelCall: String {
     //Multi Window
+    case cancelListening = "cancelListening"
     case startListening = "startListening"
     case stopListening = "stopListening"
     case createNewWindow = "createNewWindow"

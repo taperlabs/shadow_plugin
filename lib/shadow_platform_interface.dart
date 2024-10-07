@@ -56,6 +56,10 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('multiWindowEvents has not been implemented.');
   }
 
+  Future<void> cancelListening() {
+    throw UnimplementedError('cancelListening() has not been implemented.');
+  }
+
   Future<void> stopListening() {
     throw UnimplementedError('stopListening() has not been implemented.');
   }

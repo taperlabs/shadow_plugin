@@ -47,6 +47,11 @@ class MethodChannelShadow extends ShadowPlatform {
   Stream<dynamic> get multiWindowEvents => _multiWindowEventChannel.receiveBroadcastStream();
 
   @override
+  Future<void> cancelListening() async {
+    return methodChannel.invokeMethod('cancelListening');
+  }
+
+  @override
   Future<void> stopListening() async {
     return methodChannel.invokeMethod('stopListening');
   }

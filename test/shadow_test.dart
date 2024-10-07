@@ -30,6 +30,9 @@ class MockShadowPlatform with MockPlatformInterfaceMixin implements ShadowPlatfo
   Stream<dynamic> get multiWindowEvents => Stream.empty();
 
   @override
+  Future<void> cancelListening() async {}
+
+  @override
   Future<void> stopListening() async {}
 
   @override

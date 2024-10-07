@@ -59,6 +59,8 @@ class _MyAppState extends State<MyApp> {
 
   List<String> audioInputDeviceList = [];
 
+  int windowState = 0;
+
 //Configs
   final micConfig = {
     'fileName': 'FlutterCustomMicrophone.m4a',
@@ -118,11 +120,17 @@ class _MyAppState extends State<MyApp> {
 
   void _setupNewEventStream() {
     // Cancel the previous subscription if it exists
-    multiWindowEventStreamSubscription?.cancel();
+    // multiWindowEventStreamSubscription?.cancel();
 
     // Set up a new subscription
     multiWindowEventStreamSubscription = _shadowPlugin.multiWindowEvents.listen((event) {
       print('Flutter-side: $event');
+
+      if (event != null && event['windowState'] != null) {
+        setState(() {
+          windowState = event['windowState'];
+        });
+      }
 
       if (event != null && event['isRecording'] == true) {
         setState(() {
@@ -133,6 +141,8 @@ class _MyAppState extends State<MyApp> {
           isRecording = false;
           currentUuid = null;
         });
+        multiWindowEventStreamSubscription?.cancel();
+        multiWindowEventStreamSubscription = null;
       }
       // Handle the event
     }, onError: (error) {
@@ -200,12 +210,26 @@ class _MyAppState extends State<MyApp> {
     };
 
     await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);
-    multiWindowEventStreamSubscription = _shadowPlugin.multiWindowEvents.listen((event) {
-      print('event: $event');
-    });
-    // } on PlatformException {
-    print('Failed to create new window.');
-    // }
+    if (multiWindowEventStreamSubscription == null) {
+      _setupNewEventStream();
+    }
+  }
+
+  Future<void> _startListening() async {
+    final listeningConfig = {
+      'userName': "Phoenix",
+      'micFileName': "ggggggggg",
+      'sysFileName': "ggggggggg",
+    };
+
+    await _shadowPlugin.startListening(listeningConfig: listeningConfig);
+    if (multiWindowEventStreamSubscription == null) {
+      _setupNewEventStream();
+    }
+  }
+
+  Future<void> _stopListening() async {
+    await _shadowPlugin.stopListening();
   }
 
   finalLsofTest() async {
@@ -803,6 +827,8 @@ class _MyAppState extends State<MyApp> {
               Text('$isInMeeting', style: Theme.of(context).textTheme.headlineMedium),
 
               CustomButton("Create createNewWindow", () => _createNewWindow()),
+              CustomButton("Start Listening", () => _startListening()),
+              CustomButton("Stop Listening", () => _stopListening()),
 
               CustomButton(
                   "Request Microhpone Permission",
