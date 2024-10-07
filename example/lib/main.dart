@@ -154,10 +154,9 @@ class _MyAppState extends State<MyApp> {
         final key = hotKey.physicalKey.debugName!;
         final modifiers = hotKey.modifiers!.map((modifier) => modifier.toString()).toList();
         final listeningConfig = {
-          'key': "key",
-          'modifiers': "modifier",
           'userName': "Phoenix",
-          'uuid': "FromPreListeningView",
+          'micFileName': "hotkey",
+          'sysFileName': "hotkey",
         };
 
         await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);
@@ -197,7 +196,7 @@ class _MyAppState extends State<MyApp> {
     final listeningConfig = {
       'userName': "Phoenix",
       'micFileName': "ggggggggg",
-      'systemFileName': "ggggggggg",
+      'sysFileName': "ggggggggg",
     };
 
     await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);
@@ -854,49 +853,49 @@ class _MyAppState extends State<MyApp> {
                 "Stop Microphone Permission Request Stream 버튼",
                 () => stopRequestingPermission(microphonePermissionSubscription),
               ),
-              CustomButton(
-                "get  screen recording all permissions button",
-                () => getAllScreenRecordingPermissionStatuses(),
-              ),
-              CustomButton(
-                "Stop Screen Recording Permission Request Stream 버튼",
-                () => stopRequestingPermission(screenCaptureEventSubscription),
-              ),
-              CustomButton(
-                "Open Mic System Setting 버튼",
-                () => _shadowPlugin.openMicSystemSetting(),
-              ),
-              CustomButton(
-                "Open Screen Recording System Setting 버튼",
-                () => _shadowPlugin.openScreenSystemSetting(),
-              ),
-              CustomButton(
-                "Is Microphone Permission Granted 버튼",
-                () => checkMicPermission(),
-              ),
-              CustomButton(
-                "Is Screen Recording Permission Granted 버튼",
-                () => checkScreenPermission(),
-              ),
-              CustomButton(
-                  "ScreenCapture 버튼", () => startRecording(_shadowPlugin.startSystemAndMicAudioRecordingWithDefault, _shadowPlugin.microphoneEvents)),
-              // () => startScreenCapture()),
-              CustomButton(
-                  "Stop ScreenCapture 버튼", () => stopRecording(_shadowPlugin.stopRecordingMicAndSystemAudio, screenCaptureEventSubscription)),
-              CustomButton(
-                  "Start Microphone Recording 버튼", () => startRecording(_shadowPlugin.startMicRecordingWithDefault, _shadowPlugin.microphoneEvents)),
-              CustomButton("Stop Microphone Recording 버튼", () => stopRecording(_shadowPlugin.stopMicRecording, microphoneEventSubscription)),
-              CustomButton("Start System Audio Only Capturing",
-                  () => startRecording(_shadowPlugin.startSystemAudioRecordingWithDefault, _shadowPlugin.screenCaptureEvents)),
-              CustomButton("Stop System Audio Only Capturing", () => stopRecording(_shadowPlugin.stopScreenCapture, screenCaptureEventSubscription)),
-              CustomButton(
-                "Delete File 버튼",
-                () => deleteFile("FlutterSystemAudio.m4a"),
-              ),
-              CustomButton(
-                "Relaunch 버튼",
-                () => _shadowPlugin.restartApp(),
-              ),
+              // CustomButton(
+              //   "get  screen recording all permissions button",
+              //   () => getAllScreenRecordingPermissionStatuses(),
+              // ),
+              // CustomButton(
+              //   "Stop Screen Recording Permission Request Stream 버튼",
+              //   () => stopRequestingPermission(screenCaptureEventSubscription),
+              // ),
+              // CustomButton(
+              //   "Open Mic System Setting 버튼",
+              //   () => _shadowPlugin.openMicSystemSetting(),
+              // ),
+              // CustomButton(
+              //   "Open Screen Recording System Setting 버튼",
+              //   () => _shadowPlugin.openScreenSystemSetting(),
+              // ),
+              // CustomButton(
+              //   "Is Microphone Permission Granted 버튼",
+              //   () => checkMicPermission(),
+              // ),
+              // CustomButton(
+              //   "Is Screen Recording Permission Granted 버튼",
+              //   () => checkScreenPermission(),
+              // ),
+              // CustomButton(
+              //     "ScreenCapture 버튼", () => startRecording(_shadowPlugin.startSystemAndMicAudioRecordingWithDefault, _shadowPlugin.microphoneEvents)),
+              // // () => startScreenCapture()),
+              // CustomButton(
+              //     "Stop ScreenCapture 버튼", () => stopRecording(_shadowPlugin.stopRecordingMicAndSystemAudio, screenCaptureEventSubscription)),
+              // CustomButton(
+              //     "Start Microphone Recording 버튼", () => startRecording(_shadowPlugin.startMicRecordingWithDefault, _shadowPlugin.microphoneEvents)),
+              // CustomButton("Stop Microphone Recording 버튼", () => stopRecording(_shadowPlugin.stopMicRecording, microphoneEventSubscription)),
+              // CustomButton("Start System Audio Only Capturing",
+              //     () => startRecording(_shadowPlugin.startSystemAudioRecordingWithDefault, _shadowPlugin.screenCaptureEvents)),
+              // CustomButton("Stop System Audio Only Capturing", () => stopRecording(_shadowPlugin.stopScreenCapture, screenCaptureEventSubscription)),
+              // CustomButton(
+              //   "Delete File 버튼",
+              //   () => deleteFile("FlutterSystemAudio.m4a"),
+              // ),
+              // CustomButton(
+              //   "Relaunch 버튼",
+              //   () => _shadowPlugin.restartApp(),
+              // ),
               CustomButton(
                 "Start Nudging",
                 () => startNudging(),

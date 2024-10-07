@@ -41,7 +41,12 @@ final class MicrophoneService: NSObject, ObservableObject {
             for: .downloadsDirectory,
             in: .userDomainMask
         )[0]
-        let audioFileURL = documentsDirectory.appendingPathComponent(fileName)
+//        let audioFileURL = documentsDirectory.appendingPathComponent(fileName)
+        
+        guard let audioFileURL = FileManagerHelper.getURL(for: fileName, in: "ApplicationSupportDirectory") else {
+            print("File URL을 가져오는데 실패하였습니다.")
+            return
+        }
 
         do {
             // Initialize and prepare the recorder

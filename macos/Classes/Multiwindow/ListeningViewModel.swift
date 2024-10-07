@@ -64,6 +64,18 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         print("ListeningViewModel deinitialized 🦊")
     }
     
+    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+        print("onListen!!!")
+        self.eventSink = events
+        //        sendEvent("Test event from Swift!!!")
+        return nil
+    }
+    
+    func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        print("onListen Cancel!!")
+        return nil
+    }
+    
     func startCountdownRecording() {
         countdownNumber = 3
         isCountdownActive = true
@@ -198,20 +210,6 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     
     func updateImagePath(_ path: String) {
         self.imagePath = path
-    }
-    
-    
-    
-    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
-        print("onListen!!!")
-        self.eventSink = events
-        //        sendEvent("Test event from Swift!!!")
-        return nil
-    }
-    
-    func onCancel(withArguments arguments: Any?) -> FlutterError? {
-        print("onListen Cancel!!")
-        return nil
     }
     
     func sendEvent(_ event: Any) {

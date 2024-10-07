@@ -15,7 +15,13 @@ final class ScreenCaptureService: NSObject, ObservableObject {
         // Set up the output file URL
         let fileManager = FileManager.default
         let downloadsURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let outputURL = downloadsURL.appendingPathComponent("systemAudio-\(name).m4a")
+        let fileName = "systemAudio-\(name).m4a"
+//        let outputURL = downloadsURL.appendingPathComponent("systemAudio-\(name).m4a")
+        
+        guard let outputURL = FileManagerHelper.getURL(for: fileName, in: "ApplicationSupportDirectory") else {
+            print("File URL을 가져오는데 실패하였습니다.")
+            return
+        }
 
         // Remove existing file if necessary
         if fileManager.fileExists(atPath: outputURL.path) {
