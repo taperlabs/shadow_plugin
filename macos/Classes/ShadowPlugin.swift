@@ -127,6 +127,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
                 print("녹화아님")
                 newListeningVM.renderListeningView()
                 WindowManager.shared.moveWindowToBottomLeft()
+                MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
                 WindowManager.shared.updateWindowState(.listening, isRecording: true)
             }
         }
