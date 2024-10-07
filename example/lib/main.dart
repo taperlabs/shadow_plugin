@@ -195,10 +195,9 @@ class _MyAppState extends State<MyApp> {
     // try {1
 
     final listeningConfig = {
-      'key': "key",
-      'modifiers': "modifier",
       'userName': "Phoenix",
-      'uuid': "FromPreListeningView",
+      'micFileName': "ggggggggg",
+      'systemFileName': "ggggggggg",
     };
 
     await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);
@@ -652,10 +651,19 @@ class _MyAppState extends State<MyApp> {
           print("Nudge Event입니다 $event");
           if (event['isInMeeting']) {
             // await startMicRecording();
+            final listeningConfig = {
+              'userName': "Phoenix",
+              'micFileName': "ggggggggg",
+              'systemFileName': "ggggggggg",
+            };
+            _shadowPlugin.startListening(listeningConfig: listeningConfig);
+
             setState(() {
               isInMeeting = "미팅 ✅";
             });
           } else {
+            _shadowPlugin.stopListening();
+
             setState(() {
               isInMeeting = "미팅 ❌";
             });

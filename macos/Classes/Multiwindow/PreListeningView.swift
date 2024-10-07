@@ -28,9 +28,16 @@ struct PreListeningView: View {
                         VStack {
                             Spacer()
                             
-                            LottieView(lottieFile: vm.lottiePath!, loopMode: .loop, autostart: true, contentMode: .scaleAspectFit)
-                                .frame(width: 75, height: 75)
-                                .padding(.bottom, 20)
+                            if let lottiePath = vm.lottiePath {
+                                LottieView(lottieFile: lottiePath, loopMode: .loop, autostart: true, contentMode: .scaleAspectFit)
+                                    .frame(width: 75, height: 75)
+                                    .padding(.bottom, 20)
+                            } else {
+                                // Handle the nil case, perhaps show a placeholder or an error message
+                                Text("Loading...")
+                                    .frame(width: 75, height: 75)
+                                    .padding(.bottom, 20)
+                            }
                             // Text label
                             if let username = vm.username {
                                 Text("Hey \(username), I'm ready to listen.")
@@ -43,7 +50,7 @@ struct PreListeningView: View {
                                     .fontWeight(.bold)
                                     .padding(.bottom,  20)
                             }
-
+                      
                             // Start Listening Button
                             Button {
                                 vm.showListeningView = true
@@ -57,8 +64,9 @@ struct PreListeningView: View {
                                     .foregroundColor(.primaryColor)
                             }
                             .buttonStyle(PlainButtonStyle())
+                            .cornerRadius(8)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 4)
+                                RoundedRectangle(cornerRadius: 5) // Adjust the cornerRadius as needed
                                     .stroke(Color.primaryColor, lineWidth: 1)
                             )
                             .background(Color.primaryColor.opacity(0.1))
@@ -68,9 +76,10 @@ struct PreListeningView: View {
                             // Dismiss Button
                             Button {
                                 print("Dismiss")
+                                WindowManager.shared.currentWindow?.close()
                             } label: {
                                 Text("Dismiss")
-                                    .font(.system(size: 16))
+                                    .font(.system(size: 13))
                                     .foregroundColor(.gray)
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -84,11 +93,10 @@ struct PreListeningView: View {
                                         .foregroundColor(.gray)
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: Color.primaryColor))
+                                .scaleEffect(0.8)
                                 .padding(.trailing, 20)
                                 .onChange(of: isAudioOn) { newValue in
-                                    let oldValue = isAudioOn
                                     vm.sendEvent(["isAudioOn": newValue])
-                                    // Use `oldValue` here if needed
                                 }
 
                                 // Video Toggle
@@ -98,14 +106,17 @@ struct PreListeningView: View {
                                 }
                                 
                                 .toggleStyle(SwitchToggleStyle(tint: .gray))
+                                .scaleEffect(0.8)
                                 .disabled(true)
                             }
-                            .padding(.trailing, 20)
+                            .padding(.trailing, 10)
+                            .padding(.vertical, 3)
                             .background(Color.bgColor.edgesIgnoringSafeArea(.all))
                         }
                     }
                     .edgesIgnoringSafeArea(.all)
             }
+            // Define navigation destination here
             .navigationDestination(isPresented: $vm.showListeningView) {
                 RealListeningView(vm: vm)
                 
@@ -113,11 +124,11 @@ struct PreListeningView: View {
             .navigationBarBackButtonHidden(true)
             .onAppear {
                 print("PreListeningView appeared")
+//                vm.updateViewState(view: "prelisteningview")
             }
-            .onDisappear{
-                print("PreListeningView appeared")
-            }
-
+            .onDisappear(perform: {
+                print("PreListeningView disappeared")
+            })
         }
     }
 }
