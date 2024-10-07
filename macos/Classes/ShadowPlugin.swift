@@ -130,10 +130,19 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid listeningConfig value", details: nil))
             return
         }
+        
+        //        guard let micFileName = listeningConfig["micFileName"] as? String,
+        //              let sysFileName = listeningConfig["sysFileName"] as? String else {
+        //            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid listeningConfig value", details: nil))
+        //            return
+        //        }
+        
         let username = listeningConfig["userName"] as? String ?? ""
         let key = listeningConfig["key"] as? Int ?? 0
         let modifiers = listeningConfig["modifiers"] as? Int ?? 0
         let uuid = listeningConfig["uuid"] as? String ?? ""
+        let micFileName = listeningConfig["micFileName"] as? String ?? ""
+        let sysFileName = listeningConfig["sysFileName"] as? String ?? ""
         
         guard let registrar = registrar else {
             result(FlutterError(code: "UNAVAILABLE", message: "Registrar not available", details: nil))
@@ -162,7 +171,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             return
         }
         
-        newListeningVM.setupRecordingProperties(userName: username, micFileName: uuid, sysFileName: uuid)
+        newListeningVM.setupRecordingProperties(userName: username, micFileName: micFileName, sysFileName: sysFileName)
         
         if WindowManager.shared.currentWindow == nil {
             windowManager?.createWindow(with: "preview")
