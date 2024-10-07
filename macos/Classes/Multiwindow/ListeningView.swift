@@ -158,6 +158,20 @@ struct RealListeningView: View {
                     }
                 }
         }
+        .confirmationDialog("Are you sure you want to cancel?", isPresented: $showingCancelConfirmation, titleVisibility: .visible) {
+            HStack {
+                Button("Yes, cancel recording", role: .destructive) {
+                    vm.stopMicRecording()
+                    WindowManager.shared.currentWindow?.close()
+                }
+                Button("No, continue recording", role: .cancel) {
+                    //dismiss dialog
+                }
+            }
+  
+        } message: {
+            Text("This will cancel the current recording.")
+        }
         .onAppear(perform: {
             print("real listening View appeared")
             vm.startCountdownRecording()
