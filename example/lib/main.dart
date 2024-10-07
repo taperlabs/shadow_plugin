@@ -12,6 +12,12 @@ void main() {
   runApp(const MyApp());
 }
 
+enum WindowState {
+  closed,
+  preListening,
+  listening,
+}
+
 class LsofEntry {
   final String appName;
   final String port;
@@ -131,7 +137,32 @@ class _MyAppState extends State<MyApp> {
     multiWindowStatusEventStreamSubscription = _shadowPlugin.multiWindowStatusEvents.listen((event) {
       print('Flutter-side: $event');
 
-      // Handle the event
+      // Parse the event
+      final isRecording = event['isRecording'];
+      final windowStateString = event['windowState'];
+      WindowState windowState;
+
+      print('isRecording: $isRecording, windowStateString: $windowStateString');
+
+      // Map the string to the enum
+      switch (windowStateString) {
+        case 'closed':
+          windowState = WindowState.closed;
+          break;
+        case 'preListening':
+          windowState = WindowState.preListening;
+          break;
+        case 'listening':
+          windowState = WindowState.listening;
+          break;
+        default:
+          throw Exception('Unknown window state: $windowStateString');
+      }
+
+      // Handle the event using the enum
+      print('WindowState: $windowState, isRecording: $isRecording');
+
+      // Additional handling based on windowState and isRecording
     }, onError: (error) {
       print('Error from event stream: $error');
     });

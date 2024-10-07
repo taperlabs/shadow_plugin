@@ -15,7 +15,7 @@ final class ScreenCaptureService: NSObject, ObservableObject {
         // Set up the output file URL
         let fileManager = FileManager.default
         let downloadsURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let fileName = "systemAudio-\(name).m4a"
+        let fileName = name
 //        let outputURL = downloadsURL.appendingPathComponent("systemAudio-\(name).m4a")
         
         guard let outputURL = FileManagerHelper.getURL(for: fileName, in: "ApplicationSupportDirectory") else {
