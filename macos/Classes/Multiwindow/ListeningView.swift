@@ -9,8 +9,8 @@ struct RealListeningView: View {
     @State private var expand = false
     @State private var selectedDevice: AudioDevice?
     
-    @State private var countdownNumber: Int? = nil
-    @State private var countdownTimer: AnyCancellable? = nil
+//    @State private var countdownNumber: Int? = nil
+//    @State private var countdownTimer: AnyCancellable? = nil
     
     var body: some View {
         VStack(spacing: 16) { // The vertical gap between the dropdown and the buttons
@@ -70,7 +70,7 @@ struct RealListeningView: View {
                     HStack(alignment: .center,spacing: 20) { // Adjust spacing between items in HStack
                         // Timer View
                         VStack {
-                            if let count = countdownNumber {
+                            if let count = vm.countdownNumber {
                                 // Countdown View
                                 Text("\(count)")
                                     .frame(width: 30, height: 30)
@@ -117,7 +117,7 @@ struct RealListeningView: View {
                             Button(action: {
                                 print("Cancel Clicked")
                                 //Cancel Confirmation only if 3 seconds buffer time is not on.
-                                if countdownTimer == nil {
+                                if vm.countdownTimer == nil {
                                     showingCancelConfirmation = true
                                 } else {
                                     WindowManager.shared.currentWindow?.close()

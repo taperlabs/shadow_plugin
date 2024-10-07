@@ -49,12 +49,9 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-    - assets/heart.png
-    - assets/loading_white.json
-    - assets/Inter-Regular.ttf
-    - assets/done.svg
-    - assets/cancel.svg
-    - assets/minimize.svg
+    - assets/fonts/
+    - assets/images/icon/listening/
+    - assets/lotties/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

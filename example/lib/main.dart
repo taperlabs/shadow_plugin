@@ -96,6 +96,8 @@ class _MyAppState extends State<MyApp> {
   Process? process;
 
   late HotKey _hotKey;
+  bool isRecording = false;
+  String? currentUuid;
 
   @override
   void initState() {
@@ -114,6 +116,30 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
+  void _setupNewEventStream() {
+    // Cancel the previous subscription if it exists
+    multiWindowEventStreamSubscription?.cancel();
+
+    // Set up a new subscription
+    multiWindowEventStreamSubscription = _shadowPlugin.multiWindowEvents.listen((event) {
+      print('Flutter-side: $event');
+
+      if (event != null && event['isRecording'] == true) {
+        setState(() {
+          isRecording = event['isRecording'];
+        });
+      } else {
+        setState(() {
+          isRecording = false;
+          currentUuid = null;
+        });
+      }
+      // Handle the event
+    }, onError: (error) {
+      print('Error from event stream: $error');
+    });
+  }
+
   void _setupHotkey() async {
     _hotKey = HotKey(
       key: PhysicalKeyboardKey.keyS,
@@ -127,8 +153,15 @@ class _MyAppState extends State<MyApp> {
         print('Hotkey pressed: ${hotKey.identifier}, ${hotKey.physicalKey.debugName}, ${hotKey.scope} ${hotKey.modifiers}');
         final key = hotKey.physicalKey.debugName!;
         final modifiers = hotKey.modifiers!.map((modifier) => modifier.toString()).toList();
-        print('key: $key');
-        await _shadowPlugin.sendHotKeyEvent(key, modifiers);
+        final listeningConfig = {
+          'key': "key",
+          'modifiers': "modifier",
+          'userName': "Phoenix",
+          'uuid': "FromPreListeningView",
+        };
+
+        await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);
+        ;
         //Send event to Swift
       },
     );
@@ -158,16 +191,23 @@ class _MyAppState extends State<MyApp> {
     process?.kill();
   }
 
-  createNewWindow() async {
-    try {
-      print('Creating new window 호출');
-      await _shadowPlugin.createNewWindow();
-      multiWindowEventStreamSubscription = _shadowPlugin.multiWindowEvents.listen((event) {
-        print('event: $event');
-      });
-    } on PlatformException {
-      print('Failed to create new window.');
-    }
+  Future<void> _createNewWindow() async {
+    // try {1
+
+    final listeningConfig = {
+      'key': "key",
+      'modifiers': "modifier",
+      'userName': "Phoenix",
+      'uuid': "FromPreListeningView",
+    };
+
+    await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);
+    multiWindowEventStreamSubscription = _shadowPlugin.multiWindowEvents.listen((event) {
+      print('event: $event');
+    });
+    // } on PlatformException {
+    print('Failed to create new window.');
+    // }
   }
 
   finalLsofTest() async {
@@ -755,7 +795,7 @@ class _MyAppState extends State<MyApp> {
               Text('$_isScreenRecordingPermissionGranted', style: Theme.of(context).textTheme.headlineMedium),
               Text('$isInMeeting', style: Theme.of(context).textTheme.headlineMedium),
 
-              CustomButton("Create createNewWindow", () => createNewWindow()),
+              CustomButton("Create createNewWindow", () => _createNewWindow()),
 
               CustomButton(
                   "Request Microhpone Permission",
