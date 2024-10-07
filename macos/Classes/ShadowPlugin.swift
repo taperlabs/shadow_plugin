@@ -71,6 +71,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             return
         }
         
+        print("listeningConifg 값 확인입니다 -- \(listeningConfig)")
+        
         //        guard let micFileName = listeningConfig["micFileName"] as? String,
         //              let sysFileName = listeningConfig["sysFileName"] as? String else {
         //            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid listeningConfig value", details: nil))

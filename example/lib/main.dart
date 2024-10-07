@@ -127,6 +127,15 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
+  setListeningConfig() {
+    final listeningConfig = {
+      'userName': "Phoenix",
+      'sysFileName': "systemFileName",
+      'micFileName': "micFileName",
+      'convUuid': "convUuid",
+    };
+  }
+
   void _setupMultiWindowStatusEventStream() {
     // Cancel the previous subscription if it exists
     if (multiWindowStatusEventStreamSubscription != null) {
