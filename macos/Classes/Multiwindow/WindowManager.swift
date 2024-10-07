@@ -260,7 +260,7 @@ extension WindowManager {
     func windowWillClose(_ notification: Notification) {
         print("Window is closing")
         self.currentWindow = nil
-        self.updateWindowState(.closed, isRecording: true)
+        self.updateWindowState(.closed, isRecording: false)
         self.listeningViewModel = nil
     }
     
