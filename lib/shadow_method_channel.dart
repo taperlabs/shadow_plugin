@@ -13,6 +13,7 @@ class MethodChannelShadow extends ShadowPlatform {
   final _micAudioLevelEventChannel = const EventChannel('micAudioLevelEventChannel');
 
   final _multiWindowEventChannel = const EventChannel('multiWindowEventChannel');
+  final _multiWindowStatusEventChannel = const EventChannel('multiWindowStatusEventChannel');
 
   final _microphonePermissionEventChannel = const EventChannel('phoenixMicrophonePermissionEventChannel');
   final _screenRecordingPermissionEventChannel = const EventChannel('phoenixScreenRecordingPermissionEventChannel');
@@ -45,6 +46,9 @@ class MethodChannelShadow extends ShadowPlatform {
 
   @override
   Stream<dynamic> get multiWindowEvents => _multiWindowEventChannel.receiveBroadcastStream();
+
+  @override
+  Stream<dynamic> get multiWindowStatusEvents => _multiWindowStatusEventChannel.receiveBroadcastStream();
 
   @override
   Future<void> cancelListening() async {

@@ -18,6 +18,8 @@ class Shadow {
 
   Stream<dynamic> get multiWindowEvents => ShadowPlatform.instance.multiWindowEvents;
 
+  Stream<dynamic> get multiWindowStatusEvents => ShadowPlatform.instance.multiWindowStatusEvents;
+
   Future<void> cancelListening() {
     return ShadowPlatform.instance.cancelListening();
   }

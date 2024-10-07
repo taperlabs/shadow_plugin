@@ -35,12 +35,6 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     @Published var micFileName: String?
     @Published var sysFileName: String?
     
-    @Published var viewState: String? {
-        didSet {
-            sendEvent(viewState!)
-        }
-    }
-    
     @Published var countdownNumber: Int? = nil
     @Published var countdownTimer: AnyCancellable? = nil
     @Published var isCountdownActive: Bool = false
@@ -134,12 +128,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         countdownTimer?.cancel()
         countdownNumber = nil
     }
-    
-    func updateViewState(view viewState: String) {
-        self.viewState = viewState
-        print("뷰 스테이트 -- \(self.viewState)")
-    }
-    
+
     func setupRecordingProperties(userName: String, micFileName: String, sysFileName: String, isAudioSaveOn: Bool) {
         self.username = userName
         self.micFileName = micFileName
@@ -183,16 +172,11 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         $isRecording
             .receive(on: RunLoop.main)
             .sink { [weak self] newValue in
-                self?.sendEvent(["isRecording": newValue, "viewState": self?.viewState])
+                self?.sendEvent(["isRecording": newValue])
             }
             .store(in: &cancellables)
     }
-    
-    func buttonClicked() {
-        print("Button clicked via global hotkey!")
-        sendEvent("Button Clicked!!!")
-    }
-    
+
     func updateLottiePath(_ path: String) {
         self.lottiePath = path
     }

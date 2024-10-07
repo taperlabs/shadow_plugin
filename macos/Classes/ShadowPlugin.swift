@@ -15,9 +15,11 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     private static let screenCaptureKitBugEventsName = "screenCaptureKitBugEventChannel"
     
     private static let multiWindowEventChannelName = "multiWindowEventChannel"
+    private static let multiWindowStatusEventChannelName = "multiWindowStatusEventChannel"
     private var windowManager: WindowManager?
     private var listeningViewModel: ListeningViewModel?
     static var multiWindowEventChannel: FlutterEventChannel?
+    static var multiWindowStatusEventChannel: FlutterEventChannel?
     private var registrar: FlutterPluginRegistrar?
     private static var instance: ShadowPlugin?
     
@@ -113,7 +115,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         newListeningVM.setupRecordingProperties(userName: username, micFileName: micFileName, sysFileName: sysFileName, isAudioSaveOn: isAudioSaveOn)
         
         if WindowManager.shared.currentWindow == nil {
-            let windowType = call.method == "startListening" ? "listening" : "preview"
+            let windowType = call.method == "startListening" ? "listening" : "preview"            
             windowManager?.createWindow(with: windowType)
         } else {
             if newListeningVM.isRecording {
@@ -125,6 +127,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
                 print("녹화아님")
                 newListeningVM.renderListeningView()
                 WindowManager.shared.moveWindowToBottomLeft()
+                WindowManager.shared.updateWindowState(.listening, isRecording: true)
             }
         }
         result(nil)
@@ -136,6 +139,9 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         
         instance.registrar = registrar
         multiWindowEventChannel = FlutterEventChannel(name: multiWindowEventChannelName, binaryMessenger: registrar.messenger)
+        let multiWindowStatusEventChannel = FlutterEventChannel(name: multiWindowStatusEventChannelName, binaryMessenger: registrar.messenger)
+        multiWindowStatusEventChannel.setStreamHandler(MultiWindowStatusService.shared)
+        
         let windowManager = WindowManager.shared
         instance.windowManager = windowManager
         

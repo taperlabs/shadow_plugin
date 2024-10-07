@@ -7,11 +7,6 @@ enum WindowNames: String, CaseIterable {
     case preListening = "preListening"
 }
 
-enum WindowState: Int {
-    case closed = 0
-    case preListening = 1
-    case listening = 2
-}
 
 final class WindowManager: NSObject, NSWindowDelegate {
     // Singleton instance
@@ -32,7 +27,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
         print("Window Manager has been deinitialized.")
     }
     
-    private func updateWindowState(_ state: WindowState, isRecording: Bool) {
+    func updateWindowState(_ state: WindowState, isRecording: Bool) {
         let eventData: [String: Any] = [
             "windowState": state.rawValue,
             "isRecording": isRecording
@@ -166,11 +161,13 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 let hostingView = NSHostingView(rootView: preListeningView)
                 newWindow.contentView = hostingView
                 self.updateWindowState(.preListening, isRecording: false)
+                MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .preListening, isRecording: false))
             } else {
                 let listeningView = RealListeningView(vm: listeningVM)
                 let hostingView = NSHostingView(rootView: listeningView)
                 newWindow.contentView = hostingView
                 self.updateWindowState(.listening, isRecording: true)
+                MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
             }
             
       
@@ -260,7 +257,7 @@ extension WindowManager {
     func windowWillClose(_ notification: Notification) {
         print("Window is closing")
         self.currentWindow = nil
-        self.updateWindowState(.closed, isRecording: false)
+        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false))
         self.listeningViewModel = nil
     }
     

@@ -54,6 +54,7 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription<dynamic>? micAudioLevelSubscription;
 
   StreamSubscription<dynamic>? multiWindowEventStreamSubscription;
+  StreamSubscription<dynamic>? multiWindowStatusEventStreamSubscription;
 
   String dropdownValue = '';
 
@@ -106,6 +107,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _setupHotkey();
     getAudioInputDeviceList();
+    _setupMultiWindowStatusEventStream();
 
     // initPlatformState();
   }
@@ -114,8 +116,25 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     print("dispose called !!!!@!@!@!@");
     _shadowPlugin.stopShadowServer();
+    multiWindowStatusEventStreamSubscription?.cancel();
     hotKeyManager.unregister(_hotKey);
     super.dispose();
+  }
+
+  void _setupMultiWindowStatusEventStream() {
+    // Cancel the previous subscription if it exists
+    if (multiWindowStatusEventStreamSubscription != null) {
+      multiWindowStatusEventStreamSubscription?.cancel();
+    }
+
+    // Set up a new subscription
+    multiWindowStatusEventStreamSubscription = _shadowPlugin.multiWindowStatusEvents.listen((event) {
+      print('Flutter-side: $event');
+
+      // Handle the event
+    }, onError: (error) {
+      print('Error from event stream: $error');
+    });
   }
 
   void _setupNewEventStream() {

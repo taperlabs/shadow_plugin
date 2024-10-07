@@ -57,6 +57,7 @@ struct PreListeningView: View {
 //                                vm.startMicRecording()
                                 vm.isRecording = true
                                 WindowManager.shared.moveWindowToBottomLeft()
+                                MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
                             } label: {
                                 Text("Start Listening  ⌃ ⌘")
                                     .font(.system(size: 14, weight: .bold))
