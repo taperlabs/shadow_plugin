@@ -8,15 +8,28 @@ enum WindowState: String, Codable {
     case listening
 }
 
-struct WindowStatus: Codable {
+struct WindowStatus {
     let windowState: WindowState
     let isRecording: Bool
+    let windowCloseType: WindowCloseType?
+    
+    init(windowState: WindowState, isRecording: Bool, windowCloseType: WindowCloseType? = nil) {
+        self.windowState = windowState
+        self.isRecording = isRecording
+        self.windowCloseType = windowCloseType
+    }
     
     func toDictionary() -> [String: Any] {
-        return [
+        var dict: [String: Any] = [
             "windowState": windowState.rawValue,
             "isRecording": isRecording
         ]
+        
+        if let closeType = windowCloseType {
+            dict["windowCloseType"] = closeType.rawValue
+        }
+        
+        return dict
     }
 }
 

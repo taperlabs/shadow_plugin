@@ -7,6 +7,12 @@ enum WindowNames: String, CaseIterable {
     case preListening = "preListening"
 }
 
+enum WindowCloseType: String {
+    case done = "done"
+    case cancel = "cancel"
+    case dismiss = "dismiss"
+}
+
 
 final class WindowManager: NSObject, NSWindowDelegate {
     // Singleton instance
@@ -207,13 +213,14 @@ final class WindowManager: NSObject, NSWindowDelegate {
         }
     }
     
-    func closeCurrentWindow() {
+    func closeCurrentWindow(for windowCloseType: WindowCloseType ) {
         guard let currentWindow = currentWindow else {
             print("No current window exists")
             return
         }
-        print("Closing the current Window")
+        print("Closing the current Window \(windowCloseType.rawValue)")
         currentWindow.close()
+        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false, windowCloseType: windowCloseType))
     }
     
     func closeWindow() {
@@ -266,7 +273,7 @@ extension WindowManager {
     func windowWillClose(_ notification: Notification) {
         print("Window is closing")
         self.currentWindow = nil
-        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false))
+//        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false))
         self.listeningViewModel = nil
     }
     

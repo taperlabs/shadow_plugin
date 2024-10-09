@@ -53,7 +53,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         
         listeningVM.stopMicRecording()
         listeningVM.isRecording = false
-        WindowManager.shared.closeCurrentWindow()
+        WindowManager.shared.closeCurrentWindow(for: .done)
     }
     
     private func handleCreateNewWindow(call: FlutterMethodCall , result: @escaping FlutterResult) {
@@ -122,9 +122,17 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         } else {
             if newListeningVM.isRecording {
                 print("녹화중")
-                newListeningVM.stopMicRecording()
-                newListeningVM.isRecording = false
-                WindowManager.shared.closeCurrentWindow()
+                if let countDownNumber = newListeningVM.countdownNumber {
+                    if countDownNumber > 1 {
+                        newListeningVM.stopMicRecording()
+                        newListeningVM.isRecording = false
+                        WindowManager.shared.closeCurrentWindow(for: .cancel)
+                    }
+                } else {
+                    newListeningVM.stopMicRecording()
+                    newListeningVM.isRecording = false
+                    WindowManager.shared.closeCurrentWindow(for: .done)
+                }
             } else {
                 print("녹화아님")
                 newListeningVM.renderListeningView()
