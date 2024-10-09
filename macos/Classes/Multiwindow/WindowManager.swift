@@ -207,6 +207,15 @@ final class WindowManager: NSObject, NSWindowDelegate {
         }
     }
     
+    func closeCurrentWindow() {
+        guard let currentWindow = currentWindow else {
+            print("No current window exists")
+            return
+        }
+        print("Closing the current Window")
+        currentWindow.close()
+    }
+    
     func closeWindow() {
         print("Closing the first window...")
         

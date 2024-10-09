@@ -77,7 +77,7 @@ struct PreListeningView: View {
                             // Dismiss Button
                             Button {
                                 print("Dismiss")
-                                WindowManager.shared.currentWindow?.close()
+                                WindowManager.shared.closeCurrentWindow()
                             } label: {
                                 Text("Dismiss")
                                     .font(.system(size: 13))

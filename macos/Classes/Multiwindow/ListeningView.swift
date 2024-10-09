@@ -94,7 +94,7 @@ struct RealListeningView: View {
                             Button(action: {
                                 // Done action + Close Main Window
                                 vm.stopMicRecording()
-                                WindowManager.shared.currentWindow?.close()
+                                WindowManager.shared.closeCurrentWindow()
                             }) {
                                 if let donePath = vm.donePath, let doneImage = NSImage(contentsOfFile: donePath) {
                                     Image(nsImage: doneImage)
@@ -120,7 +120,7 @@ struct RealListeningView: View {
                                 if vm.countdownTimer == nil {
                                     showingCancelConfirmation = true
                                 } else {
-                                    WindowManager.shared.currentWindow?.close()
+                                    WindowManager.shared.closeCurrentWindow()
                                 }
                                 // Cancel action
                             }) {
@@ -162,7 +162,7 @@ struct RealListeningView: View {
             HStack {
                 Button("Yes, cancel recording", role: .destructive) {
                     vm.stopMicRecording()
-                    WindowManager.shared.currentWindow?.close()
+                    WindowManager.shared.closeCurrentWindow()
                 }
                 Button("No, continue recording", role: .cancel) {
                     //dismiss dialog
