@@ -51,9 +51,21 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             return
         }
         
-        listeningVM.stopMicRecording()
-        listeningVM.isRecording = false
-        WindowManager.shared.closeCurrentWindow(for: .done)
+        guard listeningVM.isRecording else {
+            result(FlutterError(code: "Not in Recording", message: "The recording is not in session.", details: nil))
+            return
+        }
+            if let countDownNumber = listeningVM.countdownNumber {
+                if countDownNumber > 1 {
+                    listeningVM.stopMicRecording()
+                    listeningVM.isRecording = false
+                    WindowManager.shared.closeCurrentWindow(for: .cancel)
+                }
+            } else {
+                listeningVM.stopMicRecording()
+                listeningVM.isRecording = false
+                WindowManager.shared.closeCurrentWindow(for: .done)
+            }
     }
     
     private func handleCreateNewWindow(call: FlutterMethodCall , result: @escaping FlutterResult) {
@@ -230,6 +242,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             
         case .stopListening:
             print("Stop Listening")
+//            handleCreateNewWindow(call: call, result: result)
             handleStopListening(call: call, result: result)
 
         case .createNewWindow:
