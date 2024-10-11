@@ -309,6 +309,11 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             // Ensure that updates are thread-safe
             print("isInMeetingByMic - \(isInMeetingByMic), isInMeetingByWindowTitle - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
             
+            if (isInMeetingByMic || !isInMeetingByMic) && isInMeetingByWindowTitle {
+                print("isInMeetingByMic - \(isInMeetingByMic), isInMeetingByWindowTitle - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
+                ShadowLogger.shared.log("isInMeetingBM - \(isInMeetingByMic), isInMeetingBWT - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
+            }
+            
             if isInMeetingByMic && isInMeetingByWindowTitle && !isMeetingDetected {
                 isMeetingDetected = true
                 self.eventSink?(["isInMeeting": isMeetingDetected])
