@@ -22,6 +22,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     @Published var minimizePath: String?
     
     @Published var isAudioSaveOn: Bool = false
+    @Published var hotkeys: String = ""
     
     @Published var currentTime: TimeInterval = 0
     @Published var isRecording: Bool = false
@@ -127,6 +128,10 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         isCountdownActive = false
         countdownTimer?.cancel()
         countdownNumber = nil
+    }
+    
+    func setHotkeys(with hotkey: String) {
+        self.hotkeys = hotkey
     }
 
     func setupRecordingProperties(userName: String, micFileName: String, sysFileName: String, isAudioSaveOn: Bool) {

@@ -1,6 +1,7 @@
 import Cocoa
 import AVFoundation
 import FlutterMacOS
+import RegexBuilder
 
 
 //MARK: - Fluuter <-> Swift native code entry point class
@@ -90,7 +91,12 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         //            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid listeningConfig value", details: nil))
         //            return
         //        }
-        
+        let hotkeys = listeningConfig["hotkeys"] as? String ?? ""
+        let plusPattern = Regex {
+            "+"
+        }
+        let formattedHotkeys = hotkeys.replacing(plusPattern, with: " ")
+
         let username = listeningConfig["userName"] as? String ?? ""
         let key = listeningConfig["key"] as? Int ?? 0
         let modifiers = listeningConfig["modifiers"] as? Int ?? 0
@@ -125,7 +131,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
             return
         }
-        
+        newListeningVM.setHotkeys(with: formattedHotkeys)
         newListeningVM.setupRecordingProperties(userName: username, micFileName: micFileName, sysFileName: sysFileName, isAudioSaveOn: isAudioSaveOn)
         
         if WindowManager.shared.currentWindow == nil {

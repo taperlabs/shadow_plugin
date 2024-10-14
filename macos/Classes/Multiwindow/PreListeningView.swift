@@ -59,7 +59,7 @@ struct PreListeningView: View {
                                 WindowManager.shared.moveWindowToBottomLeft()
                                 MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
                             } label: {
-                                Text("Start Listening  ⌃ ⌘")
+                                Text("Start Listening  \(vm.hotkeys)")
                                     .font(.system(size: 14, weight: .bold))
                                     .frame(width: 200, height: 30)
                                     .foregroundColor(.primaryColor)
