@@ -96,7 +96,7 @@ struct PreListeningView: View {
                                 .toggleStyle(SwitchToggleStyle(tint: Color.primaryColor))
                                 .scaleEffect(0.8)
                                 .padding(.trailing, 20)
-                                .onChange(of: isAudioOn) { newValue in
+                                .onChange(of: vm.isAudioSaveOn) { newValue in
                                     vm.sendEvent(["isAudioSaveOn": newValue])
                                     MultiWindowStatusService.shared.sendEvent(["isAudioSaveOn": newValue])
                                 }
