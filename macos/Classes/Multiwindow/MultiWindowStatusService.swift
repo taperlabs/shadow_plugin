@@ -12,13 +12,13 @@ struct WindowStatus {
     let windowState: WindowState
     let isRecording: Bool
     let windowCloseType: WindowCloseType?
-    let isSaveAudioOn: Bool?
+    let isAudioSaveOn: Bool?
     
-    init(windowState: WindowState, isRecording: Bool, windowCloseType: WindowCloseType? = nil, isSaveAudioOn: Bool? = nil) {
+    init(windowState: WindowState, isRecording: Bool, windowCloseType: WindowCloseType? = nil, isAudioSaveOn: Bool? = nil) {
         self.windowState = windowState
         self.isRecording = isRecording
         self.windowCloseType = windowCloseType
-        self.isSaveAudioOn = isSaveAudioOn
+        self.isAudioSaveOn = isAudioSaveOn
     }
     
     func toDictionary() -> [String: Any] {
@@ -31,8 +31,8 @@ struct WindowStatus {
             dict["windowCloseType"] = closeType.rawValue
         }
         
-        if let isSaveAudioOn = isSaveAudioOn {
-            dict["isSaveAudioOn"] = isSaveAudioOn
+        if let isAudioSaveOn = isAudioSaveOn {
+            dict["isAudioSaveOn"] = isAudioSaveOn
         }
         
         return dict
