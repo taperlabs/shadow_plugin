@@ -98,7 +98,7 @@ struct PreListeningView: View {
                                 .padding(.trailing, 20)
                                 .onChange(of: vm.isAudioSaveOn) { newValue in
                                     vm.sendEvent(["isAudioSaveOn": newValue])
-                                    MultiWindowStatusService.shared.sendEvent(["isAudioSaveOn": newValue])
+                                    MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .preListening, isRecording: false, isSaveAudioOn: newValue))
                                 }
 
                                 // Video Toggle
