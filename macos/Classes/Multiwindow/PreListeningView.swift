@@ -89,7 +89,7 @@ struct PreListeningView: View {
                             HStack {
                                 Spacer()
                                 // Audio Toggle
-                                Toggle(isOn: $isAudioOn) {
+                                Toggle(isOn: $vm.isAudioSaveOn) {
                                     Text("Save Audio")
                                         .foregroundColor(.gray)
                                 }
@@ -97,7 +97,7 @@ struct PreListeningView: View {
                                 .scaleEffect(0.8)
                                 .padding(.trailing, 20)
                                 .onChange(of: isAudioOn) { newValue in
-                                    vm.sendEvent(["isAudioOn": newValue])
+                                    vm.sendEvent(["isAudioSaveOn": newValue])
                                 }
 
                                 // Video Toggle
