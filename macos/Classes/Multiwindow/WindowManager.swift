@@ -137,7 +137,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
             
             var newWindow = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 600, height: 300),
-                styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
+                styleMask: [.titled, .fullSizeContentView, .borderless],
                 backing: .buffered,
                 defer: false,
                 screen: .main
@@ -154,6 +154,12 @@ final class WindowManager: NSObject, NSWindowDelegate {
             newWindow.backgroundColor = .clear
             newWindow.isMovableByWindowBackground = true
             newWindow.delegate = self
+            newWindow.hasShadow = false
+            
+            newWindow.contentView?.wantsLayer = true
+            newWindow.contentView?.layer?.cornerRadius = 0
+//            newWindow.contentView?.layer?.masksToBounds = true
+            newWindow.isOpaque = false
             
             newWindow.isReleasedWhenClosed = false
             
@@ -169,7 +175,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 self.updateWindowState(.preListening, isRecording: false)
                 MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .preListening, isRecording: false))
             } else {
-                let listeningView = RealListeningView(vm: listeningVM)
+                let listeningView = ListeningView(vm: listeningVM)
                 let hostingView = NSHostingView(rootView: listeningView)
                 newWindow.contentView = hostingView
                 self.updateWindowState(.listening, isRecording: true)

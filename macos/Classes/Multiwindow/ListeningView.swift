@@ -1,162 +1,245 @@
 import SwiftUI
 import Combine
 
-struct RealListeningView: View {
+struct ListeningView: View {
     @ObservedObject var vm: ListeningViewModel
-    @State private var showingCancelConfirmation = false
-    
-    
+    @State private var showingCancelConfirmation = false {
+        didSet {
+            // Force expanded state when confirmation dialog is shown
+            if showingCancelConfirmation {
+                isExpanded = true
+            }
+        }
+    }
     @State private var expand = false
     @State private var selectedDevice: AudioDevice?
+    @State private var isMicSettingVisible = false
+    @State private var isExpanded = false
+    @State private var isForcedHover = true
+    @State private var isDoneHover = false
+    @State private var isCancelHover = false
+    @State private var isMinimizeHover = false
     
-//    @State private var countdownNumber: Int? = nil
-//    @State private var countdownTimer: AnyCancellable? = nil
+    var audioDeviceListView: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(vm.inputDevices, id: \.id) { device in
+                    Text(device.name)
+                        .foregroundColor(selectedDevice?.id == device.id ? .primaryColor : .white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 7)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.black.opacity(0.8))
+                        .onTapGesture {
+                            self.selectedDevice = device
+                            vm.setDefaultAudioInputDevice(with: device.name)
+                            withAnimation {
+                                isMicSettingVisible = false
+                            }
+                        }
+                }
+            }
+        }
+        .frame(height: 80)
+        .background(Color.black.opacity(0.8))
+        .cornerRadius(8)
+        .padding(.bottom, -8)
+    }
+    
+    /// Current Audio Device Display View
+    var currentAudioDeviceView: some View {
+        Text("Input Source: \(vm.defaultInputDeviceName)")
+            .font(.system(size: 12))
+            .foregroundColor(Color(hex: "BBBBBB"))
+            .padding()
+            .frame(height: 50)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.black.opacity(0.8))
+            .cornerRadius(10)
+            .onTapGesture {
+                withAnimation {
+                    isMicSettingVisible.toggle()
+                }
+            }
+    }
+    
+    var listeningControlsView: some View {
+        HStack(alignment: .center,spacing: 15) {
+            timerView
+            
+            if isExpanded {
+                doneButton
+                cancelButton
+                
+                Divider()
+                    .frame(height: 40)
+                
+                minimizeButton
+            }
+        }
+        .padding()
+        .frame(maxWidth: isExpanded ? .infinity : 70, alignment: .leading)
+        .background(Color.black.opacity(0.8))
+        .cornerRadius(10)
+    }
+    
+    var timerView: some View {
+        VStack {
+            if let count = vm.countdownNumber {
+                // Countdown View
+                Text("\(count)")
+                    .frame(width: 30, height: 30)
+                    .font(.largeTitle)
+                    .transition(.scale)
+                    .animation(.easeInOut)
+                    .onAppear {
+                        vm.startCountdown()
+                    }
+            } else {
+                ProgressiveFillShadowLogo(fillLevel: CGFloat(vm.noiseLevel), fillColor: Color.primaryColor)
+                    .frame(width: 30, height: 30)
+                
+                Text(formatTime(vm.currentTime))
+                    .font(.caption)
+            }
+        }
+    }
+    
+    var doneButton: some View {
+        VStack {
+            Button(action: {
+                // Done action + Close Main Window
+                vm.stopMicRecording()
+                WindowManager.shared.closeCurrentWindow(for: .done)
+            }) {
+                if let donePath = vm.donePath, let doneImage = NSImage(contentsOfFile: donePath) {
+                    Image(nsImage: doneImage)
+                } else {
+                    Text("Image not found")
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
+            .frame(width: 30, height: 30)
+            .disabled(vm.countdownNumber != nil)
+            .opacity(vm.countdownNumber != nil ? 0.5 : 1.0)
+            .foregroundColor(vm.countdownNumber != nil ? .gray : .primary)
+            .onHover { hovering in
+                if hovering && vm.countdownNumber == nil {
+                    NSCursor.pointingHand.push()
+                } else {
+                    NSCursor.pop()
+                }
+                isDoneHover = hovering
+            }
+            
+            Text("Done")
+                .font(.caption)
+                .opacity(vm.countdownNumber != nil ? 0.5 : 1.0)
+                .foregroundColor(isDoneHover && vm.countdownNumber == nil ? Color(hex: "EEEEEE") : Color(hex: "BBBBBB"))
+        }
+    }
+    
+    var cancelButton: some View {
+        VStack {
+            Button(action: {
+                print("Cancel Clicked")
+                //Cancel Confirmation only if 3 seconds buffer time is not on.
+                if vm.countdownTimer == nil {
+                    showingCancelConfirmation = true
+                } else {
+                    WindowManager.shared.closeCurrentWindow(for: .cancel)
+                }
+                // Cancel action
+            }) {
+                if let cancelImage = NSImage(contentsOfFile: vm.cancelPath!) {
+                    Image(nsImage: cancelImage) // Use the NSImage in SwiftUI
+                } else {
+                    Text("Image not found")
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
+            .frame(width: 30, height: 30)
+            .onHover { hovering in
+                if hovering {
+                    NSCursor.pointingHand.push()
+                } else {
+                    NSCursor.pop()
+                }
+                isCancelHover = hovering
+            }
+            
+            Text("Cancel")
+                .font(.caption)
+                .foregroundColor(isCancelHover ? Color(hex: "EEEEEE") : Color(hex: "BBBBBB"))
+        }
+        
+    }
+    
+    var minimizeButton: some View {
+        VStack {
+            Button(action: {
+                print("miniaturize")
+                WindowManager.shared.miniaturizeWindow()
+            }) {
+                if let minimizeImage = NSImage(contentsOfFile: vm.minimizePath!) {
+                    Image(nsImage: minimizeImage) // Use the NSImage in SwiftUI
+                } else {
+                    Text("Image not found")
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
+            .frame(width: 30, height: 30)
+            .onHover { hovering in
+                if hovering {
+                    NSCursor.pointingHand.push()
+                } else {
+                    NSCursor.pop()
+                }
+                isMinimizeHover = hovering
+            }
+            
+            Text("Minimize")
+                .font(.caption)
+                .foregroundColor(isMinimizeHover ? Color(hex: "EEEEEE") : Color(hex: "BBBBBB"))
+        }
+    }
+    
+    
     
     var body: some View {
-        VStack(spacing: 16) { // The vertical gap between the dropdown and the buttons
-            // Dropdown or input source
-            VisualEffectBlur(material: .menu, blendingMode: .behindWindow, isActive: true, cornerRadius: 16)
-                .overlay {
-                    //                    CustomDropdown2()
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack {
-                            Text(vm.defaultInputDeviceName)
-                            Spacer()
-                            Image(systemName: expand ? "chevron.up" : "chevron.down")
-                        }
-                        .padding(10)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .onTapGesture {
-                            withAnimation(.spring()) {
-                                self.expand.toggle()
-                            }
-                        }
-                        
-                        if expand {
-                            ScrollView {
-                                VStack(alignment: .leading, spacing: 0) {
-                                    ForEach(vm.inputDevices, id: \.id) { device in
-                                        Text(device.name)
-                                            .padding(10)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .foregroundColor(selectedDevice?.id == device.id ? .primaryColor : .white)
-                                            .onTapGesture {
-                                                self.selectedDevice = device
-                                                vm.setDefaultAudioInputDevice(with: device.name)
-                                                withAnimation(.spring()) {
-                                                    self.expand = false
-                                                }
-                                            }
-                                    }
-                                }
-                            }
-                            .frame(maxHeight: vm.inputDevices.count >= 5 ? 200 : CGFloat(vm.inputDevices.count * 40))
-                            .cornerRadius(10)
-                            .offset(y: -5)
-                        }
-                    }
-                    .frame(maxWidth: 200, maxHeight: expand ? .infinity : 50) // Adjust frame height based on expand state
-                    .animation(.spring(), value: expand)
-                }
-                .opacity(0.8)
+        VStack(spacing: 10) {
             
+            if isMicSettingVisible {
+                audioDeviceListView
+                    .transition(.opacity)
+            } else {
+                Spacer()
+                    .frame(height: 80)
+            }
             
+            // Current Audio Device Display
+            if isExpanded {
+                currentAudioDeviceView
+            } else {
+                Spacer()
+            }
             
+            listeningControlsView
+        }
+        .frame(width: 240, alignment: .leading)
+        .background(Color.clear)
+        .padding()
+        .onHover { hovering in
             
-            // The HStack containing the timer and action buttons
-            VisualEffectBlur(material: .popover, blendingMode: .behindWindow, isActive: true, cornerRadius: 16)
-                .overlay {
-                    HStack(alignment: .center,spacing: 20) { // Adjust spacing between items in HStack
-                        // Timer View
-                        VStack {
-                            if let count = vm.countdownNumber {
-                                // Countdown View
-                                Text("\(count)")
-                                    .frame(width: 30, height: 30)
-                                    .font(.largeTitle)
-                                    .transition(.scale)
-                                    .animation(.easeInOut)
-                                    .onAppear {
-                                        vm.startCountdown()
-                                    }
-                            } else {
-                                ProgressiveFillShadowLogo(fillLevel: CGFloat(vm.noiseLevel), fillColor: Color.primaryColor)
-                                    .frame(width: 30, height: 30)
-                                
-                                Text(formatTime(vm.currentTime))
-                                    .font(.caption)
-                            }
-                        }
-                        
-                        
-                        VStack {
-                            Button(action: {
-                                // Done action + Close Main Window
-                                vm.stopMicRecording()
-                                WindowManager.shared.closeCurrentWindow(for: .done)
-                            }) {
-                                if let donePath = vm.donePath, let doneImage = NSImage(contentsOfFile: donePath) {
-                                    Image(nsImage: doneImage)
-                                } else {
-                                    Text("Image not found")
-                                }
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .frame(width: 30, height: 30)
-                            .disabled(vm.countdownNumber != nil)
-                            .opacity(vm.countdownNumber != nil ? 0.5 : 1.0)
-                            .foregroundColor(vm.countdownNumber != nil ? .gray : .primary)
-                            
-                            Text("Done")
-                                .font(.caption)
-                                .opacity(vm.countdownNumber != nil ? 0.5 : 1.0)
-                        }
-                        
-                        VStack {
-                            Button(action: {
-                                print("Cancel Clicked")
-                                //Cancel Confirmation only if 3 seconds buffer time is not on.
-                                if vm.countdownTimer == nil {
-                                    showingCancelConfirmation = true
-                                } else {
-                                    WindowManager.shared.closeCurrentWindow(for: .cancel)
-                                }
-                                // Cancel action
-                            }) {
-                                if let cancelImage = NSImage(contentsOfFile: vm.cancelPath!) {
-                                    Image(nsImage: cancelImage) // Use the NSImage in SwiftUI
-                                } else {
-                                    Text("Image not found")
-                                }
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .frame(width: 30, height: 30)
-                            Text("Cancel")
-                                .font(.caption)
-                        }
-                        
-                        Divider()
-                            .frame(height: 40) // Adjust height of the divider
-                        
-                        VStack {
-                            Button(action: {
-                                print("miniaturize")
-                                WindowManager.shared.miniaturizeWindow()
-                            }) {
-                                if let minimizeImage = NSImage(contentsOfFile: vm.minimizePath!) {
-                                    Image(nsImage: minimizeImage) // Use the NSImage in SwiftUI
-                                } else {
-                                    Text("Image not found")
-                                }
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .frame(width: 30, height: 30)
-                            Text("Minimize")
-                                .font(.caption)
-                        }
+            if !isForcedHover && !showingCancelConfirmation {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    isExpanded = hovering
+                    if !isExpanded {
+                        isMicSettingVisible = false
                     }
                 }
+            }
+            
         }
         .confirmationDialog("Are you sure you want to cancel?", isPresented: $showingCancelConfirmation, titleVisibility: .visible) {
             HStack {
@@ -168,22 +251,32 @@ struct RealListeningView: View {
                     //dismiss dialog
                 }
             }
-  
+            
         } message: {
             Text("This will delete all data from the current meeting.")
         }
         .onAppear(perform: {
-            print("real listening View appeared")
+            print("listening View appeared")
             vm.startCountdownRecording()
             vm.setAudioDeviceListener()
             vm.isRecording = true
+            isExpanded = true // Start in expanded state
+            startForcedExpand() // Start the 5-second timer
         })
         .onDisappear(perform: {
-            print("real listening View disappeared")
+            print("listening View disappeared")
             vm.removeAudioDeviceListener()
         })
-        .frame(maxWidth: 250, maxHeight: 200)
+        //        .frame(maxWidth: 250, maxHeight: 200)
         .ignoresSafeArea(.all)
+    }
+    
+    func startForcedExpand() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            withAnimation {
+                self.isForcedHover = false
+            }
+        }
     }
     
     

@@ -120,7 +120,7 @@ struct PreListeningView: View {
             }
             // Define navigation destination here
             .navigationDestination(isPresented: $vm.showListeningView) {
-                RealListeningView(vm: vm)
+                ListeningView(vm: vm)
                 
             }
             .navigationBarBackButtonHidden(true)
