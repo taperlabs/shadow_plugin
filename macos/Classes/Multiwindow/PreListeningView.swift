@@ -23,7 +23,7 @@ struct PreListeningView: View {
         NavigationStack {
             ZStack {
                 // VisualEffectBlur applies to the background and main content
-                VisualEffectBlur(material: .ultraDark, blendingMode: .behindWindow, isActive: true, cornerRadius: 16)
+                VisualEffectBlur(material: .sidebar, blendingMode: .behindWindow, isActive: true, cornerRadius: 16)
                     .overlay {
                         VStack {
                             Spacer()
@@ -122,7 +122,7 @@ struct PreListeningView: View {
                             .padding(.vertical, 3)
                             .background(Color.bgColor.edgesIgnoringSafeArea(.all))
                         }
-                        .background(Color(hex: "5B5B5B"))
+//                        .background(Color(hex: "5B5B5B"))
 //                        .background(Color(hex: "000000"))
                     }
                     .edgesIgnoringSafeArea(.all)
