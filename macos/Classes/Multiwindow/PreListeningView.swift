@@ -23,24 +23,27 @@ struct PreListeningView: View {
         NavigationStack {
             ZStack {
                 // VisualEffectBlur applies to the background and main content
-                VisualEffectBlur(material: .menu, blendingMode: .behindWindow, isActive: true, cornerRadius: 16)
+                VisualEffectBlur(material: .ultraDark, blendingMode: .behindWindow, isActive: true, cornerRadius: 16)
                     .overlay {
                         VStack {
                             Spacer()
                             
                             if let lottiePath = vm.lottiePath {
                                 LottieView(lottieFile: lottiePath, loopMode: .loop, autostart: true, contentMode: .scaleAspectFit)
-                                    .frame(width: 75, height: 75)
-                                    .padding(.bottom, 20)
+                                    .frame(width: 80, height: 80)
+                                    .padding(.bottom, 10)
                             } else {
                                 // Handle the nil case, perhaps show a placeholder or an error message
                                 Text("Loading...")
                                     .frame(width: 75, height: 75)
                                     .padding(.bottom, 20)
                             }
+                            
+                            Spacer()
                             // Text label
                             if let username = vm.username {
                                 Text("Hey \(username), I'm ready to listen.")
+                                    .foregroundStyle(Color.white)
                                     .font(.system(size: 14, weight: .bold))
                                     .fontWeight(.bold)
                                     .padding(.bottom,  20)
@@ -50,6 +53,7 @@ struct PreListeningView: View {
                                     .fontWeight(.bold)
                                     .padding(.bottom,  20)
                             }
+                            
                       
                             // Start Listening Button
                             Button {
@@ -73,6 +77,8 @@ struct PreListeningView: View {
                             .background(Color.primaryColor.opacity(0.1))
                             .padding(.bottom, 20)
                             .frame(width: 200, height: 30)
+                            
+                    
 
                             // Dismiss Button
                             Button {
@@ -84,8 +90,9 @@ struct PreListeningView: View {
                                     .foregroundColor(.gray)
                             }
                             .buttonStyle(PlainButtonStyle())
-
+                            
                             Spacer()
+
                             HStack {
                                 Spacer()
                                 // Audio Toggle
@@ -115,6 +122,8 @@ struct PreListeningView: View {
                             .padding(.vertical, 3)
                             .background(Color.bgColor.edgesIgnoringSafeArea(.all))
                         }
+                        .background(Color(hex: "5B5B5B"))
+//                        .background(Color(hex: "000000"))
                     }
                     .edgesIgnoringSafeArea(.all)
             }

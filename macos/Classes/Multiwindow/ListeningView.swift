@@ -88,10 +88,11 @@ struct ListeningView: View {
             if let count = vm.countdownNumber {
                 // Countdown View
                 Text("\(count)")
+                    .foregroundStyle(Color(hex: "BBBBBB"))
                     .frame(width: 30, height: 30)
                     .font(.largeTitle)
                     .transition(.scale)
-                    .animation(.easeInOut)
+                    .animation(.easeInOut, value: 0.3)
                     .onAppear {
                         vm.startCountdown()
                     }
@@ -100,6 +101,7 @@ struct ListeningView: View {
                     .frame(width: 30, height: 30)
                 
                 Text(formatTime(vm.currentTime))
+                    .foregroundStyle(Color(hex: "EEEEEE"))
                     .font(.caption)
             }
         }
@@ -147,6 +149,7 @@ struct ListeningView: View {
                 if vm.countdownTimer == nil {
                     showingCancelConfirmation = true
                 } else {
+                    vm.cancelRecording()
                     WindowManager.shared.closeCurrentWindow(for: .cancel)
                 }
                 // Cancel action
