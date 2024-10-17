@@ -198,6 +198,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
                     let xPos = screenFrame.midX - windowSize.width / 2
                     let yPos = screenFrame.midY - windowSize.height / 2
                     newWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+                    newWindow.makeKeyAndOrderFront(nil)
                 }
             } else {
                 if let screen = NSScreen.main {
