@@ -2,6 +2,8 @@ import Foundation
 import AppKit
 import SwiftUI
 
+import FlutterMacOS
+
 enum WindowNames: String, CaseIterable {
     case listening = "listening"
     case preListening = "preListening"
@@ -17,7 +19,7 @@ enum WindowCloseType: String {
 final class WindowManager: NSObject, NSWindowDelegate {
     // Singleton instance
     static let shared = WindowManager()
-
+    
     var windows: [Int64: NSWindow] = [:]
     var nextWindowId: Int64 = 1
     var listeningViewModel: ListeningViewModel?
@@ -69,11 +71,11 @@ final class WindowManager: NSObject, NSWindowDelegate {
         if let screen = NSScreen.main {
             let screenFrame = screen.frame
             let windowSize = window.frame.size
-
+            
             // Calculate the bottom-left position
             let xPos = screenFrame.minX + 50
-            let yPos = screenFrame.minY - 20
-
+            let yPos = screenFrame.minY + 60
+            
             // Set the window's new position
             window.setFrameOrigin(NSPoint(x: xPos, y: yPos))
         }
@@ -114,7 +116,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
             window.setFrameOrigin(newOrigin)
         }
     }
-
+    
     
     func hotkeyPressed() {
         print("Hotkey pressed in AppDelegate")
@@ -137,7 +139,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
             
             var newWindow = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 600, height: 300),
-                styleMask: [.titled, .fullSizeContentView, .borderless],
+                styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView, .borderless],
                 backing: .buffered,
                 defer: false,
                 screen: .main
@@ -158,7 +160,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
             
             newWindow.contentView?.wantsLayer = true
             newWindow.contentView?.layer?.cornerRadius = 0
-//            newWindow.contentView?.layer?.masksToBounds = true
+            //            newWindow.contentView?.layer?.masksToBounds = true
             newWindow.isOpaque = false
             
             newWindow.isReleasedWhenClosed = false
@@ -174,6 +176,8 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 newWindow.contentView = hostingView
                 self.updateWindowState(.preListening, isRecording: false)
                 MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .preListening, isRecording: false))
+                newWindow.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
             } else {
                 let listeningView = ListeningView(vm: listeningVM)
                 let hostingView = NSHostingView(rootView: listeningView)
@@ -182,7 +186,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
             }
             
-      
+            
             
             
             self.currentWindow = newWindow
@@ -198,7 +202,6 @@ final class WindowManager: NSObject, NSWindowDelegate {
                     let xPos = screenFrame.midX - windowSize.width / 2
                     let yPos = screenFrame.midY - windowSize.height / 2
                     newWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
-                    newWindow.makeKeyAndOrderFront(nil)
                 }
             } else {
                 if let screen = NSScreen.main {
@@ -207,15 +210,15 @@ final class WindowManager: NSObject, NSWindowDelegate {
                     
                     // Calculate the bottom-left position
                     let xPos = screenFrame.minX + 50
-                    let yPos = screenFrame.minY + 50
+                    let yPos = screenFrame.minY + 70
                     
                     // Set the window's new position
                     newWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
                 }
             }
             
-         
-
+            
+            
             print("New window has been created and configured with ID \(newWindowId).")
         }
     }
@@ -225,8 +228,22 @@ final class WindowManager: NSObject, NSWindowDelegate {
             print("No current window exists")
             return
         }
+        
         print("Closing the current Window \(windowCloseType.rawValue)")
         currentWindow.close()
+        
+        guard let app = NSApplication.shared.delegate as? FlutterAppDelegate else {
+            debugPrint("failed to find flutter main window, application delegate is not FlutterAppDelegate")
+            return
+        }
+        guard let mainFlutterWindow = app.mainFlutterWindow else {
+            debugPrint("failed to find flutter main window")
+            return
+        }
+        if windowCloseType == .dismiss {
+            print("아하아하 \( app.mainFlutterWindow?.isKeyWindow)")
+        }
+        
         MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false, windowCloseType: windowCloseType))
     }
     
@@ -272,6 +289,26 @@ final class WindowManager: NSObject, NSWindowDelegate {
 
 extension WindowManager {
     
+    func windowDidMiniaturize(_ notification: Notification) {
+        print("window is miniaturizing")
+        
+        guard let app = NSApplication.shared.delegate as? FlutterAppDelegate else {
+            debugPrint("failed to find flutter main window, application delegate is not FlutterAppDelegate")
+            return
+        }
+        guard let mainFlutterWindow = app.mainFlutterWindow else {
+            debugPrint("failed to find flutter main window")
+            return
+        }
+        
+        print("occulusionState !!!",mainFlutterWindow.occlusionState.contains(.visible))
+        let isMainWindowVisible = mainFlutterWindow.occlusionState.contains(.visible)
+        
+        if !isMainWindowVisible {
+            mainFlutterWindow.orderBack(nil)
+        }
+    }
+    
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         print("Window should close called")
         return true
@@ -280,7 +317,7 @@ extension WindowManager {
     func windowWillClose(_ notification: Notification) {
         print("Window is closing")
         self.currentWindow = nil
-//        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false))
+        //        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false))
         self.listeningViewModel = nil
     }
     

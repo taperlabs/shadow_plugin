@@ -104,6 +104,19 @@ struct ListeningView: View {
                     .foregroundStyle(Color(hex: "EEEEEE"))
                     .font(.caption)
             }
+
+        }
+        .onHover { hovering in
+            
+            if !isForcedHover && !showingCancelConfirmation && !isExpanded {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    isExpanded = hovering
+                    if !isExpanded {
+                        isMicSettingVisible = false
+                    }
+                }
+            }
+            
         }
     }
     
@@ -234,7 +247,7 @@ struct ListeningView: View {
         .padding()
         .onHover { hovering in
             
-            if !isForcedHover && !showingCancelConfirmation {
+            if !isForcedHover && !showingCancelConfirmation && isExpanded {
                 withAnimation(.easeOut(duration: 0.2)) {
                     isExpanded = hovering
                     if !isExpanded {

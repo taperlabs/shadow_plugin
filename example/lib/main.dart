@@ -226,7 +226,7 @@ class _MyAppState extends State<MyApp> {
           'userName': "Phoenix",
           'micFileName': "hotkey",
           'sysFileName': "hotkey",
-          'isAudioSaveOn': false,
+          'isAudioSaveOn': true,
         };
 
         await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);

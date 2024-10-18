@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import Lottie
+import Carbon.HIToolbox
 
 struct WindowResizeKey: EnvironmentKey {
     static let defaultValue: (CGSize) -> Void = { _ in }
@@ -15,10 +16,10 @@ extension EnvironmentValues {
 
 struct PreListeningView: View {
     @ObservedObject var vm: ListeningViewModel
-    
+    @State private var localMonitor: Any?
     @State private var isAudioOn = true
     @State private var isVideoOn = false
-//    @State private var showListeningView = false
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -54,11 +55,12 @@ struct PreListeningView: View {
                                     .padding(.bottom,  20)
                             }
                             
-                      
+                            
                             // Start Listening Button
                             Button {
+                                removeKeyMonitor()
                                 vm.showListeningView = true
-//                                vm.startMicRecording()
+                                //                                vm.startMicRecording()
                                 vm.isRecording = true
                                 WindowManager.shared.moveWindowToBottomLeft()
                                 MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
@@ -78,11 +80,12 @@ struct PreListeningView: View {
                             .padding(.bottom, 20)
                             .frame(width: 200, height: 30)
                             
-                    
-
+                            
+                            
                             // Dismiss Button
                             Button {
                                 print("Dismiss")
+                                removeKeyMonitor()
                                 WindowManager.shared.closeCurrentWindow(for: .dismiss)
                             } label: {
                                 Text("Dismiss")
@@ -92,7 +95,7 @@ struct PreListeningView: View {
                             .buttonStyle(PlainButtonStyle())
                             
                             Spacer()
-
+                            
                             HStack {
                                 Spacer()
                                 // Audio Toggle
@@ -107,7 +110,7 @@ struct PreListeningView: View {
                                     vm.sendEvent(["isAudioSaveOn": newValue])
                                     MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .preListening, isRecording: false, isAudioSaveOn: newValue))
                                 }
-
+                                
                                 // Video Toggle
                                 Toggle(isOn: $isVideoOn) {
                                     Text("Video")
@@ -122,8 +125,8 @@ struct PreListeningView: View {
                             .padding(.vertical, 3)
                             .background(Color.bgColor.edgesIgnoringSafeArea(.all))
                         }
-//                        .background(Color(hex: "5B5B5B"))
-//                        .background(Color(hex: "000000"))
+                        //                        .background(Color(hex: "5B5B5B"))
+                        //                        .background(Color(hex: "000000"))
                     }
                     .edgesIgnoringSafeArea(.all)
             }
@@ -134,12 +137,43 @@ struct PreListeningView: View {
             }
             .navigationBarBackButtonHidden(true)
             .onAppear {
+                setupKeyMonitor()
                 print("PreListeningView appeared")
-//                vm.updateViewState(view: "prelisteningview")
+                //                vm.updateViewState(view: "prelisteningview")
             }
             .onDisappear(perform: {
+                removeKeyMonitor()
                 print("PreListeningView disappeared")
             })
+        }
+    }
+    
+    private func setupKeyMonitor() {
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if keyDown(with: event) {
+                return nil
+            } else {
+                return event
+            }
+        }
+    }
+    
+    private func removeKeyMonitor() {
+        if let monitor = localMonitor {
+            print("키모니터 이벤트 삭제!!!!!")
+            NSEvent.removeMonitor(monitor)
+            localMonitor = nil
+        }
+    }
+    
+    private func keyDown(with event: NSEvent) -> Bool {
+        if Int(event.keyCode) == kVK_Escape {
+            print("Escape key pressed!")
+            removeKeyMonitor()
+            WindowManager.shared.closeCurrentWindow(for: .dismiss)
+            return true
+        } else {
+            return false
         }
     }
 }
