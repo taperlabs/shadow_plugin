@@ -135,8 +135,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         newListeningVM.setupRecordingProperties(userName: username, micFileName: micFileName, sysFileName: sysFileName, isAudioSaveOn: isAudioSaveOn)
         
         if WindowManager.shared.currentWindow == nil {
-            let windowType = call.method == "startListening" ? "listening" : "preview"            
-            windowManager?.createWindow(with: windowType)
+            let windowViewState = ShadowPlugin.from(method: call.method)
+            windowManager?.createWindow(with: windowViewState)
         } else {
             if newListeningVM.isRecording {
                 print("녹화중")
@@ -560,6 +560,12 @@ extension ShadowPlugin {
         let shadowServerApp = ShadowServerHandler()
         let isServerRunning = shadowServerApp.isAppRunning()
         result(isServerRunning)
+    }
+}
+
+extension ShadowPlugin {
+    static func from(method: String) -> WindowViewState {
+        method == "startListening" ? .listening : .preListening
     }
 }
 

@@ -104,10 +104,9 @@ struct ListeningView: View {
                     .foregroundStyle(Color(hex: "EEEEEE"))
                     .font(.caption)
             }
-
+            
         }
         .onHover { hovering in
-            
             if !isForcedHover && !showingCancelConfirmation && !isExpanded {
                 withAnimation(.easeOut(duration: 0.2)) {
                     isExpanded = hovering
@@ -246,7 +245,6 @@ struct ListeningView: View {
         .background(Color.clear)
         .padding()
         .onHover { hovering in
-            
             if !isForcedHover && !showingCancelConfirmation && isExpanded {
                 withAnimation(.easeOut(duration: 0.2)) {
                     isExpanded = hovering
@@ -291,6 +289,11 @@ struct ListeningView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             withAnimation {
                 self.isForcedHover = false
+                if !self.isExpanded {
+                    self.isExpanded = true
+                } else {
+                    self.isExpanded = false
+                }
             }
         }
     }

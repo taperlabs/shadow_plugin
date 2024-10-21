@@ -1,10 +1,9 @@
 import Foundation
 import AppKit
 import SwiftUI
-
 import FlutterMacOS
 
-enum WindowNames: String, CaseIterable {
+enum WindowViewState: String, CaseIterable {
     case listening = "listening"
     case preListening = "preListening"
 }
@@ -60,26 +59,58 @@ final class WindowManager: NSObject, NSWindowDelegate {
         window.miniaturize(nil)
     }
     
-    // Method to update the window position
-    func moveWindowToBottomLeft() {
-        guard let window = currentWindow else {
-            print("No window available to move")
-            return
-        }
-        
-        // Get screen size and window size
-        if let screen = NSScreen.main {
+    func moveWindowToBottomLeft(completion: (() -> Void)? = nil) {
+        DispatchQueue.main.async {
+            guard let window = self.currentWindow else {
+                print("No window available to move")
+                completion?()
+                return
+            }
+            
+            guard let screen = NSScreen.main else {
+                print("No main screen available")
+                completion?()
+                return
+            }
+            
             let screenFrame = screen.frame
             let windowSize = window.frame.size
             
             // Calculate the bottom-left position
             let xPos = screenFrame.minX + 50
-            let yPos = screenFrame.minY + 60
+            let yPos = screenFrame.minY + 70
             
-            // Set the window's new position
-            window.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+            // Create the target frame
+            let newFrame = NSRect(x: xPos, y: yPos, width: windowSize.width, height: windowSize.height)
+            
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.3  // Animation duration in seconds
+                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                window.animator().setFrame(newFrame, display: true)
+            }, completionHandler: completion)
         }
     }
+    
+    // Method to update the window position
+//    func moveWindowToBottomLeft() {
+//        guard let window = currentWindow else {
+//            print("No window available to move")
+//            return
+//        }
+//        
+//        // Get screen size and window size
+//        if let screen = NSScreen.main {
+//            let screenFrame = screen.frame
+//            let windowSize = window.frame.size
+//            
+//            // Calculate the bottom-left position
+//            let xPos = screenFrame.minX + 50
+//            let yPos = screenFrame.minY + 60
+//            
+//            // Set the window's new position
+//            window.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+//        }
+//    }
     
     func setupGlobalHotkeyMonitor() {
         let mask: NSEvent.EventTypeMask = [.keyDown]
@@ -117,12 +148,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
         }
     }
     
-    
-    func hotkeyPressed() {
-        print("Hotkey pressed in AppDelegate")
-    }
-    
-    func createWindow(with viewState: String) {
+    func createWindow(with viewState: WindowViewState) {
         print("Creating a new window... with \(viewState)")
         
         DispatchQueue.main.async {
@@ -169,7 +195,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 self?.resizeWindow(to: newSize, window: newWindow)
             }
             
-            if viewState == "preview" {
+            if viewState == .preListening {
                 let preListeningView = PreListeningView(vm: listeningVM)
                     .environment(\.resizeWindow, resizeWindow)
                 let hostingView = NSHostingView(rootView: preListeningView)
@@ -195,7 +221,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
             // Center the window on screen
             
             
-            if viewState == "preview" {
+            if viewState == .preListening {
                 if let screen = NSScreen.main {
                     let screenFrame = screen.frame
                     let windowSize = newWindow.frame.size
