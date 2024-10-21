@@ -40,7 +40,7 @@ struct ListeningView: View {
                 }
             }
         }
-        .frame(height: 80)
+        .frame(maxHeight: 80)
         .background(Color.black.opacity(0.8))
         .cornerRadius(8)
         .padding(.bottom, -8)
@@ -293,6 +293,7 @@ struct ListeningView: View {
                     self.isExpanded = true
                 } else {
                     self.isExpanded = false
+                    isMicSettingVisible = false
                 }
             }
         }
