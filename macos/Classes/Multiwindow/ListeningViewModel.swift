@@ -123,6 +123,8 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     
     // Call this method when the window is about to close
     func cancelRecording() {
+        screenCaptureService.stopCapture()
+        microphoneService.stopRecording()
         isRecording = false
         shouldStartRecording = false
         isCountdownActive = false

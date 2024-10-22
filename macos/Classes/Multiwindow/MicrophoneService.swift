@@ -6,6 +6,12 @@ import QuartzCore
 final class MicrophoneService: NSObject, ObservableObject {
     private var audioRecorder: AVAudioRecorder?
     private var timer: Timer?
+    private var noiseTimer: Timer?
+    private var timeTimer: Timer?
+    private var startTime: TimeInterval?
+    
+    // Create a dedicated serial queue for time updates
+    private let timeQueue = DispatchQueue(label: "com.app.microphoneService.timeQueue")
     
     @Published private(set) var currentTime: TimeInterval = 0
     @Published private(set) var isRecording: Bool = false
@@ -56,7 +62,7 @@ final class MicrophoneService: NSObject, ObservableObject {
             audioRecorder?.prepareToRecord()
             audioRecorder?.record()
             isRecording = true // Update isRecording
-            startTimer()
+            startTimers()
 
             print("Recording started at \(audioFileURL.absoluteString)")
         } catch {
@@ -68,20 +74,66 @@ final class MicrophoneService: NSObject, ObservableObject {
     func stopRecording() {
         audioRecorder?.stop()
         audioRecorder = nil
-        stopTimer()
+        stopTimers()
     }
     
-    private func startTimer() {
-        currentTime = 0 // Reset currentTime
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            guard let self = self, let recorder = self.audioRecorder else { return }
-            self.currentTime = recorder.currentTime
-            // Update metering
+    private func startTimers() {
+        timeQueue.sync {
+            currentTime = 0
+            startTime = Date().timeIntervalSinceReferenceDate
+        }
+        
+        // Timer for noise level updates (0.1 second intervals)
+        noiseTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard let self = self,
+                  let recorder = self.audioRecorder else { return }
+            
             recorder.updateMeters()
             let averagePower = recorder.averagePower(forChannel: 0)
             self.noiseLevel = self.normalizedPowerLevel(fromDecibels: averagePower)
         }
+        
+        // Timer for time updates (1 second intervals)
+        timeTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            self.timeQueue.sync {
+                guard let startTime = self.startTime else { return }
+                let currentSystemTime = Date().timeIntervalSinceReferenceDate
+  
+                DispatchQueue.main.async {
+                    self.currentTime = floor(currentSystemTime - startTime)
+                }
+            }
+        }
     }
+    
+    private func stopTimers() {
+        noiseTimer?.invalidate()
+        noiseTimer = nil
+        timeTimer?.invalidate()
+        timeTimer = nil
+        
+        timeQueue.sync {
+            startTime = nil
+            DispatchQueue.main.async {
+                self.currentTime = 0
+            }
+        }
+    }
+    
+//    private func startTimer() {
+//        currentTime = 0 // Reset currentTime
+//        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+//            guard let self = self, let recorder = self.audioRecorder else { return }
+//            print("recorder 시간 ---> \(recorder.currentTime)")
+//            self.currentTime = recorder.currentTime
+//            // Update metering
+//            recorder.updateMeters()
+//            let averagePower = recorder.averagePower(forChannel: 0)
+//            self.noiseLevel = self.normalizedPowerLevel(fromDecibels: averagePower)
+//        }
+//    }
 
     private func stopTimer() {
         timer?.invalidate()
@@ -113,7 +165,7 @@ extension MicrophoneService: AVAudioRecorderDelegate {
         }
         DispatchQueue.main.async { [weak self] in
              self?.isRecording = false // Update isRecording
-             self?.stopTimer()
+             self?.stopTimers()
          }
     }
 }

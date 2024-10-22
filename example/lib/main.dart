@@ -130,8 +130,8 @@ class _MyAppState extends State<MyApp> {
   setListeningConfig() {
     final listeningConfig = {
       'userName': "Phoenix",
-      'sysFileName': "systemFileName",
-      'micFileName': "micFileName",
+      'micFileName': "micAudio.m4a",
+      'sysFileName': "sysAudio.m4a",
       'convUuid': "convUuid",
     };
   }
@@ -224,8 +224,8 @@ class _MyAppState extends State<MyApp> {
         final modifiers = hotKey.modifiers!.map((modifier) => modifier.toString()).toList();
         final listeningConfig = {
           'userName': "Phoenix",
-          'micFileName': "hotkey",
-          'sysFileName': "hotkey",
+          'micFileName': "micAudio.m4a",
+          'sysFileName': "sysAudio.m4a",
           'isAudioSaveOn': true,
         };
 
@@ -265,8 +265,8 @@ class _MyAppState extends State<MyApp> {
 
     final listeningConfig = {
       'userName': "Phoenix",
-      'micFileName': "ggggggggg",
-      'sysFileName': "ggggggggg",
+      'micFileName': "micAudio.m4a",
+      'sysFileName': "sysAudio.m4a",
     };
 
     await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);
@@ -278,8 +278,8 @@ class _MyAppState extends State<MyApp> {
   Future<void> _startListening() async {
     final listeningConfig = {
       'userName': "Phoenix",
-      'micFileName': "ggggggggg",
-      'sysFileName': "ggggggggg",
+      'micFileName': "micAudio.m4a",
+      'sysFileName': "sysAudio.m4a",
     };
 
     await _shadowPlugin.startListening(listeningConfig: listeningConfig);
@@ -736,8 +736,8 @@ class _MyAppState extends State<MyApp> {
             // await startMicRecording();
             final listeningConfig = {
               'userName': "Phoenix",
-              'micFileName': "ggggggggg",
-              'systemFileName': "ggggggggg",
+              'micFileName': "micAudio.m4a",
+              'sysFileName': "sysAudio.m4a",
             };
             _shadowPlugin.startListening(listeningConfig: listeningConfig);
 
