@@ -336,6 +336,7 @@ extension WindowManager {
         //Main Window가 minimized인 상태면 orderOut으로 처리해야 함
         if isMainWindowMinimized {
             mainFlutterWindow.orderOut(nil)
+            return
         }
         
         if !isMainWindowVisible {
