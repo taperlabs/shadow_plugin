@@ -329,6 +329,14 @@ extension WindowManager {
         
         print("occulusionState !!!",mainFlutterWindow.occlusionState.contains(.visible))
         let isMainWindowVisible = mainFlutterWindow.occlusionState.contains(.visible)
+        let isMainWindowMinimized = mainFlutterWindow.isMiniaturized
+        
+        print("isMainWindowMinimized", isMainWindowMinimized)
+        
+        //Main Window가 minimized인 상태면 orderOut으로 처리해야 함
+        if isMainWindowMinimized {
+            mainFlutterWindow.orderOut(nil)
+        }
         
         if !isMainWindowVisible {
             mainFlutterWindow.orderBack(nil)

@@ -267,6 +267,7 @@ class _MyAppState extends State<MyApp> {
       'userName': "Phoenix",
       'micFileName': "micAudio.m4a",
       'sysFileName': "sysAudio.m4a",
+      'hotkeys': '^+⌘',
     };
 
     await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);

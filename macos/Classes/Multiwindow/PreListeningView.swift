@@ -24,7 +24,7 @@ struct PreListeningView: View {
         NavigationStack {
             ZStack {
                 // VisualEffectBlur applies to the background and main content
-                VisualEffectBlur(material: .sidebar, blendingMode: .behindWindow, isActive: true, cornerRadius: 16)
+                VisualEffectBlur(material: .sidebar, blendingMode: .behindWindow, isActive: true, cornerRadius: 12)
                     .overlay {
                         VStack {
                             Spacer()
@@ -45,8 +45,7 @@ struct PreListeningView: View {
                             if let username = vm.username {
                                 Text("Hey \(username), I'm ready to listen.")
                                     .foregroundStyle(Color.white)
-                                    .font(.system(size: 14, weight: .bold))
-                                    .fontWeight(.bold)
+                                    .font(.system(size: 14, weight: .semibold))
                                     .padding(.bottom,  20)
                             } else {
                                 Text("Hey no-name-user, I'm ready to listen")
@@ -65,20 +64,43 @@ struct PreListeningView: View {
                                 WindowManager.shared.moveWindowToBottomLeft()
                                 MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
                             } label: {
-                                Text("Start Listening  \(vm.hotkeys)")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .frame(width: 200, height: 30)
-                                    .foregroundColor(.primaryColor)
+                                HStack(spacing: 10) {
+                                    Text("Start Listening")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.primaryColor)
+                                    
+                                    Text(vm.hotkeys)
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.primaryColor)
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 2)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 2)
+                                                .fill(Color.bgColor.opacity(0.8))
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 2)
+                                                .stroke(Color.bgColor.opacity(0.8), lineWidth: 1)
+                                        )
+                                }
+                                .frame(width: 200, height: 30)
                             }
                             .buttonStyle(PlainButtonStyle())
-                            .cornerRadius(8)
+                            .cornerRadius(2)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 5) // Adjust the cornerRadius as needed
+                                RoundedRectangle(cornerRadius: 2) // Adjust the cornerRadius as needed
                                     .stroke(Color.primaryColor, lineWidth: 1)
                             )
                             .background(Color.primaryColor.opacity(0.1))
                             .padding(.bottom, 20)
                             .frame(width: 200, height: 30)
+                            .onHover { hovering in
+                                if hovering {
+                                    NSCursor.pointingHand.push()
+                                } else {
+                                    NSCursor.pop()
+                                }
+                            }
                             
                             
                             
@@ -93,6 +115,13 @@ struct PreListeningView: View {
                                     .foregroundColor(.gray)
                             }
                             .buttonStyle(PlainButtonStyle())
+                            .onHover { hovering in
+                                if hovering {
+                                    NSCursor.pointingHand.push()
+                                } else {
+                                    NSCursor.pop()
+                                }
+                            }
                             
                             Spacer()
                             
@@ -128,6 +157,12 @@ struct PreListeningView: View {
                         //                        .background(Color(hex: "5B5B5B"))
                         //                        .background(Color(hex: "000000"))
                     }
+                    .clipShape(RoundedRectangle(cornerRadius: 12)) // Add this to ensure consistent clipping
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
+                    .padding(1)
                     .edgesIgnoringSafeArea(.all)
             }
             // Define navigation destination here

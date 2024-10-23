@@ -52,7 +52,8 @@ struct ListeningView: View {
             .font(.system(size: 12))
             .foregroundColor(Color(hex: "BBBBBB"))
             .padding()
-            .frame(height: 50)
+            .padding(.vertical, 1)
+            .frame(height: 40)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.black.opacity(0.8))
             .cornerRadius(10)
@@ -64,7 +65,7 @@ struct ListeningView: View {
     }
     
     var listeningControlsView: some View {
-        HStack(alignment: .center,spacing: 15) {
+        HStack(alignment: .center,spacing: 20) {
             timerView
             
             if isExpanded {
@@ -73,6 +74,7 @@ struct ListeningView: View {
                 
                 Divider()
                     .frame(height: 40)
+                    .background(Color.white.opacity(0.2))
                 
                 minimizeButton
             }
@@ -98,14 +100,17 @@ struct ListeningView: View {
                     }
             } else {
                 ProgressiveFillShadowLogo(fillLevel: CGFloat(vm.noiseLevel), fillColor: Color.primaryColor)
-                    .frame(width: 30, height: 30)
+                    .frame(width: 25, height: 25) //logo size affects the element to move when time changes
+                    .padding(.bottom, 7)
                 
                 Text(formatTime(vm.currentTime))
                     .foregroundStyle(Color(hex: "EEEEEE"))
                     .font(.caption)
+//                    .font(.system(.caption, design: .monospaced))
             }
             
         }
+        .frame(width: 40)
         .onHover { hovering in
             if !isForcedHover && !showingCancelConfirmation && !isExpanded {
                 withAnimation(.easeOut(duration: 0.2)) {
@@ -138,13 +143,17 @@ struct ListeningView: View {
             .opacity(vm.countdownNumber != nil ? 0.5 : 1.0)
             .foregroundColor(vm.countdownNumber != nil ? .gray : .primary)
             .onHover { hovering in
-                if hovering && vm.countdownNumber == nil {
-                    NSCursor.pointingHand.push()
-                } else {
-                    NSCursor.pop()
+                print("Hover state changed: \(hovering), isKey: \(NSApp.keyWindow != nil)")
+                DispatchQueue.main.async {
+                    if hovering && vm.countdownNumber == nil {
+                        NSCursor.pointingHand.push()
+                    } else {
+                        NSCursor.pop()
+                    }
+                    isDoneHover = hovering
                 }
-                isDoneHover = hovering
             }
+
             
             Text("Done")
                 .font(.caption)
@@ -241,7 +250,7 @@ struct ListeningView: View {
             
             listeningControlsView
         }
-        .frame(width: 240, alignment: .leading)
+        .frame(width: 280, alignment: .leading)
         .background(Color.clear)
         .padding()
         .onHover { hovering in
