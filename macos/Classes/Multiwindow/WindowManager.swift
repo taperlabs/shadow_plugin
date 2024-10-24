@@ -77,8 +77,8 @@ final class WindowManager: NSObject, NSWindowDelegate {
             let windowSize = window.frame.size
             
             // Calculate the bottom-left position
-            let xPos = screenFrame.minX + 50
-            let yPos = screenFrame.minY + 70
+            let xPos = screenFrame.minX + 20
+            let yPos = screenFrame.minY + 40
             
             // Create the target frame
             let newFrame = NSRect(x: xPos, y: yPos, width: windowSize.width, height: windowSize.height)
@@ -235,8 +235,8 @@ final class WindowManager: NSObject, NSWindowDelegate {
                     let windowSize = newWindow.frame.size
                     
                     // Calculate the bottom-left position
-                    let xPos = screenFrame.minX + 50
-                    let yPos = screenFrame.minY + 70
+                    let xPos = screenFrame.minX + 20
+                    let yPos = screenFrame.minY + 40
                     
                     // Set the window's new position
                     newWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))

@@ -14,6 +14,30 @@ extension EnvironmentValues {
     }
 }
 
+struct CustomSwitchToggleStyle: ToggleStyle {
+    var tint: Color
+    
+    func makeBody(configuration: Configuration) -> some View {
+        HStack {
+            configuration.label
+            
+            Capsule()
+                .fill(configuration.isOn ? tint : Color.gray.opacity(0.3))
+                .frame(width: 40, height: 22)
+                .overlay(
+                    Circle()
+                        .fill(.white)
+                        .padding(2)
+                        .offset(x: configuration.isOn ? 9 : -9)
+                        .animation(.spring(), value: configuration.isOn)
+                )
+                .onTapGesture {
+                    configuration.isOn.toggle()
+                }
+        }
+    }
+}
+
 struct PreListeningView: View {
     @ObservedObject var vm: ListeningViewModel
     @State private var localMonitor: Any?
@@ -66,24 +90,41 @@ struct PreListeningView: View {
                             } label: {
                                 HStack(spacing: 10) {
                                     Text("Start Listening")
-                                        .font(.system(size: 14, weight: .semibold))
+                                        .font(.system(size: 13, weight: .medium))
                                         .foregroundColor(.primaryColor)
                                     
-                                    Text(vm.hotkeys)
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.primaryColor)
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 2)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .fill(Color.bgColor.opacity(0.8))
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .stroke(Color.bgColor.opacity(0.8), lineWidth: 1)
-                                        )
+                                    HStack(spacing: 4) {  // Spacing between hotkey boxes
+                                        ForEach(Array(vm.hotkeys.replacingOccurrences(of: " ", with: "")), id: \.self) { char in
+                                            Text(String(char))
+                                                .font(.system(size: 13, weight: .medium))
+                                                .foregroundColor(.primaryColor)
+                                                .frame(width: 20, height: 20)  // Fixed size for all boxes
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 2)
+                                                        .fill(Color(hex: "#FE8019").opacity(0.2))
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 2)
+                                                        .stroke(Color(hex: "#FE8019").opacity(0.2), lineWidth: 1)
+                                                )
+                                        }
+                                    }
+                                    
+//                                    Text(vm.hotkeys)
+//                                        .font(.system(size: 13, weight: .medium))
+//                                        .foregroundColor(.primaryColor)
+//                                        .padding(.horizontal, 4)
+//                                        .padding(.vertical, 2)
+//                                        .background(
+//                                            RoundedRectangle(cornerRadius: 2)
+//                                                .fill(Color.bgColor.opacity(0.8))
+//                                        )
+//                                        .overlay(
+//                                            RoundedRectangle(cornerRadius: 2)
+//                                                .stroke(Color.bgColor.opacity(0.8), lineWidth: 1)
+//                                        )
                                 }
-                                .frame(width: 200, height: 30)
+                                .frame(width: 230, height: 30)
                             }
                             .buttonStyle(PlainButtonStyle())
                             .cornerRadius(2)
@@ -111,7 +152,7 @@ struct PreListeningView: View {
                                 WindowManager.shared.closeCurrentWindow(for: .dismiss)
                             } label: {
                                 Text("Dismiss")
-                                    .font(.system(size: 13))
+                                    .font(.system(size: 12))
                                     .foregroundColor(.gray)
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -132,7 +173,8 @@ struct PreListeningView: View {
                                     Text("Save Audio")
                                         .foregroundColor(.gray)
                                 }
-                                .toggleStyle(SwitchToggleStyle(tint: Color.primaryColor))
+                                .toggleStyle(CustomSwitchToggleStyle(tint: Color.primaryColor))
+//                                .toggleStyle(SwitchToggleStyle(tint: Color.primaryColor))
                                 .scaleEffect(0.8)
                                 .padding(.trailing, 20)
                                 .onChange(of: vm.isAudioSaveOn) { newValue in

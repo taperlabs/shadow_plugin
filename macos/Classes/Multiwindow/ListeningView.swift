@@ -65,7 +65,7 @@ struct ListeningView: View {
     }
     
     var listeningControlsView: some View {
-        HStack(alignment: .center,spacing: 20) {
+        HStack(alignment: .center,spacing: 25) {
             timerView
             
             if isExpanded {
@@ -80,7 +80,11 @@ struct ListeningView: View {
             }
         }
         .padding()
-        .frame(maxWidth: isExpanded ? .infinity : 70, alignment: .leading)
+        .frame(maxWidth: isExpanded ? .infinity : 70, alignment: .center)
+        .frame(
+            maxWidth: isExpanded ? .infinity : 75,  // Increased from 70 to 90
+            maxHeight: isExpanded ? nil : 75        // Added height constraint
+        )
         .background(Color.black.opacity(0.8))
         .cornerRadius(10)
     }
@@ -110,7 +114,7 @@ struct ListeningView: View {
             }
             
         }
-        .frame(width: 40)
+        .frame(width: 30)
         .onHover { hovering in
             if !isForcedHover && !showingCancelConfirmation && !isExpanded {
                 withAnimation(.easeOut(duration: 0.2)) {
