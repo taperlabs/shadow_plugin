@@ -166,6 +166,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             .assign(to: \.noiseLevel, on: self)
             .store(in: &cancellables)
         
+        
         coreAudioService.$inputDevices
             .receive(on: RunLoop.main)
             .assign(to: \.inputDevices, on: self)

@@ -187,8 +187,8 @@ struct PreListeningView: View {
                                     Text("Video")
                                         .foregroundColor(.gray)
                                 }
-                                
-                                .toggleStyle(SwitchToggleStyle(tint: .gray))
+                                .toggleStyle(CustomSwitchToggleStyle(tint: Color.primaryColor))
+//                                .toggleStyle(SwitchToggleStyle(tint: .gray))
                                 .scaleEffect(0.8)
                                 .disabled(true)
                             }
