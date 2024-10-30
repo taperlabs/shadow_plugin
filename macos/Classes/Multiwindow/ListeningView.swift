@@ -253,12 +253,12 @@ struct ListeningView: View {
           }
       }
     
-    // Rest of the view implementation remains the same...
     var body: some View {
         VStack(spacing: 10) {
-            if isMicSettingVisible {
+            if isMicSettingVisible && isExpanded {
                 audioDeviceListView
                     .transition(.opacity)
+                    .frame(height: 80)
             } else {
                 Spacer()
                     .frame(height: 80)

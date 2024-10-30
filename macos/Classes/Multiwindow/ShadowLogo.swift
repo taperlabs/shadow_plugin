@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 
+
 struct ProgressiveFillShadowLogo: View {
     var fillLevel: CGFloat
     var fillColor: Color

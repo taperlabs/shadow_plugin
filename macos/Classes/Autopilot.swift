@@ -39,11 +39,11 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     private let stateQueue = DispatchQueue(label: "com.yourapp.autopilot.stateQueue")
     
     enum WhitelistAppName: String, CaseIterable {
-        case Around = "Around"
-        case Discord = "Discord"
-        case Zoom = "zoom.us"
-        case Slack = "Slack"
-        case Webex = "WebexHelper"
+        //        case Around = "Around"
+        //        case Discord = "Discord"
+        //        case Zoom = "zoom.us"
+        //        case Slack = "Slack"
+        //        case Webex = "WebexHelper"
         case GoTo = "GoTo"
     }
     
@@ -53,6 +53,8 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         case teams
         case webex
         case around
+        //        case goto
+        
         
         var detectionString: String {
             switch self {
@@ -61,6 +63,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             case .teams: return "(Meeting) | Microsoft Teams classic"
             case .webex: return "Cisco Webex"
             case .around: return "Room | Around"
+                //            case .goto: return "GoTo Meeting"
             }
         }
         
@@ -70,12 +73,14 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             case .teams: return "Microsoft Teams"
             case .webex: return "Cisco Webex"
             case .around: return "Around"
+                //            case .goto: return "GoTo"
             }
         }
     }
     
     //"mic:com.microsoft.teams2" -- Teams New
     //"mic:com.microsoft.teams" -- Teams Classic
+    //mic:com.microsoft.VSCode
     
     //MARK: Webex, discord, slack, zoom, arc, goto는 앱 기반이지만 마이크 역시 같이 체크해야 함.
     enum MicrophoneApp: String {
@@ -165,7 +170,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                     //print("🏄‍♂️", activeConnections)
                     
                     if self.activeConnections.isEmpty && self.isMeetingInProgress {
-                        //print("You were in a Meeting but now ended 🔴")
+                        print("You were in a Meeting but now ended 🔴")
                         self.isMeetingInProgress = false
                         self.isInMeetingByMic = false
                         self.isInMeetingByWindowTitle = false
@@ -176,7 +181,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                     }
                     
                     for entry in self.activeConnections.values {
-                        //print("Entry", entry)
+                        print("Entry", entry)
                         
                         if self.isAppNameWhitelisted(appName: entry.appName) {
                             if entry.isConnectionOlderThanNSeconds {
@@ -358,13 +363,14 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             
             var foundWindowID: Int?
             var foundAppName: String?
+            let _ = foundAppName
+            let _ = foundWindowID
             
             self.isInMeetingByWindowTitle = false
             
             for window in unWrappedWindows {
                 guard let title = window.title,
                       let bundleID = window.owningApplication?.bundleIdentifier else { continue }
-                
                 //                print("Window Title - \(title), bundleID - \(bundleID)")
                 
                 if bundleID == "company.thebrowser.Browser" && self.isGoogleMeetFormat(title: title) {
@@ -538,7 +544,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             readHandle.readabilityHandler = { fileHandle in
                 let data = fileHandle.availableData
                 if let string = String(data: data, encoding: .utf8), !string.isEmpty {
-//                    print("스트리입니다", string)
+                    //                    print("스트리입니다", string)
                     if string.contains("Active activity attributions changed to") {
                         let components = string.components(separatedBy: "Active activity attributions changed to")
                         if components.count > 1 {
@@ -562,11 +568,11 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                 return unescapedElement.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
                             }
                             
-                            //                            print("Cleaned Array elements ->", cleanedArrayElements)
+                            print("Cleaned Array elements ->", cleanedArrayElements)
                             
                             for app in MicrophoneApp.allValues {
                                 let appIdentifier = app.rawValue.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-                                print("appIdentifier", appIdentifier, app)
+//                                print("appIdentifier", appIdentifier, app)
                                 if cleanedArrayElements.contains(where: { element in
                                     element.contains(appIdentifier)
                                 }) {
@@ -577,6 +583,33 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
                                         ShadowLogger.shared.log("T(A-M)")
+                                        break
+                                    }
+                                    
+                                    if app == .webex {
+                                        print("Webex Detected")
+                                        self.isInMeetingByMic = true
+                                        self.activeMeetingApp = app
+                                        self.isInMeetingByWindowTitle = true
+                                        ShadowLogger.shared.log("Webex(A-M)")
+                                        break
+                                    }
+                                    
+                                    if app == .slack {
+                                        print("Slack Detected")
+                                        self.isInMeetingByMic = true
+                                        self.activeMeetingApp = app
+                                        self.isInMeetingByWindowTitle = true
+                                        ShadowLogger.shared.log("Slack(A-M)")
+                                        break
+                                    }
+                                    
+                                    if app == .discord {
+                                        print("Discord Detected")
+                                        self.isInMeetingByMic = true
+                                        self.activeMeetingApp = app
+                                        self.isInMeetingByWindowTitle = true
+                                        ShadowLogger.shared.log("Discord(A-M)")
                                         break
                                     }
                                     

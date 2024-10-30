@@ -740,13 +740,14 @@ class _MyAppState extends State<MyApp> {
               'micFileName': "micAudio.m4a",
               'sysFileName': "sysAudio.m4a",
             };
-            _shadowPlugin.startListening(listeningConfig: listeningConfig);
+            await _shadowPlugin.startListening(listeningConfig: listeningConfig);
 
             setState(() {
               isInMeeting = "미팅 ✅";
             });
           } else {
-            _shadowPlugin.stopListening();
+            print("event['isInMeeting'] is false -- ${event['isInMeeting']}");
+            await _shadowPlugin.stopListening();
 
             setState(() {
               isInMeeting = "미팅 ❌";

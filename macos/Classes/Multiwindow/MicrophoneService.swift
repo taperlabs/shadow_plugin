@@ -141,6 +141,23 @@ final class MicrophoneService: NSObject, ObservableObject {
         currentTime = 0
     }
     
+    
+    
+    private func normalizedPowerLevel(fromDecibels decibels: Float) -> Float {
+//        print("decibels : \(decibels)")
+        let minDecibels: Float = -50.0
+        let maxDecibels: Float = 10.0
+        
+        if decibels < minDecibels {
+            return 0.0
+        } else if decibels >= maxDecibels {
+            return 0.95
+        } else {
+            let normalized = (decibels - minDecibels) / (maxDecibels - minDecibels)
+            return sqrt(normalized) * 0.95
+        }
+    }
+    
 
     
 //    private func normalizedPowerLevel(fromDecibels decibels: Float) -> Float {
@@ -161,17 +178,18 @@ final class MicrophoneService: NSObject, ObservableObject {
 //        }
 //    }
     
-    private func normalizedPowerLevel(fromDecibels decibels: Float) -> Float {
-        // Decibels range from -160 (silence) to 0 (maximum power)
-        let minDecibels: Float = -80.0
-        if decibels < minDecibels {
-            return 0.0
-        } else if decibels >= 0.0 {
-            return 0.8
-        } else {
-            return (decibels - minDecibels) / -minDecibels * 0.8
-        }
-    }
+//    private func normalizedPowerLevel(fromDecibels decibels: Float) -> Float {
+//        print("decibels : \(decibels)")
+//        // Decibels range from -160 (silence) to 0 (maximum power)
+//        let minDecibels: Float = -80.0
+//        if decibels < minDecibels {
+//            return 0.0
+//        } else if decibels >= 0.0 {
+//            return 0.8
+//        } else {
+//            return (decibels - minDecibels) / -minDecibels * 0.8
+//        }
+//    }
 }
 
 // MARK: - AVAudioRecorderDelegate

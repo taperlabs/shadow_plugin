@@ -56,17 +56,18 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "Not in Recording", message: "The recording is not in session.", details: nil))
             return
         }
-            if let countDownNumber = listeningVM.countdownNumber {
-                if countDownNumber > 1 {
-                    listeningVM.stopMicRecording()
-                    listeningVM.isRecording = false
-                    WindowManager.shared.closeCurrentWindow(for: .cancel)
-                }
-            } else {
+        
+        if let countDownNumber = listeningVM.countdownNumber {
+            if countDownNumber >= 1 {
                 listeningVM.stopMicRecording()
                 listeningVM.isRecording = false
-                WindowManager.shared.closeCurrentWindow(for: .done)
+                WindowManager.shared.closeCurrentWindow(for: .cancel)
             }
+        } else {
+            listeningVM.stopMicRecording()
+            listeningVM.isRecording = false
+            WindowManager.shared.closeCurrentWindow(for: .done)
+        }
     }
     
     private func handleCreateNewWindow(call: FlutterMethodCall , result: @escaping FlutterResult) {
@@ -96,7 +97,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             "+"
         }
         let formattedHotkeys = hotkeys.replacing(plusPattern, with: " ")
-
+        
         let username = listeningConfig["userName"] as? String ?? ""
         let key = listeningConfig["key"] as? Int ?? 0
         let modifiers = listeningConfig["modifiers"] as? Int ?? 0
@@ -238,19 +239,19 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
-        
+            
         case .cancelListening:
             print("Cancel Listening")
-
+            
         case .startListening:
             print("Start Listening")
             handleCreateNewWindow(call: call, result: result)
             
         case .stopListening:
             print("Stop Listening")
-//            handleCreateNewWindow(call: call, result: result)
+            //            handleCreateNewWindow(call: call, result: result)
             handleStopListening(call: call, result: result)
-
+            
         case .createNewWindow:
             handleCreateNewWindow(call: call, result: result)
             
