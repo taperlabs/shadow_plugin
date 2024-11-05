@@ -44,6 +44,9 @@ struct PreListeningView: View {
     @State private var isAudioOn = true
     @State private var isVideoOn = false
     
+    @State private var isStartButtonHovered = false
+    @State private var isDismissButtonHovered = false
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -135,13 +138,14 @@ struct PreListeningView: View {
                             .background(Color.primaryColor.opacity(0.1))
                             .padding(.bottom, 20)
                             .frame(width: 200, height: 30)
-                            .onHover { hovering in
-                                if hovering {
-                                    NSCursor.pointingHand.push()
-                                } else {
-                                    NSCursor.pop()
-                                }
-                            }
+                            .cursor(.pointingHand)
+//                            .onHover { hovering in
+//                                if hovering {
+//                                    NSCursor.pointingHand.push()
+//                                } else {
+//                                    NSCursor.pop()
+//                                }
+//                            }
                             
                             
                             
@@ -156,13 +160,14 @@ struct PreListeningView: View {
                                     .foregroundColor(.gray)
                             }
                             .buttonStyle(PlainButtonStyle())
-                            .onHover { hovering in
-                                if hovering {
-                                    NSCursor.pointingHand.push()
-                                } else {
-                                    NSCursor.pop()
-                                }
-                            }
+                            .cursor(.pointingHand)
+//                            .onHover { hovering in
+//                                if hovering {
+//                                    NSCursor.pointingHand.push()
+//                                } else {
+//                                    NSCursor.pop()
+//                                }
+//                            }
                             
                             Spacer()
                             

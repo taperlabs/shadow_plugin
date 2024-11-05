@@ -97,8 +97,9 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         case discord = "mic:com.hnc.Discord"
         case webex = "mic:Cisco-Systems.Spark"
         case goto = "mic:com.logmein.goto"
+        case skype = "mic:com.skype.skype"
         
-        static let allValues = [chrome, safari, arc, edge, firefox, zoom, around, teamsnew, teamsclassic, slack, discord, webex, goto]
+        static let allValues = [chrome, safari, arc, edge, firefox, zoom, around, teamsnew, teamsclassic, slack, discord, webex, goto, skype]
     }
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
@@ -544,7 +545,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             readHandle.readabilityHandler = { fileHandle in
                 let data = fileHandle.availableData
                 if let string = String(data: data, encoding: .utf8), !string.isEmpty {
-                    //                    print("스트리입니다", string)
+                    print("String 런스트림", string)
                     if string.contains("Active activity attributions changed to") {
                         let components = string.components(separatedBy: "Active activity attributions changed to")
                         if components.count > 1 {
@@ -583,6 +584,15 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
                                         ShadowLogger.shared.log("T(A-M)")
+                                        break
+                                    }
+                                    
+                                    if app == .skype {
+                                        print("Skype Detected")
+                                        self.isInMeetingByMic = true
+                                        self.activeMeetingApp = app
+                                        self.isInMeetingByWindowTitle = true
+                                        ShadowLogger.shared.log("Skype(A-M)")
                                         break
                                     }
                                     
