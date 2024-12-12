@@ -354,12 +354,12 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         stateQueue.sync {
             // Update and check isInMeetingByMic and isInMeetingByWindowTitle
             // Ensure that updates are thread-safe
-            print("isInMeetingByMic - \(isInMeetingByMic), isInMeetingByWindowTitle - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
+//            print("isInMeetingByMic - \(isInMeetingByMic), isInMeetingByWindowTitle - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
             
-            if (isInMeetingByMic || !isInMeetingByMic) && isInMeetingByWindowTitle {
-                print("isInMeetingByMic - \(isInMeetingByMic), isInMeetingByWindowTitle - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
-                ShadowLogger.shared.log("isInMeetingBM - \(isInMeetingByMic), isInMeetingBWT - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
-            }
+//            if isInMeetingByMic && isInMeetingByWindowTitle {
+//                print("isInMeetingByMic - \(isInMeetingByMic), isInMeetingByWindowTitle - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
+//                ShadowLogger.shared.log("isInMeetingBM - \(isInMeetingByMic), isInMeetingBWT - \(isInMeetingByWindowTitle), isMeetingDetected - \(isMeetingDetected)")
+//            }
             
             if isInMeetingByMic && isInMeetingByWindowTitle && !isMeetingDetected {
                 isMeetingDetected = true
