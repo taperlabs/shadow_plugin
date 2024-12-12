@@ -68,6 +68,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             listeningVM.isRecording = false
             WindowManager.shared.closeCurrentWindow(for: .done)
         }
+        result("Stop Listening Successful")
     }
     
     private func handleCreateNewWindow(call: FlutterMethodCall , result: @escaping FlutterResult) {

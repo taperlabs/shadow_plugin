@@ -743,14 +743,14 @@ class _MyAppState extends State<MyApp> {
             await _shadowPlugin.startListening(listeningConfig: listeningConfig);
 
             setState(() {
-              isInMeeting = "미팅 ✅";
+              isInMeeting = "미팅 ✅ - zzzz";
             });
           } else {
             print("event['isInMeeting'] is false -- ${event['isInMeeting']}");
             await _shadowPlugin.stopListening();
-
+            print("Stopped listening successfully.");
             setState(() {
-              isInMeeting = "미팅 ❌";
+              isInMeeting = "미팅 ❌ --- yyyy";
             });
           }
         },

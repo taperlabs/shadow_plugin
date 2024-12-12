@@ -110,7 +110,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             runStream()
         }
         startWindowCheckTimer()
-        startLSOFUDPCheckTimer()
+//        startLSOFUDPCheckTimer()
         print("Autopilot OnListen 시작 🟢")
         ShadowLogger.shared.log("Autopilot Started...")
         
@@ -121,7 +121,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         self.eventSink = nil
         stopStream()
         endWindowCheckTimer()
-        endLSOFUDPCheckTimer()
+//        endLSOFUDPCheckTimer()
         print("Autopilot OnCancel 캔슬 🔴")
         ShadowLogger.shared.log("Autopilot stopped...")
         
@@ -216,10 +216,12 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     private func executeLsof() throws -> String {
         let process = Process()
         let pipe = Pipe()
+        let errorPipe = Pipe() // Add error pipe to capture stderr
         
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = ["lsof", "-i", "UDP:40000-69999", "+c", "30"]
         process.standardOutput = pipe
+        process.standardError = errorPipe // Capture error output
         
         do {
             try process.run()
@@ -227,25 +229,64 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             
             let terminationStatus = process.terminationStatus
             if terminationStatus != 0 {
-                print("lsof command failed with termination status: \(terminationStatus)")
-                ShadowLogger.shared.log("ls failed with termination status: \(terminationStatus)")
-                throw NSError(domain: "executeLsof", code: Int(terminationStatus), userInfo: [NSLocalizedDescriptionKey: "lsfailed with status \(terminationStatus)"])
+                // Read error output for more detailed diagnosis
+                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                let errorOutput = String(data: errorData, encoding: .utf8) ?? "No error details available"
+                
+                ShadowLogger.shared.log("lsof failed with status: \(terminationStatus), error: \(errorOutput)")
+                throw NSError(domain: "executeLsof",
+                             code: Int(terminationStatus),
+                             userInfo: [NSLocalizedDescriptionKey: "lsof failed with status \(terminationStatus): \(errorOutput)"])
             }
-        } catch let error {
-            print("Failed to run process: \(error), \(error.localizedDescription)")
-            ShadowLogger.shared.log(("Failed to run process: \(error), \(error.localizedDescription)"))
+        } catch {
+            ShadowLogger.shared.log("Process execution failed: \(error.localizedDescription)")
             throw error
         }
         
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        if let output = String(data: data, encoding: .utf8) {
-            return output
-        } else {
-            ShadowLogger.shared.log("Failed to decode lsof output.")
-            print("Failed to decode lsof output.")
-            return ""
+        guard let output = String(data: data, encoding: .utf8) else {
+            ShadowLogger.shared.log("Failed to decode lsof output")
+            throw NSError(domain: "executeLsof",
+                         code: -1,
+                         userInfo: [NSLocalizedDescriptionKey: "Failed to decode lsof output"])
         }
+        
+        return output
     }
+    
+//    private func executeLsof() throws -> String {
+//        let process = Process()
+//        let pipe = Pipe()
+//        
+//        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+//        process.arguments = ["lsof", "-i", "UDP:40000-69999", "+c", "30"]
+//        process.standardOutput = pipe
+//        
+//        do {
+//            try process.run()
+//            process.waitUntilExit()
+//            
+//            let terminationStatus = process.terminationStatus
+//            if terminationStatus != 0 {
+//                print("lsof command failed with termination status: \(terminationStatus)")
+//                ShadowLogger.shared.log("ls failed with termination status: \(terminationStatus)")
+//                throw NSError(domain: "executeLsof", code: Int(terminationStatus), userInfo: [NSLocalizedDescriptionKey: "lsfailed with status \(terminationStatus)"])
+//            }
+//        } catch let error {
+//            print("Failed to run process: \(error), \(error.localizedDescription)")
+//            ShadowLogger.shared.log(("Failed to run process: \(error), \(error.localizedDescription)"))
+//            throw error
+//        }
+//        
+//        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+//        if let output = String(data: data, encoding: .utf8) {
+//            return output
+//        } else {
+//            ShadowLogger.shared.log("Failed to decode lsof output.")
+//            print("Failed to decode lsof output.")
+//            return ""
+//        }
+//    }
     
     private func parseLsofOutput(_ output: String) {
         let newLines = output.components(separatedBy: .newlines)
@@ -389,7 +430,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                     self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.teams.appName
-                    ShadowLogger.shared.log("W --- 1")
+                    ShadowLogger.shared.log("W --- 1.5")
                     break
                 } else if self.isGoogleMeetTitleForChrome(title) {
                     self.isInMeetingByWindowTitle = true

@@ -112,6 +112,17 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     }
     
     func stopMicRecording() {
+//        if !isAudioSaveOn,
+//           let micFileName = micFileName,
+//           let sysFileName = sysFileName,
+//           let micfileURL = FileManagerHelper.getURL(for: micFileName, in: "ApplicationSupportDirectory"),
+//           let sysFileURL = FileManagerHelper.getURL(for: sysFileName, in: "ApplicationSupportDirectory") {
+//               
+//            // Delete files if they exist
+//            FileManagerHelper.deleteFileIfExists(at: micfileURL)
+//            FileManagerHelper.deleteFileIfExists(at: sysFileURL)
+//        }
+        
         screenCaptureService.stopCapture()
         microphoneService.stopRecording()
         showListeningView = false
