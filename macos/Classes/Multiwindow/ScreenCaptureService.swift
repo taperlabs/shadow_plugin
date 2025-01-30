@@ -75,6 +75,7 @@ final class ScreenCaptureService: NSObject, ObservableObject {
         assetWriter?.finishWriting {
             if let error = self.assetWriter?.error {
                 print("Failed to finish writing: \(error)")
+                ShadowLogger.shared.log("[SystemAudioService] - Failed to finish writing \(error)")
             } else {
                 print("Writing finished")
             }
@@ -89,6 +90,7 @@ final class ScreenCaptureService: NSObject, ObservableObject {
         // Get the list of displays (we need at least one display)
         let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
         guard let display = content.displays.first else {
+            ShadowLogger.shared.log("[SystemAudioService] - No Displays found")
             throw NSError(domain: "ScreenCaptureService", code: -1, userInfo: [NSLocalizedDescriptionKey: "No displays found"])
         }
         
@@ -129,6 +131,7 @@ final class ScreenCaptureService: NSObject, ObservableObject {
 extension ScreenCaptureService: SCStreamOutput, SCStreamDelegate {
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         print("Stream did stop with error: \(error)")
+        ShadowLogger.shared.log("didStopWithError - \(error.localizedDescription)")
     }
     
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {

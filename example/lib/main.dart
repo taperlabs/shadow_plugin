@@ -6,7 +6,6 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shadow/shadow.dart';
-import 'package:shadow/shadow_platform_interface.dart';
 
 void main() {
   runApp(const MyApp());
@@ -43,7 +42,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
   int _counter = 0;
   String _micPermissionStatus = "Mic Permission Value";
   bool _isScreenRecordingPermissionGranted = false;
@@ -496,27 +494,6 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion = await _shadowPlugin.getPlatformVersion() ?? 'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
-  }
-
   Future deleteFile(String fileName) async {
     await _shadowPlugin.deleteFileIfExists(fileName);
   }
@@ -796,21 +773,6 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  // void handleEvent(dynamic event) {
-  //   print(event);
-  //   if (event['type'] != null && event['type'] == 'screenRecordingStatus' || event['type'] == 'microphoneStatus' && event['elapsedTime'] != null) {
-  //     setState(() {
-  //       _counter = event['elapsedTime'];
-  //     });
-  //   }
-
-  //   // if (event['type'] == 'screenRecordingStatus' || event['type'] == 'microphoneStatus' && event['elapsedTime'] != null) {
-  //   //   setState(() {
-  //   //     _counter = event['elapsedTime'];
-  //   //   });
-  //   // }
-  // }
-
   Future<void> checkMicPermission() async {
     bool granted = await _shadowPlugin.isMicPermissionGranted();
     print("Microphone Permission: $granted");
@@ -1007,90 +969,6 @@ class _MyAppState extends State<MyApp> {
       ),
     );
   }
-
-//  Text('Running on: $_platformVersion\n'),
-  // @override
-  // Widget build(BuildContext context) {
-  //   return MaterialApp(
-  //     home: Scaffold(
-  //       appBar: AppBar(
-  //         title: const Text('Shadow Plugin Example App'),
-  //       ),
-  //       body: Center(
-  //         child: Column(
-  //           mainAxisAlignment: MainAxisAlignment.center,
-  //           children: <Widget>[
-  //             const Text(
-  //               'Timer ⬇️ ⏰:',
-  //             ),
-  //             Text(
-  //               '$_counter',
-  //               style: Theme.of(context).textTheme.headlineMedium,
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 startScreenCapture();
-  //               },
-  //               child: const Text('ScreenCapture 버튼'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 stopScreenCapture();
-  //               },
-  //               child: const Text('Stop ScreenCapture 버튼'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 startMicRecording();
-  //               },
-  //               child: const Text('Start Microphone Recording 버튼'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 stopMicRecording();
-  //               },
-  //               child: const Text('Stop Microphone Recording 버튼'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 startSystemAudioOnlyCapture();
-  //               },
-  //               child: const Text('Start System Audio Only Capturing'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 stopSystemAudioOnlyCapture();
-  //               },
-  //               child: const Text('Stop System Audio Only Capturing'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 // getFilePath("FlutterSystemAudio.m4a");
-  //               },
-  //               child: const Text('Start System Audio + Mic Capturing'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 // getFilePath("FlutterSystemAudio.m4a");
-  //               },
-  //               child: const Text('Stop System Audio + Mic Capturing'),
-  //             ),
-  //             // TextButton(
-  //             //   onPressed: () {
-  //             //     // getFilePath("FlutterSystemAudio.m4a");
-  //             //   },
-  //             //   child: const Text('Get File Path 버튼'),
-  //             // ),
-  //             // TextButton(
-  //             //   onPressed: () {},
-  //             //   child: const Text('FileIO 버튼'),
-  //             // ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 }
 
 class CustomButton extends StatelessWidget {
