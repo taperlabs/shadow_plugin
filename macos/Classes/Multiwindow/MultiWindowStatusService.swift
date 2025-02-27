@@ -67,8 +67,8 @@ final class MultiWindowStatusService: NSObject, FlutterStreamHandler {
     }
     
     func sendWindowStatus(_ status: WindowStatus) {
-        sendEvent(status.toDictionary())
+        DispatchQueue.main.async { [weak self] in
+            self?.sendEvent(status.toDictionary())
+        }
     }
-    
-    
 }

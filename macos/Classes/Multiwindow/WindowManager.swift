@@ -46,6 +46,12 @@ final class WindowManager: NSObject, NSWindowDelegate {
     
     // Setup method to initialize or update the listeningViewModel
     func setListeningViewModel(listeningViewModel: ListeningViewModel) {
+        let oldAddress = self.listeningViewModel != nil ?
+        "\(Unmanaged.passUnretained(self.listeningViewModel!).toOpaque())" : "nil"
+        let newAddress = "\(Unmanaged.passUnretained(listeningViewModel).toOpaque())"
+        
+        print("WindowManager changing viewModel from \(oldAddress) to \(newAddress)")
+        
         self.listeningViewModel = listeningViewModel
         print("WindowManager setup with ListeningViewModel")
     }
@@ -92,25 +98,25 @@ final class WindowManager: NSObject, NSWindowDelegate {
     }
     
     // Method to update the window position
-//    func moveWindowToBottomLeft() {
-//        guard let window = currentWindow else {
-//            print("No window available to move")
-//            return
-//        }
-//        
-//        // Get screen size and window size
-//        if let screen = NSScreen.main {
-//            let screenFrame = screen.frame
-//            let windowSize = window.frame.size
-//            
-//            // Calculate the bottom-left position
-//            let xPos = screenFrame.minX + 50
-//            let yPos = screenFrame.minY + 60
-//            
-//            // Set the window's new position
-//            window.setFrameOrigin(NSPoint(x: xPos, y: yPos))
-//        }
-//    }
+    //    func moveWindowToBottomLeft() {
+    //        guard let window = currentWindow else {
+    //            print("No window available to move")
+    //            return
+    //        }
+    //
+    //        // Get screen size and window size
+    //        if let screen = NSScreen.main {
+    //            let screenFrame = screen.frame
+    //            let windowSize = window.frame.size
+    //
+    //            // Calculate the bottom-left position
+    //            let xPos = screenFrame.minX + 50
+    //            let yPos = screenFrame.minY + 60
+    //
+    //            // Set the window's new position
+    //            window.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+    //        }
+    //    }
     
     func setupGlobalHotkeyMonitor() {
         let mask: NSEvent.EventTypeMask = [.keyDown]
@@ -148,6 +154,72 @@ final class WindowManager: NSObject, NSWindowDelegate {
         }
     }
     
+    func createListeningWindow() {
+        print("Creating a Listening Window")
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else {
+                return
+            }
+            
+            if self.currentWindow != nil {
+                self.currentWindow = nil
+            }
+            
+            guard let listeningVM = self.listeningViewModel else {
+                print("ListeningViewModel is not available")
+                fatalError("[WindowManager] ListeningViewModel is not available")
+            }
+            
+            let listeningWindow = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 240, height: 150),
+                styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView, .borderless],
+                backing: .buffered,
+                defer: false,
+                screen: .main
+            )
+            
+            listeningWindow.level = .floating
+            listeningWindow.orderFront(nil)
+            listeningWindow.titlebarSeparatorStyle = .none
+            listeningWindow.standardWindowButton(.closeButton)?.isHidden = true
+            listeningWindow.standardWindowButton(.miniaturizeButton)?.isHidden = true
+            listeningWindow.standardWindowButton(.zoomButton)?.isHidden = true
+            listeningWindow.titlebarAppearsTransparent = true
+            listeningWindow.titleVisibility = .hidden
+            listeningWindow.backgroundColor = .clear
+            listeningWindow.isMovableByWindowBackground = true
+            listeningWindow.delegate = self
+            listeningWindow.hasShadow = false
+            
+            listeningWindow.contentView?.wantsLayer = true
+            listeningWindow.contentView?.layer?.cornerRadius = 0
+            listeningWindow.isOpaque = false
+            
+            listeningWindow.isReleasedWhenClosed = false
+            
+            let listeningView = NewListeningView(viewModel: listeningVM)
+            let hostingView = NSHostingView(rootView: listeningView)
+            listeningWindow.contentView = hostingView
+            self.updateWindowState(.listening, isRecording: true)
+            MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
+            
+            self.currentWindow = listeningWindow
+            
+            if let screen = NSScreen.main {
+                let screenFrame = screen.frame
+                let windowSize = listeningWindow.frame.size
+                
+                // Calculate the bottom-left position
+                let xPos = screenFrame.maxX - windowSize.width - 350  // 오른쪽에서 20픽셀 여백
+                let yPos = screenFrame.minY + 200
+                
+                // Set the window's new position
+                listeningWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+            }
+        }
+    }
+    
     func createWindow(with viewState: WindowViewState) {
         print("Creating a new window... with \(viewState)")
         
@@ -170,6 +242,8 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 defer: false,
                 screen: .main
             )
+            
+            
             
             newWindow.level = .floating
             newWindow.orderFront(nil)
@@ -195,22 +269,29 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 self?.resizeWindow(to: newSize, window: newWindow)
             }
             
-            if viewState == .preListening {
-                let preListeningView = PreListeningView(vm: listeningVM)
-                    .environment(\.resizeWindow, resizeWindow)
-                let hostingView = NSHostingView(rootView: preListeningView)
-                newWindow.contentView = hostingView
-                self.updateWindowState(.preListening, isRecording: false)
-                MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .preListening, isRecording: false))
-                newWindow.makeKeyAndOrderFront(nil)
-                NSApp.activate(ignoringOtherApps: true)
-            } else {
-                let listeningView = ListeningView(vm: listeningVM)
-                let hostingView = NSHostingView(rootView: listeningView)
-                newWindow.contentView = hostingView
-                self.updateWindowState(.listening, isRecording: true)
-                MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
-            }
+            //TODO: - PreListeningView 제거 해야함
+            //            if viewState == .preListening {
+            //                let preListeningView = PreListeningView(vm: listeningVM)
+            //                    .environment(\.resizeWindow, resizeWindow)
+            //                let hostingView = NSHostingView(rootView: preListeningView)
+            //                newWindow.contentView = hostingView
+            //                self.updateWindowState(.preListening, isRecording: false)
+            //                MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .preListening, isRecording: false))
+            //                newWindow.makeKeyAndOrderFront(nil)
+            //                NSApp.activate(ignoringOtherApps: true)
+            //            } else {
+            //                let listeningView = ListeningView(vm: listeningVM)
+            //                let hostingView = NSHostingView(rootView: listeningView)
+            //                newWindow.contentView = hostingView
+            //                self.updateWindowState(.listening, isRecording: true)
+            //                MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
+            //            }
+            
+            let listeningView = ListeningView(vm: listeningVM)
+            let hostingView = NSHostingView(rootView: listeningView)
+            newWindow.contentView = hostingView
+            self.updateWindowState(.listening, isRecording: true)
+            MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))
             
             
             
@@ -255,8 +336,25 @@ final class WindowManager: NSObject, NSWindowDelegate {
             return
         }
         
+        // First save a reference to avoid early deallocation
+        let windowToClose = currentWindow
+        
+        // Update state
+        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false, windowCloseType: windowCloseType))
+        
+        // Clear references BEFORE closing to ensure proper cleanup order
+        // IMPORTANT: Clear the listeningViewModel reference BEFORE closing the window
+        self.listeningViewModel = nil
+        self.currentWindow = nil
+        
+        // Now actually close the window
+        windowToClose.close()
+        
+//        let emptyView = NSHostingView(rootView: Text(""))
+//        currentWindow.contentView = emptyView
+        
         print("Closing the current Window \(windowCloseType.rawValue)")
-        currentWindow.close()
+//        currentWindow.close()
         
         guard let app = NSApplication.shared.delegate as? FlutterAppDelegate else {
             debugPrint("failed to find flutter main window, application delegate is not FlutterAppDelegate")
@@ -267,7 +365,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
             return
         }
         if windowCloseType == .dismiss {
-            print("아하아하 \( app.mainFlutterWindow?.isKeyWindow)")
+            //            print("아하아하 \( app.mainFlutterWindow?.isKeyWindow)")
         }
         
         MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false, windowCloseType: windowCloseType))
@@ -352,6 +450,9 @@ extension WindowManager {
     func windowWillClose(_ notification: Notification) {
         print("Window is closing")
         self.currentWindow = nil
+        
+        print(CFGetRetainCount(listeningViewModel as CFTypeRef))
+        
         //        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false))
         self.listeningViewModel = nil
     }

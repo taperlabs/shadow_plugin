@@ -14,6 +14,7 @@ class MethodChannelShadow extends ShadowPlatform {
 
   final _multiWindowEventChannel = const EventChannel('multiWindowEventChannel');
   final _multiWindowStatusEventChannel = const EventChannel('multiWindowStatusEventChannel');
+  final _listeningStatusEventChannel = const EventChannel('listeningStatusEventChannel');
 
   final _microphonePermissionEventChannel = const EventChannel('phoenixMicrophonePermissionEventChannel');
   final _screenRecordingPermissionEventChannel = const EventChannel('phoenixScreenRecordingPermissionEventChannel');
@@ -49,6 +50,24 @@ class MethodChannelShadow extends ShadowPlatform {
 
   @override
   Stream<dynamic> get multiWindowStatusEvents => _multiWindowStatusEventChannel.receiveBroadcastStream();
+
+  @override
+  Stream<dynamic> get listeningStatusEvents => _listeningStatusEventChannel.receiveBroadcastStream();
+
+  @override
+  Future<void> testStartListening({
+    Map<String, dynamic>? listeningConfig,
+  }) async {
+    final arguments = {
+      'listeningConfig': listeningConfig,
+    };
+    return methodChannel.invokeMethod('testStartListening', arguments);
+  }
+
+  @override
+  Future<void> testStopListening() async {
+    return methodChannel.invokeMethod('testStopListening');
+  }
 
   @override
   Future<void> cancelListening() async {

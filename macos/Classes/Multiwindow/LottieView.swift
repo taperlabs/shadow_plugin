@@ -2,24 +2,38 @@ import AppKit
 import Lottie
 import SwiftUI
 
+extension NSColor {
+    func getRGBComponents() -> (CGFloat, CGFloat, CGFloat) {
+        guard let convertedColor = usingColorSpace(.sRGB) else { return (0, 0, 0) }
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        convertedColor.getRed(&red, green: &green, blue: &blue, alpha: nil)
+        return (red, green, blue)
+    }
+}
+
 public struct LottieView: NSViewRepresentable {
 
     public init(
         lottieFile: String,
         loopMode: LottieLoopMode = .loop,
         autostart: Bool = true,
-        contentMode: LottieContentMode = .scaleAspectFit
+        contentMode: LottieContentMode = .scaleAspectFit,
+        stickColors: [Int: Color] = [:]
     ) {
         self.lottieFile = lottieFile
         self.loopMode = loopMode
         self.autostart = autostart
         self.contentMode = contentMode
+        self.stickColors = stickColors
     }
 
     let lottieFile: String
     let loopMode: LottieLoopMode
     let autostart: Bool
     let contentMode: LottieContentMode
+    let stickColors: [Int: Color]  // Empty dictionary means use original colors
 
     public class Coordinator: NSObject {
         var animationView: LottieAnimationView?
@@ -48,6 +62,17 @@ public struct LottieView: NSViewRepresentable {
         }
 
         animationView.animation = animation
+        
+        // Only apply colors to sticks that are specified in stickColors
+        for (stickNumber, color) in stickColors {
+            let nsColor = NSColor(color)
+            let (red, green, blue) = nsColor.getRGBComponents()
+            let colorProvider = ColorValueProvider(LottieColor(r: Double(red), g: Double(green), b: Double(blue), a: 1))
+            
+            let keypath = AnimationKeypath(keypath: "\(stickNumber).사각형 1.칠 1.Color")
+            animationView.setValueProvider(colorProvider, keypath: keypath)
+        }
+        
         animationView.contentMode = contentMode
         animationView.loopMode = loopMode
         animationView.backgroundBehavior = .continuePlaying

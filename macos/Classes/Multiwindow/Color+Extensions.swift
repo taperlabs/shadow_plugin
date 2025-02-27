@@ -7,6 +7,13 @@ extension Color {
     static let accentColor = Color(hex: "#e74c3c")
     static let bgColor = Color(hex: "#383533")
     
+    static let borderColor = Color(hex: "777777")
+    static let newBgColor = Color(hex: "1E1E1E")
+    static let fontColor = Color(hex: "AAAAAA")
+    static let buttonWhiteColor = Color(hex: "CCCCCC")
+    static let brandPrimaryColor = Color(hex: "BB4A00")
+    static let brandSecondaryColor = Color(hex: "FE8019")
+    
     // Hex initializer
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)

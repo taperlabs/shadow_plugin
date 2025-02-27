@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 
@@ -7,31 +6,142 @@ import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shadow/shadow.dart';
 
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
+
+import 'package:uuid/uuid.dart';
+
 void main() {
   runApp(const MyApp());
+}
+
+class AudioFileName {
+  final String convUuid;
+
+  const AudioFileName({required this.convUuid});
+
+  String get systemAudioWav => '$convUuid-SystemAudio.wav';
+  String get micRecordingWav => '$convUuid-MicRecording.wav';
+  String get mergedAudioWav => '$convUuid-MergedAudio.wav';
+  String get noSilenceWav => '$convUuid-NoSilence.wav';
+  String get modifiedMicRecordingWav => '$convUuid-ModifiedMicRecording.wav';
+  String get modifiedMergedAudioWav => '$convUuid-Modified-MergedAudio.wav';
+
+  String get systemAudioM4a => '$convUuid-SystemAudio.m4a';
+  String get micRecordingM4a => '$convUuid-MicRecording.m4a';
+  String get mergedAudioM4a => '$convUuid-MergedAudio.m4a';
+  String get noSilenceM4a => '$convUuid-NoSilence.m4a';
+  String get modifiedMicRecordingM4a => '$convUuid-ModifiedMicRecording.m4a';
+  String get modifiedMergedAudioM4a => '$convUuid-Modified-MergedAudio.m4a';
+}
+
+class MyUUID {
+  /// Generates a UUID (v4) without dashes.
+  static String createUUID() {
+    return const Uuid().v4().replaceAll('-', '');
+  }
+}
+
+class WebsocketManager {
+  // Base URL as a class property
+  static const String _baseUrl = "ws://127.0.0.1:65520/api/v1/network/ws/listening";
+
+  // Each connection managed via UUID(string) keys in a Map
+  final Map<String, WebSocketChannel> _channels = {};
+
+  // Singleton pattern implementation
+  static final WebsocketManager _instance = WebsocketManager._internal();
+
+  // Factory constructor returns the single instance
+  factory WebsocketManager() => _instance;
+
+  // Private constructor for singleton pattern
+  WebsocketManager._internal();
+
+  // Connect with optional UUID (auto-generated if not provided)
+  void connect({String? uuid}) {
+    final String id = uuid ?? Uuid().v4();
+
+    // Skip if already connected
+    if (_channels.containsKey(id)) {
+      print("WebSocket with id $id is already connected.");
+      return;
+    }
+
+    // Use the base URL with the UUID
+    final String url = "$_baseUrl/$id";
+    final channel = WebSocketChannel.connect(Uri.parse(url));
+    _channels[id] = channel;
+    print("WebSocket connected to $url!");
+
+    channel.stream.listen(
+      (message) {
+        print("[$id] Received Message: $message");
+        try {
+          final decodedMessage = json.decode(message);
+          if (decodedMessage is Map && decodedMessage.containsKey('error')) {
+            print("[$id] Received Error: ${decodedMessage['error']}");
+            disconnect(id);
+          }
+          if (decodedMessage is Map && decodedMessage.containsKey('whisper')) {
+            print("[$id] Received Whisper: ${decodedMessage['whisper']}");
+            disconnect(id);
+          }
+        } catch (e) {
+          print("[$id] Failed to decode JSON message: $e");
+        }
+      },
+      onError: (error) {
+        print("[$id] WebSocket Error: $error");
+        _channels.remove(id);
+      },
+      onDone: () {
+        print("[$id] WebSocket closed");
+        _channels.remove(id);
+      },
+    );
+  }
+
+  // 특정 연결에 메시지 보내기
+  void sendMessage(String id, String micAudio, String sysAudio, bool isFinishedListening) {
+    if (!_channels.containsKey(id)) {
+      print("WebSocket with id $id is not connected!");
+      return;
+    }
+
+    const String basePath = "/Users/phoenixc/Library/Application Support/com.taperlabs.shadow";
+    final String micPath = "$basePath/$micAudio";
+    final String sysPath = "$basePath/$sysAudio";
+
+    final jsonData = {"mic_audio": micPath, "sys_audio": sysPath, "isFinishedListening": isFinishedListening};
+
+    _channels[id]!.sink.add(jsonEncode(jsonData));
+    print("[$id] Sent: $jsonData");
+  }
+
+  // 특정 연결 종료
+  void disconnect(String id) {
+    if (!_channels.containsKey(id)) {
+      print("WebSocket with id $id is not connected!");
+      return;
+    }
+    _channels[id]!.sink.close(status.normalClosure);
+    _channels.remove(id);
+    print("WebSocket with id $id disconnected!");
+  }
+
+  // 모든 연결 종료 (필요시)
+  void disconnectAll() {
+    _channels.keys.toList().forEach((id) {
+      disconnect(id);
+    });
+  }
 }
 
 enum WindowState {
   closed,
   preListening,
   listening,
-}
-
-class LsofEntry {
-  final String appName;
-  final String port;
-  final String pid;
-  final DateTime startTime;
-
-  LsofEntry(this.appName, this.port, this.pid, this.startTime);
-
-  Map<String, dynamic> toDictionary() {
-    return {'appName': appName, 'port': port, 'pid': pid, 'startTime': startTime.toIso8601String()};
-  }
-
-  bool get isConnectionOlderThanNSeconds {
-    return DateTime.now().difference(startTime).inSeconds >= 2;
-  }
 }
 
 class MyApp extends StatefulWidget {
@@ -59,12 +169,17 @@ class _MyAppState extends State<MyApp> {
 
   StreamSubscription<dynamic>? multiWindowEventStreamSubscription;
   StreamSubscription<dynamic>? multiWindowStatusEventStreamSubscription;
+  StreamSubscription<dynamic>? listeningEventStreamSubscription;
+
+  final webSocketManager = WebsocketManager();
+  String currentUUID = '';
+  String prevUUID = '';
 
   String dropdownValue = '';
 
   List<String> audioInputDeviceList = [];
 
-  int windowState = 0;
+  WindowState windowState = WindowState.closed;
 
 //Configs
   final micConfig = {
@@ -84,23 +199,6 @@ class _MyAppState extends State<MyApp> {
   };
 
   Timer? timer;
-  bool _isInMeeting = false;
-  final Map<String, LsofEntry> entries = {};
-  final List<String> whitelistAppNames = [
-    "Around",
-    "Discord",
-    "zoom.us",
-    "Slack",
-    "GoogleChromeHelper",
-    "com.apple",
-    "MicrosoftEdgeHelper",
-    "ArcHelper",
-    "plugin-co", //firefox
-  ];
-
-  List tempProcessList = [];
-  List processList = [];
-  Process? process;
 
   late HotKey _hotKey;
   bool isRecording = false;
@@ -112,8 +210,69 @@ class _MyAppState extends State<MyApp> {
     _setupHotkey();
     getAudioInputDeviceList();
     _setupMultiWindowStatusEventStream();
+    _setupListeningStatusEventStream();
 
     // initPlatformState();
+  }
+
+  connectWebSocket(String uuid) {
+    webSocketManager.connect(uuid: uuid);
+  }
+
+  disConnectWebSocket(String uuid) {
+    webSocketManager.disconnect(uuid);
+  }
+
+  testStartListening() async {
+    final convUuid = MyUUID.createUUID();
+    final audioFileName = AudioFileName(convUuid: convUuid);
+
+    currentUUID = convUuid;
+
+    var micFileName = audioFileName.micRecordingM4a;
+    var systemFileName = audioFileName.systemAudioM4a;
+
+    print("convUuid: ${currentUUID} micFileName: $micFileName -- systemFileName: $systemFileName");
+
+    final listeningConfig = {'userName': "Phoenix", 'micFileName': micFileName, 'sysFileName': systemFileName, 'uuid': currentUUID};
+
+    await _shadowPlugin.testStartListening(listeningConfig: listeningConfig);
+    connectWebSocket(currentUUID);
+  }
+
+  testStopListening() async {
+    await _shadowPlugin.testStopListening();
+  }
+
+  void _setupListeningStatusEventStream() {
+    if (listeningEventStreamSubscription != null) {
+      listeningEventStreamSubscription?.cancel();
+    }
+
+    listeningEventStreamSubscription = _shadowPlugin.listeningStatusEvents.listen((event) {
+      print('Flutter-side listening Event Stream: $event');
+
+      try {
+        // Convert event to Map (assuming it's already a JSON-like structure)
+        final eventData = Map<String, dynamic>.from(event);
+
+        // Extract required fields
+        final String micAudio = eventData["microphone_segment"] ?? "";
+        final String sysAudio = eventData["system_audio_segment"] ?? "";
+        final bool isFinishedListening = eventData.containsKey("isFinishedListening") ? eventData["isFinishedListening"] : true;
+
+        if (eventData["isCancelledListening"]) {
+          print("Listening is cancelled");
+          disConnectWebSocket(currentUUID);
+          return;
+        }
+        webSocketManager.sendMessage(currentUUID, micAudio, sysAudio, isFinishedListening);
+      } catch (e) {
+        print("Error parsing event data: $e");
+      }
+    }, onError: (error) {
+      print('Error from event stream: $error');
+    });
   }
 
   @override
@@ -121,6 +280,7 @@ class _MyAppState extends State<MyApp> {
     print("dispose called !!!!@!@!@!@");
     _shadowPlugin.stopShadowServer();
     multiWindowStatusEventStreamSubscription?.cancel();
+    listeningEventStreamSubscription?.cancel();
     hotKeyManager.unregister(_hotKey);
     super.dispose();
   }
@@ -147,7 +307,13 @@ class _MyAppState extends State<MyApp> {
       // Parse the event
       final isRecording = event['isRecording'];
       final windowStateString = event['windowState'];
-      WindowState windowState;
+      final windowCloseType = event['windowCloseType'];
+
+      if (windowCloseType == 'cancel') {
+        print("cancel detected");
+        disConnectWebSocket(currentUUID);
+      }
+      // WindowState windowState;
 
       print('isRecording: $isRecording, windowStateString: $windowStateString');
 
@@ -208,59 +374,49 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _setupHotkey() async {
+    print("Hotkey setup called");
+
+    await hotKeyManager.unregisterAll(); // Clear any existing registrations
+
     _hotKey = HotKey(
       key: PhysicalKeyboardKey.keyS,
       modifiers: [HotKeyModifier.control, HotKeyModifier.meta],
       scope: HotKeyScope.system,
     );
 
+    print("Hotkey setup called ${_hotKey.identifier}");
+
     await hotKeyManager.register(
       _hotKey,
       keyDownHandler: (hotKey) async {
         print('Hotkey pressed: ${hotKey.identifier}, ${hotKey.physicalKey.debugName}, ${hotKey.scope} ${hotKey.modifiers}');
-        final key = hotKey.physicalKey.debugName!;
-        final modifiers = hotKey.modifiers!.map((modifier) => modifier.toString()).toList();
-        final listeningConfig = {
-          'userName': "Phoenix",
-          'micFileName': "micAudio.m4a",
-          'sysFileName': "sysAudio.m4a",
-          'isAudioSaveOn': true,
-        };
 
-        await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);
-        ;
+        if (windowState == WindowState.listening) {
+          await testStopListening();
+          return;
+        }
+
+        await testStartListening();
+
+        // await _shadowPlugin.testStartListening();
+
+        // final key = hotKey.physicalKey.debugName!;
+        // final modifiers = hotKey.modifiers!.map((modifier) => modifier.toString()).toList();
+        // final listeningConfig = {
+        //   'userName': "Phoenix",
+        //   'micFileName': "micAudio.m4a",
+        //   'sysFileName': "sysAudio.m4a",
+        //   'isAudioSaveOn': true,
+        // };
+
+        // await _shadowPlugin.createNewWindow(listeningConfig: listeningConfig);
+
         //Send event to Swift
       },
     );
   }
 
-  runStream() async {
-    // Dart uses Futures and Streams for asynchronous operations
-    var newProcess = await Process.start('/usr/bin/log', [
-      'stream',
-      '--predicate',
-      "subsystem == 'com.apple.controlcenter' AND (eventMessage CONTAINS 'Recent activity attributions changed to' OR eventMessage CONTAINS 'Active activity attributions changed to')"
-    ]);
-
-    process = newProcess;
-
-    // Setting up a subscription to listen to the output
-    newProcess.stdout.transform(utf8.decoder).listen((data) {
-      print(data); // Printing the data received
-    }).onError((error) {
-      print('Error occurred: $error');
-    });
-
-    // You can also handle stderr in a similar way if needed
-  }
-
-  void stopStream() {
-    process?.kill();
-  }
-
   Future<void> _createNewWindow() async {
-    // try {1
-
     final listeningConfig = {
       'userName': "Phoenix",
       'micFileName': "micAudio.m4a",
@@ -291,209 +447,6 @@ class _MyAppState extends State<MyApp> {
     await _shadowPlugin.stopListening();
   }
 
-  finalLsofTest() async {
-    Timer test = Timer.periodic(
-      const Duration(seconds: 1),
-      (timer) async {
-        ProcessResult results = await Process.run('lsof', ['-i', 'UDP:40000-69999']);
-        var lines = results.stdout.split('\n').skip(1);
-        var pattern = RegExp(r'UDP \*(?!:).*[^->]$');
-
-        var filteredProcesses =
-            lines.where((line) => line.trim().isNotEmpty && !pattern.hasMatch(line) && !line.contains('->') && !line.contains('*')).map(
-          (line) {
-            print("Line - $line");
-            var item = line.replaceAll(RegExp(r'\s{2,}'), ' ').split(' ');
-            return {
-              'command': item.first.replaceAll('\\x20', ''),
-              'pid': item[1],
-              'port': item.last.split(':').last,
-              'firstRunAt': DateTime.now().millisecondsSinceEpoch,
-            };
-          },
-        ).toList();
-
-        // 필터링 된 라인이 있으면 임시 프로세스 목록에 추가
-        tempProcessList.addAll(filteredProcesses.where((newProcess) => !tempProcessList.any((process) => process['pid'] == newProcess['pid'])));
-
-        // 임시 프로세스 리스트가 없으면 종료
-        if (tempProcessList.isEmpty) return;
-
-        // 임시 프로세스 목록에서 5초 이상 머무른 프로세스 체크
-        var addedProcesses = tempProcessList.where((tempProcess) {
-          if ((tempProcess['command'] == 'Microsoft' || tempProcess['command'] == 'Google') &&
-              DateTime.now().millisecondsSinceEpoch - tempProcess['firstRunAt'] < 5000) return false;
-          return !processList.any((process) => process['pid'] == tempProcess['pid']);
-        }).toList();
-
-        // 프로세스 목록에 추가하며 START 넛지 주기
-        if (addedProcesses.isNotEmpty) {
-          processList.addAll(addedProcesses);
-          print('Added to processList: $addedProcesses');
-        }
-
-        // 종료된 프로세스 체크
-        tempProcessList.removeWhere((tempProcess) => !filteredProcesses.any((process) => process['pid'] == tempProcess['pid']));
-        var removedProcesses = processList.where((process) => !tempProcessList.any((tempProcess) => tempProcess['pid'] == process['pid'])).toList();
-
-        // 프로세스 목록에서 제거하며 END 넛지 주기
-        if (removedProcesses.isNotEmpty) {
-          processList.removeWhere((process) => removedProcesses.contains(process));
-          print('Removed from processList: $removedProcesses');
-        }
-      },
-    );
-  }
-
-  Future<String> runLsofCommand() async {
-    final result = await Process.run('lsof', ['-i', 'UDP:40000-69999', '+c', '30']);
-    return result.stdout as String;
-  }
-
-  List<LsofEntry> parseLsofOutput(String output) {
-    final lines = output.split('\n').skip(1);
-    // final pattern = RegExp(r'UDP (\*|\d{1,3}(\.\d{1,3}){3}):([4-6]\d{4,5})(?!.*->)');
-    var pattern = RegExp(r'UDP \*(?!:).*[^->]$');
-    final foundPIDs = <String>{};
-
-    return lines
-        .map((line) {
-          final words = line.split(' ').where((str) => str.isNotEmpty).toList();
-          if (words.isNotEmpty) {
-            final matchedLine = pattern.firstMatch(line);
-
-            if (matchedLine != null) {
-              final appName = words[0];
-              final appNameWithoutSpaces = appName.replaceAll('\\x20', '');
-              print(appNameWithoutSpaces);
-
-              final portPattern = RegExp(r':(\d+)$');
-              final portMatch = portPattern.firstMatch(words.last);
-              final bool isAppNameInWhitelist = whitelistAppNames.any((whitelistAppName) => appNameWithoutSpaces.startsWith(whitelistAppName));
-
-              if (portMatch != null && isAppNameInWhitelist) {
-                final pid = words[1];
-                foundPIDs.add(pid);
-
-                entries[pid] = entries.putIfAbsent(pid, () => LsofEntry(words[0], portMatch.group(1)!, pid, DateTime.now()));
-
-                return LsofEntry(words[0], portMatch.group(1)!, words[1], DateTime.now());
-              }
-            }
-          }
-        })
-        .where((item) => item != null)
-        .toList()
-        .cast<LsofEntry>();
-  }
-
-  void updateEntries(List<LsofEntry> parsedLines) {
-    final foundPIDs = parsedLines.map((entry) => entry.pid).toSet();
-    print("foundPID, $foundPIDs");
-    entries.removeWhere((key, value) => !foundPIDs.contains(key));
-  }
-
-  void updateMeetingStatus() {
-    if (entries.isEmpty) {
-      print("No entries found");
-      if (_isInMeeting) {
-        print("You were in a meeting but now you are not");
-        _isInMeeting = false;
-      }
-      setState(() {
-        isInMeeting = "미팅 ❌";
-      });
-    }
-
-    if (entries.isNotEmpty) {
-      entries.values.forEach((entry) {
-        if (entry.isConnectionOlderThanNSeconds) {
-          print("Meeting is longer than 5 seconds");
-          _isInMeeting = true;
-          setState(() {
-            isInMeeting = "미팅 ✅";
-          });
-        }
-      });
-    }
-  }
-
-  detectInMeetingSession2() {
-    timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      final output = await runLsofCommand();
-      final parsedLines = parseLsofOutput(output);
-      updateEntries(parsedLines);
-      updateMeetingStatus();
-      print(parsedLines.map((entry) => entry.toDictionary()).toList());
-    });
-  }
-
-  detectInMeetingSession() {
-    timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      final result = await Process.run('lsof', ['-i', 'UDP:40000-69999']);
-      final output = result.stdout as String;
-
-      final lines = output.split('\n').skip(1);
-
-      final pattern = RegExp(r'UDP (\*|\d{1,3}(\.\d{1,3}){3}):([4-6]\d{4,5})(?!.*->)');
-      final foundPIDs = <String>{};
-
-      final parsedLines = lines
-          .map((line) {
-            final words = line.split(' ').where((str) => str.isNotEmpty).toList();
-
-            if (words.isNotEmpty) {
-              final matchedLine = pattern.firstMatch(line);
-
-              if (matchedLine != null) {
-                final appName = words[0];
-                final portPattern = RegExp(r':(\d+)$');
-                final portMatch = portPattern.firstMatch(words.last);
-
-                if (portMatch != null && whitelistAppNames.contains(appName)) {
-                  final pid = words[1];
-                  foundPIDs.add(pid);
-
-                  entries[pid] = entries.putIfAbsent(pid, () => LsofEntry(words[0], portMatch.group(1)!, pid, DateTime.now()));
-
-                  return LsofEntry(words[0], portMatch.group(1)!, words[1], DateTime.now());
-                }
-              }
-            }
-          })
-          .where((item) => item != null)
-          .toList()
-          .cast<LsofEntry>();
-
-      entries.removeWhere((key, value) => !foundPIDs.contains(key));
-
-      if (entries.isEmpty) {
-        print("No entries found");
-        if (_isInMeeting) {
-          print("You were in a meeting but now you are not");
-          _isInMeeting = false;
-        }
-        setState(() {
-          isInMeeting = "미팅 ❌";
-        });
-      }
-
-      if (entries.isNotEmpty) {
-        entries.values.forEach((entry) {
-          if (entry.isConnectionOlderThanNSeconds) {
-            print("Meeting is longer than 5 seconds");
-            _isInMeeting = true;
-            setState(() {
-              isInMeeting = "미팅 ✅";
-            });
-          }
-        });
-      }
-
-      print(parsedLines.map((entry) => entry.toDictionary()).toList());
-    });
-  }
-
   Future deleteFile(String fileName) async {
     await _shadowPlugin.deleteFileIfExists(fileName);
   }
@@ -502,9 +455,6 @@ class _MyAppState extends State<MyApp> {
   Future startMicRecording() async {
     try {
       await _shadowPlugin.startMicRecordingWithConfig(micConfig);
-      // await _shadowPlugin.startMicRecordingWithDefault();
-      // await _shadowPlugin.startMicRecording();
-      // print(result);
       print("startMicRecording called successfully ✅");
       microphoneEventSubscription = _shadowPlugin.microphoneEvents.listen((event) {
         print("마이크 오디오 이벤트 스트림 테스트입니다");
@@ -573,17 +523,7 @@ class _MyAppState extends State<MyApp> {
   //Screen Capture
   Future startScreenCapture() async {
     try {
-      // final result = await _shadowPlugin.startScreenCapture();
-
-      // await _shadowPlugin
-      // .startSystemAudioRecordingWithConfig(systemAudioConfig);
-      // await _shadowPlugin.startSystemAudioRecordingWithDefault();
-
-      // await _shadowPlugin.startSystemAndMicAudioRecordingWithConfig()
-
       await _shadowPlugin.startSystemAndMicAudioRecordingWithConfig(systemAudioConfig: systemAudioConfig, micConfig: micConfig);
-
-      // await _shadowPlugin.startSystemAndMicAudioRecordingWithDefault();
 
       print('startScreenCapture called successfully');
 
@@ -850,6 +790,11 @@ class _MyAppState extends State<MyApp> {
               Text('$_isScreenRecordingPermissionGranted', style: Theme.of(context).textTheme.headlineMedium),
               Text('$isInMeeting', style: Theme.of(context).textTheme.headlineMedium),
 
+              // CustomButton("Weboskcet Test", () => connectWebSocket()),
+
+              CustomButton("Test Start Listening", () => testStartListening()),
+              CustomButton("Test Stop Listening", () => testStopListening()),
+
               CustomButton("Create createNewWindow", () => _createNewWindow()),
               CustomButton("Start Listening", () => _startListening()),
               CustomButton("Stop Listening", () => _stopListening()),
@@ -860,9 +805,6 @@ class _MyAppState extends State<MyApp> {
                         _shadowPlugin.requestMicPermission,
                         _shadowPlugin.microphonePermissionEvents,
                       )),
-              // CustomButton("RUN LOOF COMMAND", () => finalLsofTest()),
-              // CustomButton("Run log stream --predicate", () => runStream()),
-              // CustomButton("stop log stream --predicate", () => stopStream()),
               CustomButton("Get Current Default Audio Input Device", () => getAudioInputDevice()),
               CustomButton("Get Audio Input Devices 🎤", () => getAudioInputDeviceList()),
               CustomButton("Set Audio Input Devices 🎤", () => setAudioInputDevice("")),
@@ -903,49 +845,6 @@ class _MyAppState extends State<MyApp> {
                 "Stop Microphone Permission Request Stream 버튼",
                 () => stopRequestingPermission(microphonePermissionSubscription),
               ),
-              // CustomButton(
-              //   "get  screen recording all permissions button",
-              //   () => getAllScreenRecordingPermissionStatuses(),
-              // ),
-              // CustomButton(
-              //   "Stop Screen Recording Permission Request Stream 버튼",
-              //   () => stopRequestingPermission(screenCaptureEventSubscription),
-              // ),
-              // CustomButton(
-              //   "Open Mic System Setting 버튼",
-              //   () => _shadowPlugin.openMicSystemSetting(),
-              // ),
-              // CustomButton(
-              //   "Open Screen Recording System Setting 버튼",
-              //   () => _shadowPlugin.openScreenSystemSetting(),
-              // ),
-              // CustomButton(
-              //   "Is Microphone Permission Granted 버튼",
-              //   () => checkMicPermission(),
-              // ),
-              // CustomButton(
-              //   "Is Screen Recording Permission Granted 버튼",
-              //   () => checkScreenPermission(),
-              // ),
-              // CustomButton(
-              //     "ScreenCapture 버튼", () => startRecording(_shadowPlugin.startSystemAndMicAudioRecordingWithDefault, _shadowPlugin.microphoneEvents)),
-              // // () => startScreenCapture()),
-              // CustomButton(
-              //     "Stop ScreenCapture 버튼", () => stopRecording(_shadowPlugin.stopRecordingMicAndSystemAudio, screenCaptureEventSubscription)),
-              // CustomButton(
-              //     "Start Microphone Recording 버튼", () => startRecording(_shadowPlugin.startMicRecordingWithDefault, _shadowPlugin.microphoneEvents)),
-              // CustomButton("Stop Microphone Recording 버튼", () => stopRecording(_shadowPlugin.stopMicRecording, microphoneEventSubscription)),
-              // CustomButton("Start System Audio Only Capturing",
-              //     () => startRecording(_shadowPlugin.startSystemAudioRecordingWithDefault, _shadowPlugin.screenCaptureEvents)),
-              // CustomButton("Stop System Audio Only Capturing", () => stopRecording(_shadowPlugin.stopScreenCapture, screenCaptureEventSubscription)),
-              // CustomButton(
-              //   "Delete File 버튼",
-              //   () => deleteFile("FlutterSystemAudio.m4a"),
-              // ),
-              // CustomButton(
-              //   "Relaunch 버튼",
-              //   () => _shadowPlugin.restartApp(),
-              // ),
               CustomButton(
                 "Start Nudging",
                 () => startNudging(),

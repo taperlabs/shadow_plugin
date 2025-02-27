@@ -29,7 +29,8 @@ struct FileManagerHelper {
         }
         
         // Append the app's bundle identifier to the path
-        let appSpecificDirectoryURL = directoryURL.appendingPathComponent(Bundle.main.bundleIdentifier ?? "com.taperlabs.shadow")
+//        let appSpecificDirectoryURL = directoryURL.appendingPathComponent(Bundle.main.bundleIdentifier ?? "com.taperlabs.shadow")
+        let appSpecificDirectoryURL = directoryURL.appendingPathComponent("com.taperlabs.shadow")
 
         // Create the directory if it doesn't exist
         do {

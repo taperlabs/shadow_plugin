@@ -20,6 +20,18 @@ class Shadow {
 
   Stream<dynamic> get multiWindowStatusEvents => ShadowPlatform.instance.multiWindowStatusEvents;
 
+  Stream<dynamic> get listeningStatusEvents => ShadowPlatform.instance.listeningStatusEvents;
+
+  Future<void> testStartListening({
+    Map<String, dynamic>? listeningConfig,
+  }) {
+    return ShadowPlatform.instance.testStartListening(listeningConfig: listeningConfig);
+  }
+
+  Future<void> testStopListening() {
+    return ShadowPlatform.instance.testStopListening();
+  }
+
   Future<void> cancelListening() {
     return ShadowPlatform.instance.cancelListening();
   }

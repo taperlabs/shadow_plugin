@@ -208,6 +208,38 @@ class CoreAudioService: ObservableObject {
         return status == noErr ? deviceID : nil
     }
     
+    private func shouldIncludeDevice(deviceID: AudioDeviceID) -> Bool {
+//        return true
+        // 1. 이름 기반 필터링
+//        let name = getDeviceName(deviceID: deviceID)
+//        let excludedKeywords = ["CADefaultDeviceAggregate", "NoSound", "Microsoft Teams Audio"]
+//        for keyword in excludedKeywords {
+//            if name.contains(keyword) {
+//                return false
+//            }
+//        }
+        
+        // 2. Transport Type 기반 필터링
+        var transportType: UInt32 = 0
+        var size = UInt32(MemoryLayout<UInt32>.size)
+        var transportAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyTransportType,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        let status = AudioObjectGetPropertyData(deviceID, &transportAddress, 0, nil, &size, &transportType)
+        if status == noErr {
+            // 예시: 가상 또는 집계 디바이스인 경우 제외
+            if transportType == kAudioDeviceTransportTypeAggregate ||
+                transportType == kAudioDeviceTransportTypeVirtual {
+                return false
+            }
+        }
+        
+        return true
+    }
+
     private func retrieveAllInputDevices() -> [AudioDevice] {
         var propertyAddress = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDevices,
@@ -238,16 +270,16 @@ class CoreAudioService: ObservableObject {
         )
         guard result == noErr else { return [] }
         
-        // Filter input devices
-        let inputDeviceIDs = audioDevices.filter { isInputDevice(deviceID: $0) }
+        // Filter input devices + 추가 필터 적용
+        let inputDeviceIDs = audioDevices.filter { isInputDevice(deviceID: $0) && shouldIncludeDevice(deviceID: $0) }
         let inputDevices = inputDeviceIDs.compactMap { deviceID -> AudioDevice? in
             let name = getDeviceName(deviceID: deviceID)
             return AudioDevice(id: deviceID, name: name)
         }
-        //        print(inputDevices)
         
         return inputDevices
     }
+
     
     // MARK: - Helper Methods
     

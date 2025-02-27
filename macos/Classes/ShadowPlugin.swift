@@ -17,10 +17,13 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     
     private static let multiWindowEventChannelName = "multiWindowEventChannel"
     private static let multiWindowStatusEventChannelName = "multiWindowStatusEventChannel"
+    private static let listeningStatusEventChannelName = "listeningStatusEventChannel"
+    
     private var windowManager: WindowManager?
     private var listeningViewModel: ListeningViewModel?
     static var multiWindowEventChannel: FlutterEventChannel?
     static var multiWindowStatusEventChannel: FlutterEventChannel?
+    static var listeningStatusEventChannel: FlutterEventChannel?
     private var registrar: FlutterPluginRegistrar?
     private static var instance: ShadowPlugin?
     
@@ -35,6 +38,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     var autopilotClass = Autopilot()
     let coreAudioHandler = CoreAudioHandler()
     let screenCaptureKitBugEventsClass = ScreenCaptureKitBugHandler()
+
     
     func isFontAvailable(_ fontName: String) -> Bool {
         let fontFamilyNames = NSFontManager.shared.availableFontFamilies
@@ -103,6 +107,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let key = listeningConfig["key"] as? Int ?? 0
         let modifiers = listeningConfig["modifiers"] as? Int ?? 0
         let uuid = listeningConfig["uuid"] as? String ?? ""
+        
+        // TODO: - 파일 네임 고민 (세그먼트, Full Length)
         let micFileName = listeningConfig["micFileName"] as? String ?? ""
         let sysFileName = listeningConfig["sysFileName"] as? String ?? ""
         let isAudioSaveOn = listeningConfig["isAudioSaveOn"] as? Bool ?? false
@@ -126,7 +132,6 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             } else {
                 print("Warning: eventChannel is nil, unable to set stream handler")
             }
-            
         }
         
         guard let newListeningVM = windowManager?.listeningViewModel else {
@@ -173,6 +178,9 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let multiWindowStatusEventChannel = FlutterEventChannel(name: multiWindowStatusEventChannelName, binaryMessenger: registrar.messenger)
         multiWindowStatusEventChannel.setStreamHandler(MultiWindowStatusService.shared)
         
+        listeningStatusEventChannel = FlutterEventChannel(name: listeningStatusEventChannelName, binaryMessenger: registrar.messenger)
+        listeningStatusEventChannel?.setStreamHandler(ListeningStatusService.shared)
+        
         let windowManager = WindowManager.shared
         instance.windowManager = windowManager
         
@@ -216,6 +224,108 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         screenRecordingPermissionEventChannel.setStreamHandler(instance.screenRecordingPermissionClass)
     }
     
+    private func newHandleStopListening(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let listeningVM = windowManager?.listeningViewModel else {
+            result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
+            return
+        }
+        
+        guard listeningVM.isRecording else {
+            result(FlutterError(code: "Not_in_listening_mode", message: "Listening is not in session.", details: nil))
+            return
+        }
+        
+        if let countDownNumber = listeningVM.countdownNumber {
+            if countDownNumber >= 0 {
+                listeningVM.cancelListening()
+                
+                WindowManager.shared.closeCurrentWindow(for: .cancel)
+            }
+        } else {
+            listeningVM.stopListening()
+            WindowManager.shared.closeCurrentWindow(for: .done)
+        }
+        result("Stop Listening Successful")
+    }
+    
+    private func handleListening(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = ArgumentParser.parse(from: call),
+              let listeningConfig = args["listeningConfig"] as? [String: Any],
+              let userName = listeningConfig["userName"] as? String,
+              let micFileName = listeningConfig["micFileName"] as? String,
+              let sysFileName = listeningConfig["sysFileName"] as? String,
+              let convUuid = listeningConfig["uuid"] as? String else {
+            result(FlutterError(
+                code: "INVALID_ARGUMENTS",
+                message: "Missing or invalid listeningConfig parameters",
+                details: nil))
+            return
+        }
+        
+        print("UserName: \(userName), micFileName: \(micFileName), sysFileName: \(sysFileName), uuid: \(convUuid)")
+        
+        // Create a Listening window
+        // First check if windowManager is available
+        if windowManager == nil {
+            windowManager = WindowManager.shared
+        }
+        
+        // Window 생성 및 뷰모델 생성 이벤트 채널 스트림 셋하기
+        guard let registrar = registrar else {
+            result(FlutterError(code: "UNAVAILABLE_registrar", message: "Registrar not available", details: nil))
+            return
+        }
+        
+        // Use the existing listeningViewModel or create a new one if nil
+        if windowManager?.listeningViewModel == nil {
+            let newListeningVM = ListeningViewModel()
+            if !loadAssets(registrar: registrar, listeningVM: newListeningVM) {
+                result(FlutterError(code: "ASSET_LOADING_FAILED", message: "Failed to load assets", details: nil))
+                return
+            }
+            // Set the new ViewModel and update the event channel
+            windowManager?.setListeningViewModel(listeningViewModel: newListeningVM)
+            if let eventChannel = ShadowPlugin.multiWindowEventChannel {
+                eventChannel.setStreamHandler(newListeningVM)
+            } else {
+                result(FlutterError(code: "EVENTCHANNEL_SET_ERROR", message: "eventChannel is nil, unable to set stream handler", details: nil))
+                print("Warning: eventChannel is nil, unable to set stream handler")
+            }
+        }
+        
+        guard let newListeningVM = windowManager?.listeningViewModel else {
+            result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
+            return
+        }
+        newListeningVM.setRecordingProperties(userName: userName, micFileName: micFileName, sysFileName: sysFileName, uuid: convUuid)
+        
+        if WindowManager.shared.currentWindow == nil {
+            windowManager?.createListeningWindow()
+            
+            result("Create a new listening window")
+            
+        } else {
+            if newListeningVM.isRecording {
+                print("녹화 시작 했습니다")
+                if let countDownNumber = newListeningVM.countdownNumber {
+                    if countDownNumber >= 0 {
+                        print("CountDown 중 종료입니다 캔슬하겠습니다 \(countDownNumber)")
+                        newListeningVM.stopListening()
+                        newListeningVM.isRecording = false
+                        WindowManager.shared.closeCurrentWindow(for: .cancel)
+                        result("Cancel Listening")
+                    } else {
+                        print("녹음을 종료하겠습니다")
+                        newListeningVM.stopListening()
+                        newListeningVM.isRecording = false
+                        WindowManager.shared.closeCurrentWindow(for: .done)
+                        result("Done Listening")
+                    }
+                }
+            }
+        }
+    }
+    
     
     //MARK: - Flutter MethodCall Handler
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -240,6 +350,14 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+            
+        case .testStopListening:
+            print("TEST STOP LISTENING")
+            newHandleStopListening(call: call, result: result)
+            
+            
+        case .testStartListening:
+            handleListening(call: call, result: result)
             
         case .cancelListening:
             print("Cancel Listening")
@@ -421,6 +539,7 @@ extension ShadowPlugin {
 extension ShadowPlugin {
     struct AssetPaths {
         let lottie: String
+        let waveform: String
         let font: String
         let done: String
         let cancel: String
@@ -433,6 +552,7 @@ extension ShadowPlugin {
         
         let assetPaths = AssetPaths(
             lottie: registrar.lookupKey(forAsset: "assets/lotties/loading_white.json"),
+            waveform: registrar.lookupKey(forAsset: "assets/lotties/waveformicon.json"),
             font: registrar.lookupKey(forAsset: "assets/fonts/Inter-Regular.ttf"),
             done: registrar.lookupKey(forAsset: "assets/images/icon/listening/done.svg"),
             cancel: registrar.lookupKey(forAsset: "assets/images/icon/listening/cancel.svg"),
@@ -441,6 +561,7 @@ extension ShadowPlugin {
         
         let fullPaths = AssetPaths(
             lottie: "\(bundlePath)/\(assetPaths.lottie)",
+            waveform: "\(bundlePath)/\(assetPaths.waveform)",
             font: "\(bundlePath)/\(assetPaths.font)",
             done: "\(bundlePath)/\(assetPaths.done)",
             cancel: "\(bundlePath)/\(assetPaths.cancel)",
@@ -467,6 +588,7 @@ extension ShadowPlugin {
         }
         
         // Update ViewModel paths
+        listeningVM.updateWaveformPath(fullPaths.waveform)
         listeningVM.updateLottiePath(fullPaths.lottie)
         listeningVM.updateDonePath(fullPaths.done)
         listeningVM.updateCancelPath(fullPaths.cancel)

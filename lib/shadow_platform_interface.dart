@@ -60,6 +60,20 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('multiWindowStatusEvents has not been implemented.');
   }
 
+  Stream<dynamic> get listeningStatusEvents {
+    throw UnimplementedError('listeningStatusEvents has not been implemented.');
+  }
+
+  Future<void> testStartListening({
+    Map<String, dynamic>? listeningConfig,
+  }) {
+    throw UnimplementedError('testStartListening() has not been implemented.');
+  }
+
+  Future<void> testStopListening() {
+    throw UnimplementedError('testStopListening() has not been implemented.');
+  }
+
   Future<void> cancelListening() {
     throw UnimplementedError('cancelListening() has not been implemented.');
   }
