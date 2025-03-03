@@ -553,7 +553,7 @@ extension ShadowPlugin {
         let assetPaths = AssetPaths(
             lottie: registrar.lookupKey(forAsset: "assets/lotties/loading_white.json"),
             waveform: registrar.lookupKey(forAsset: "assets/lotties/waveformicon.json"),
-            font: registrar.lookupKey(forAsset: "assets/fonts/Inter-Regular.ttf"),
+            font: registrar.lookupKey(forAsset: "assets/fonts/Inter-Regular.ttf")
 //            done: registrar.lookupKey(forAsset: "assets/images/icon/listening/done.svg"),
 //            cancel: registrar.lookupKey(forAsset: "assets/images/icon/listening/cancel.svg"),
 //            minimize: registrar.lookupKey(forAsset: "assets/images/icon/listening/minimize.svg")
@@ -571,7 +571,7 @@ extension ShadowPlugin {
         let fullPaths = AssetPaths(
             lottie: "\(bundlePath)/\(assetPaths.lottie)",
             waveform: "\(bundlePath)/\(assetPaths.waveform)",
-            font: "\(bundlePath)/\(assetPaths.font)",
+            font: "\(bundlePath)/\(assetPaths.font)"
 //            done: "\(bundlePath)/\(assetPaths.done)",
 //            cancel: "\(bundlePath)/\(assetPaths.cancel)",
 //            minimize: "\(bundlePath)/\(assetPaths.minimize)"
