@@ -541,9 +541,9 @@ extension ShadowPlugin {
         let lottie: String
         let waveform: String
         let font: String
-        let done: String
-        let cancel: String
-        let minimize: String
+//        let done: String
+//        let cancel: String
+//        let minimize: String
     }
     
     func loadAssets(registrar: FlutterPluginRegistrar, listeningVM: ListeningViewModel) -> Bool {
@@ -554,45 +554,67 @@ extension ShadowPlugin {
             lottie: registrar.lookupKey(forAsset: "assets/lotties/loading_white.json"),
             waveform: registrar.lookupKey(forAsset: "assets/lotties/waveformicon.json"),
             font: registrar.lookupKey(forAsset: "assets/fonts/Inter-Regular.ttf"),
-            done: registrar.lookupKey(forAsset: "assets/images/icon/listening/done.svg"),
-            cancel: registrar.lookupKey(forAsset: "assets/images/icon/listening/cancel.svg"),
-            minimize: registrar.lookupKey(forAsset: "assets/images/icon/listening/minimize.svg")
+//            done: registrar.lookupKey(forAsset: "assets/images/icon/listening/done.svg"),
+//            cancel: registrar.lookupKey(forAsset: "assets/images/icon/listening/cancel.svg"),
+//            minimize: registrar.lookupKey(forAsset: "assets/images/icon/listening/minimize.svg")
         )
+        
+        // Log the asset paths returned by lookupKey
+        print("Asset paths from lookupKey:")
+        print("Lottie: \(assetPaths.lottie)")
+        print("Waveform: \(assetPaths.waveform)")
+        print("Font: \(assetPaths.font)")
+//        print("Done: \(assetPaths.done)")
+//        print("Cancel: \(assetPaths.cancel)")
+//        print("Minimize: \(assetPaths.minimize)")
         
         let fullPaths = AssetPaths(
             lottie: "\(bundlePath)/\(assetPaths.lottie)",
             waveform: "\(bundlePath)/\(assetPaths.waveform)",
             font: "\(bundlePath)/\(assetPaths.font)",
-            done: "\(bundlePath)/\(assetPaths.done)",
-            cancel: "\(bundlePath)/\(assetPaths.cancel)",
-            minimize: "\(bundlePath)/\(assetPaths.minimize)"
+//            done: "\(bundlePath)/\(assetPaths.done)",
+//            cancel: "\(bundlePath)/\(assetPaths.cancel)",
+//            minimize: "\(bundlePath)/\(assetPaths.minimize)"
         )
         
-        // Check if files exist
+        // Log the full paths
+        print("Bundle path: \(bundlePath)")
+        print("Full paths:")
+        print("Lottie: \(fullPaths.lottie)")
+        print("Waveform: \(fullPaths.waveform)")
+        print("Font: \(fullPaths.font)")
+//        print("Done: \(fullPaths.done)")
+//        print("Cancel: \(fullPaths.cancel)")
+//        print("Minimize: \(fullPaths.minimize)")
+        
+        // Check if files exist and log the results
         for (assetName, path) in [
-            ("Font", fullPaths.font),
             ("Lottie", fullPaths.lottie),
-            ("Done", fullPaths.done)
+            ("Waveform", fullPaths.waveform),
+            ("Font", fullPaths.font),
+//            ("Done", fullPaths.done),
+//            ("Cancel", fullPaths.cancel),
+//            ("Minimize", fullPaths.minimize)
         ] {
             if fileManager.fileExists(atPath: path) {
-                //                print("\(assetName) file exists at path: \(path)")
+                print("✅ \(assetName) file exists at path: \(path)")
             } else {
-                //                print("\(assetName) file does not exist at path: \(path)")
-                return false
+                print("❌ \(assetName) file does not exist at path: \(path)")
             }
         }
         
         // Register font
         if !registerFont(at: fullPaths.font) {
+            print("❌ Failed to register font at path: \(fullPaths.font)")
             return false
         }
         
         // Update ViewModel paths
         listeningVM.updateWaveformPath(fullPaths.waveform)
         listeningVM.updateLottiePath(fullPaths.lottie)
-        listeningVM.updateDonePath(fullPaths.done)
-        listeningVM.updateCancelPath(fullPaths.cancel)
-        listeningVM.updateMinimizePath(fullPaths.minimize)
+//        listeningVM.updateDonePath(fullPaths.done)
+//        listeningVM.updateCancelPath(fullPaths.cancel)
+//        listeningVM.updateMinimizePath(fullPaths.minimize)
         
         return true
     }

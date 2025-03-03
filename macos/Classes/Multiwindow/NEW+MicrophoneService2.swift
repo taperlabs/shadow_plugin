@@ -315,7 +315,7 @@ final class MicrophoneService2: NSObject, ObservableObject {
 extension MicrophoneService2: AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         // 이제 대부분의 로직은 switchToNextSegment와 stopRecording에서 직접 처리하므로
-        // 여기서는 예상치 못한 recorder 중단만 처리합니다.
+        // 여기서는 예상치 못한 recorder 중단만 처리.
         
         // recorder가 switchToNextSegment나 stopRecording에 의해 의도적으로 중지된 경우가 아닌지 확인
         guard isRecording, !isFinishedListening, !isCancelled else {
