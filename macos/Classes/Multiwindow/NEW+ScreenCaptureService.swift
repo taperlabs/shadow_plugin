@@ -145,61 +145,89 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
     }
     
     func stopCapture(isCancelled: Bool = false) {
-        guard isRecording else { return }
-        isRecording = false
-        
-        // Create a dispatch group to coordinate cleanup
-        let cleanupGroup = DispatchGroup()
-        
         // Stop the stream
-        cleanupGroup.enter()
-        stream?.stopCapture { [weak self] error in
-            guard let self = self else {
-                cleanupGroup.leave()
-                return
-            }
-            
+        stream?.stopCapture { error in
             if let error = error {
                 print("Failed to stop capture: \(error)")
+                ShadowLogger.shared.log("[SystemAudioService] - Failed to stop capture: \(error)")
+            } else {
+                print("Capture stopped")
             }
-            
-            // Safely remove stream outputs
-            do {
-                try self.stream?.removeStreamOutput(self, type: .audio)
-                try self.stream?.removeStreamOutput(self, type: .screen)
-            } catch {
-                print("Failed to remove stream outputs: \(error)")
-            }
-            cleanupGroup.leave()
         }
         
-        // Finish full length recording
-        cleanupGroup.enter()
-        fullLengthAudioInput?.markAsFinished()
-        fullLengthWriter?.finishWriting { [weak self] in
-            if let error = self?.fullLengthWriter?.error {
-                print("Failed to finish writing full length file: \(error)")
-            }
-            cleanupGroup.leave()
-        }
-        
-        // Finish current segment
-        cleanupGroup.enter()
+        // Mark the audio input as finished
         segmentAudioInput?.markAsFinished()
+        
+        // Finish writing
         segmentWriter?.finishWriting { [weak self] in
             if let error = self?.segmentWriter?.error {
-                print("Failed to finish writing segment file: \(error)")
-            } else{
+                print("Failed to finish writing: \(error)")
+                ShadowLogger.shared.log("[SystemAudioService] - Failed to finish writing \(error)")
+            } else {
+                print("Writing finished")
                 self?.finalizeLastSegment(isCancelled: isCancelled)
             }
-            cleanupGroup.leave()
-        }
-        
-        // Only cleanup after all async operations complete
-        cleanupGroup.notify(queue: .main) { [weak self] in
+            // Clean up
             self?.cleanup()
         }
     }
+    
+//    func stopCapture(isCancelled: Bool = false) {
+//        guard isRecording else { return }
+//        isRecording = false
+//        
+//        // Create a dispatch group to coordinate cleanup
+//        let cleanupGroup = DispatchGroup()
+//        
+//        // Stop the stream
+//        cleanupGroup.enter()
+//        stream?.stopCapture { [weak self] error in
+//            guard let self = self else {
+//                cleanupGroup.leave()
+//                return
+//            }
+//            
+//            if let error = error {
+//                print("Failed to stop capture: \(error)")
+//            }
+//            
+//            // Safely remove stream outputs
+//            do {
+//                try self.stream?.removeStreamOutput(self, type: .audio)
+//                try self.stream?.removeStreamOutput(self, type: .screen)
+//            } catch {
+//                print("Failed to remove stream outputs: \(error)")
+//            }
+//            cleanupGroup.leave()
+//        }
+//        
+//        // Finish full length recording
+//        cleanupGroup.enter()
+//        fullLengthAudioInput?.markAsFinished()
+//        fullLengthWriter?.finishWriting { [weak self] in
+//            if let error = self?.fullLengthWriter?.error {
+//                print("Failed to finish writing full length file: \(error)")
+//            }
+//            cleanupGroup.leave()
+//        }
+//        
+//        // Finish current segment
+//        cleanupGroup.enter()
+//        segmentAudioInput?.markAsFinished()
+//        segmentWriter?.finishWriting { [weak self] in
+//            if let error = self?.segmentWriter?.error {
+//                print("Failed to finish writing segment file: \(error)")
+//            } else{
+//                self?.finalizeLastSegment(isCancelled: isCancelled)
+//            }
+//            cleanupGroup.leave()
+//        }
+//        
+//        // Only cleanup after all async operations complete
+//        cleanupGroup.notify(queue: .main) { [weak self] in
+//            self?.cleanup()
+//        }
+//    }
     
     private func finalizeLastSegment(isCancelled: Bool) {
         ListeningCoordinator.shared.handleSystemAudioSegment(
