@@ -224,6 +224,21 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         screenRecordingPermissionEventChannel.setStreamHandler(instance.screenRecordingPermissionClass)
     }
     
+    private func handleCancelListening(call: FlutterMethodCall, result: @escaping FlutterResult){
+        guard let listeningVM = windowManager?.listeningViewModel else {
+            result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
+            return
+        }
+        
+        guard listeningVM.isRecording else {
+            result(FlutterError(code: "Not_in_listening_mode", message: "Listening is not in session.", details: nil))
+            return
+        }
+        
+        listeningVM.cancelListening()
+        WindowManager.shared.closeCurrentWindow(for: .done)
+    }
+    
     private func newHandleStopListening(call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard let listeningVM = windowManager?.listeningViewModel else {
             result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
@@ -361,6 +376,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             
         case .cancelListening:
             print("Cancel Listening")
+            handleCancelListening(call: call, result: result)
             
         case .startListening:
             print("Start Listening")
