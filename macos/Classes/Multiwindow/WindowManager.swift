@@ -340,7 +340,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
         let windowToClose = currentWindow
         
         // Update state
-        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false, windowCloseType: windowCloseType))
+//        MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .closed, isRecording: false, windowCloseType: windowCloseType))
         
         // Clear references BEFORE closing to ensure proper cleanup order
         // IMPORTANT: Clear the listeningViewModel reference BEFORE closing the window
