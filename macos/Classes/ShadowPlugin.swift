@@ -41,8 +41,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
 
     
     func isFontAvailable(_ fontName: String) -> Bool {
-        let fontFamilyNames = NSFontManager.shared.availableFontFamilies
-        let fontNames = NSFontManager.shared.availableMembers(ofFontFamily: fontName)?.map { $0[0] as! String } ?? []
+        _ = NSFontManager.shared.availableFontFamilies
+        _ = NSFontManager.shared.availableMembers(ofFontFamily: fontName)?.map { $0[0] as! String } ?? []
         
         //        print("Available font families: \(fontFamilyNames)")
         //        print("Available font names for family '\(fontName)': \(fontNames)")
@@ -104,9 +104,9 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let formattedHotkeys = hotkeys.replacing(plusPattern, with: " ")
         
         let username = listeningConfig["userName"] as? String ?? ""
-        let key = listeningConfig["key"] as? Int ?? 0
-        let modifiers = listeningConfig["modifiers"] as? Int ?? 0
-        let uuid = listeningConfig["uuid"] as? String ?? ""
+        _ = listeningConfig["key"] as? Int ?? 0
+        _ = listeningConfig["modifiers"] as? Int ?? 0
+        _ = listeningConfig["uuid"] as? String ?? ""
         
         // TODO: - 파일 네임 고민 (세그먼트, Full Length)
         let micFileName = listeningConfig["micFileName"] as? String ?? ""
@@ -554,7 +554,7 @@ extension ShadowPlugin {
 
 extension ShadowPlugin {
     struct AssetPaths {
-        let lottie: String
+//        let lottie: String
         let waveform: String
         let font: String
 //        let done: String
@@ -567,7 +567,7 @@ extension ShadowPlugin {
         let fileManager = FileManager.default
         
         let assetPaths = AssetPaths(
-            lottie: registrar.lookupKey(forAsset: "assets/lotties/loading_white.json"),
+//            lottie: registrar.lookupKey(forAsset: "assets/lotties/loading_white.json"),
             waveform: registrar.lookupKey(forAsset: "assets/lotties/waveformicon.json"),
             font: registrar.lookupKey(forAsset: "assets/fonts/Inter-Regular.ttf")
 //            done: registrar.lookupKey(forAsset: "assets/images/icon/listening/done.svg"),
@@ -577,7 +577,7 @@ extension ShadowPlugin {
         
         // Log the asset paths returned by lookupKey
         print("Asset paths from lookupKey:")
-        print("Lottie: \(assetPaths.lottie)")
+//        print("Lottie: \(assetPaths.lottie)")
         print("Waveform: \(assetPaths.waveform)")
         print("Font: \(assetPaths.font)")
 //        print("Done: \(assetPaths.done)")
@@ -585,7 +585,7 @@ extension ShadowPlugin {
 //        print("Minimize: \(assetPaths.minimize)")
         
         let fullPaths = AssetPaths(
-            lottie: "\(bundlePath)/\(assetPaths.lottie)",
+//            lottie: "\(bundlePath)/\(assetPaths.lottie)",
             waveform: "\(bundlePath)/\(assetPaths.waveform)",
             font: "\(bundlePath)/\(assetPaths.font)"
 //            done: "\(bundlePath)/\(assetPaths.done)",
@@ -596,7 +596,7 @@ extension ShadowPlugin {
         // Log the full paths
         print("Bundle path: \(bundlePath)")
         print("Full paths:")
-        print("Lottie: \(fullPaths.lottie)")
+//        print("Lottie: \(fullPaths.lottie)")
         print("Waveform: \(fullPaths.waveform)")
         print("Font: \(fullPaths.font)")
 //        print("Done: \(fullPaths.done)")
@@ -605,7 +605,7 @@ extension ShadowPlugin {
         
         // Check if files exist and log the results
         for (assetName, path) in [
-            ("Lottie", fullPaths.lottie),
+//            ("Lottie", fullPaths.lottie),
             ("Waveform", fullPaths.waveform),
             ("Font", fullPaths.font),
 //            ("Done", fullPaths.done),
@@ -627,7 +627,7 @@ extension ShadowPlugin {
         
         // Update ViewModel paths
         listeningVM.updateWaveformPath(fullPaths.waveform)
-        listeningVM.updateLottiePath(fullPaths.lottie)
+//        listeningVM.updateLottiePath(fullPaths.lottie)
 //        listeningVM.updateDonePath(fullPaths.done)
 //        listeningVM.updateCancelPath(fullPaths.cancel)
 //        listeningVM.updateMinimizePath(fullPaths.minimize)

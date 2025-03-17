@@ -77,7 +77,7 @@ struct ListeningView2: View {
                                     .frame(width: 30, height: 30)
                                     .font(.largeTitle)
                                     .transition(.scale)
-                                    .animation(.easeInOut)
+//                                    .animation(.easeInOut)
                                     .onAppear {
                                         vm.startCountdown()
                                     }

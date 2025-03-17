@@ -5,16 +5,13 @@ struct LottieButton: View {
     @EnvironmentObject var viewModel: ListeningViewModel
     @State private var animationID = UUID()
     @State private var isAnimationRunning = false
-    let action: () -> Void
-    
+
     // 애니메이션 전체 사이클의 예상 시간 (초)
     let animationDuration: TimeInterval = 1.0
     let noiseThreshold: Float = 0.1
-    
-    var body: some View {
-        Button(action: {
 
-        }) {
+    var body: some View {
+        Group {
             if let waveformLottie = viewModel.waveformLottie {
                 LottieView(
                     lottieFile: waveformLottie,
@@ -27,25 +24,71 @@ struct LottieButton: View {
                 .frame(width: 20, height: 20)
             }
         }
-        .buttonStyle(.plain)
         .onReceive(
-             Publishers.CombineLatest(
-                 viewModel.$micNoiseLevel,
-                 viewModel.$sysNoiseLevel
-             )
-         ) { micNoise, sysNoise in
-             let shouldAnimate = micNoise > noiseThreshold || sysNoise > noiseThreshold
-             
-             if !isAnimationRunning && shouldAnimate {
-                 isAnimationRunning = true
-                 animationID = UUID()
-                 DispatchQueue.main.asyncAfter(deadline:.now() + animationDuration) {
-                     isAnimationRunning = false
-                 }
-             }
-         }
+            Publishers.CombineLatest(
+                viewModel.$micNoiseLevel,
+                viewModel.$sysNoiseLevel
+            )
+        ) { micNoise, sysNoise in
+            let shouldAnimate = micNoise > noiseThreshold || sysNoise > noiseThreshold
+
+            if !isAnimationRunning && shouldAnimate {
+                isAnimationRunning = true
+                animationID = UUID()
+                DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+                    isAnimationRunning = false
+                }
+            }
+        }
     }
 }
+
+
+//struct LottieButton: View {
+//    @EnvironmentObject var viewModel: ListeningViewModel
+//    @State private var animationID = UUID()
+//    @State private var isAnimationRunning = false
+//    let action: () -> Void
+//    
+//    // 애니메이션 전체 사이클의 예상 시간 (초)
+//    let animationDuration: TimeInterval = 1.0
+//    let noiseThreshold: Float = 0.1
+//    
+//    var body: some View {
+//        Button(action: {
+//
+//        }) {
+//            if let waveformLottie = viewModel.waveformLottie {
+//                LottieView(
+//                    lottieFile: waveformLottie,
+//                    loopMode: .playOnce,
+//                    autostart: true,
+//                    contentMode: .scaleAspectFit,
+//                    stickColors: viewModel.stickColors
+//                )
+//                .id(animationID)
+//                .frame(width: 20, height: 20)
+//            }
+//        }
+//        .buttonStyle(.plain)
+//        .onReceive(
+//             Publishers.CombineLatest(
+//                 viewModel.$micNoiseLevel,
+//                 viewModel.$sysNoiseLevel
+//             )
+//         ) { micNoise, sysNoise in
+//             let shouldAnimate = micNoise > noiseThreshold || sysNoise > noiseThreshold
+//             
+//             if !isAnimationRunning && shouldAnimate {
+//                 isAnimationRunning = true
+//                 animationID = UUID()
+//                 DispatchQueue.main.asyncAfter(deadline:.now() + animationDuration) {
+//                     isAnimationRunning = false
+//                 }
+//             }
+//         }
+//    }
+//}
 
 struct CountdownTimerView: View {
     @State private var countdown = 3
@@ -167,11 +210,7 @@ struct ListeningControlBar: View {
                            .foregroundColor(.white)
                            .font(.system(size: 15, weight: .bold))
                    } else {
-       
-                       
-                       LottieButton(action: {
-                           print("hi")
-                       })
+                       LottieButton()
                    }
                }
         .confirmationDialog("Are you sure you want to cancel?",

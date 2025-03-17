@@ -43,7 +43,7 @@ final class MicrophoneService: NSObject, ObservableObject {
 
         // Create a unique file name
         let fileName = name
-        let documentsDirectory = FileManager.default.urls(
+        _ = FileManager.default.urls(
             for: .downloadsDirectory,
             in: .userDomainMask
         )[0]
