@@ -97,10 +97,10 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
             )
             segmentAudioInput?.expectsMediaDataInRealTime = true
             
-//            if let audioInput = segmentAudioInput,
-//               segmentWriter!.canAdd(audioInput) {
-//                segmentWriter!.add(audioInput)
-//            }
+            //            if let audioInput = segmentAudioInput,
+            //               segmentWriter!.canAdd(audioInput) {
+            //                segmentWriter!.add(audioInput)
+            //            }
             
             guard let writer = segmentWriter,
                   let audioInput = segmentAudioInput,
@@ -160,19 +160,19 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
             )
             nextSegmentAudioInput?.expectsMediaDataInRealTime = true
             
-//            if let audioInput = nextSegmentAudioInput,
-//               nextSegmentWriter!.canAdd(audioInput) {
-//                nextSegmentWriter!.add(audioInput)
-//            }
+            //            if let audioInput = nextSegmentAudioInput,
+            //               nextSegmentWriter!.canAdd(audioInput) {
+            //                nextSegmentWriter!.add(audioInput)
+            //            }
             
             if let writer = nextSegmentWriter, let audioInput = nextSegmentAudioInput, writer.canAdd(audioInput) {
-                 writer.add(audioInput)
-             } else {
-                 print("Unable to add audio input to next segment writer")
-                 nextSegmentWriter = nil
-                 nextSegmentAudioInput = nil
-                 nextSegmentFileName = ""
-             }
+                writer.add(audioInput)
+            } else {
+                print("Unable to add audio input to next segment writer")
+                nextSegmentWriter = nil
+                nextSegmentAudioInput = nil
+                nextSegmentFileName = ""
+            }
             
             print("Prepared next segment \(nextSegmentIndex) at \(nextURL.path)")
         } catch {
@@ -244,44 +244,44 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
         fullLengthWriter!.startSession(atSourceTime: .zero)
     }
     
-//    private func setupNewSegment(fileName: String) throws {
-//        // Remove .m4a extension and create segmented filename
-//        let baseFileName = fileName.replacingOccurrences(of: ".m4a", with: "")
-//        let segmentFileName = "\(baseFileName)-\(currentSegmentIndex).m4a"
-//        sysSegmentFileName = segmentFileName
-//        guard let outputURL = FileManagerHelper.getURL(for: segmentFileName, in: "ApplicationSupportDirectory") else {
-//            throw NSError(domain: "ScreenCaptureService", code: -1,
-//                          userInfo: [NSLocalizedDescriptionKey: "Unable to get Application Support directory URL"])
-//        }
-//        
-//        // Remove existing file if necessary - now checking the correct path
-//        if FileManager.default.fileExists(atPath: outputURL.path) {
-//            try FileManager.default.removeItem(at: outputURL)
-//        }
-//        
-//        // Initialize writer and input for segment
-//        segmentWriter = try AVAssetWriter(outputURL: outputURL, fileType: .m4a)
-//        
-//        let audioSettings = AudioSetting.setAudioConfiguration(
-//            format: .mpeg4AAC,
-//            channels: .mono,
-//            sampleRate: .rate16K
-//        )
-//        
-//        segmentAudioInput = AVAssetWriterInput(
-//            mediaType: .audio,
-//            outputSettings: audioSettings
-//        )
-//        segmentAudioInput?.expectsMediaDataInRealTime = true
-//        
-//        if let audioInput = segmentAudioInput,
-//           segmentWriter!.canAdd(audioInput) {
-//            segmentWriter!.add(audioInput)
-//        }
-//        
-//        segmentWriter!.startWriting()
-//        segmentWriter!.startSession(atSourceTime: .zero)
-//    }
+    //    private func setupNewSegment(fileName: String) throws {
+    //        // Remove .m4a extension and create segmented filename
+    //        let baseFileName = fileName.replacingOccurrences(of: ".m4a", with: "")
+    //        let segmentFileName = "\(baseFileName)-\(currentSegmentIndex).m4a"
+    //        sysSegmentFileName = segmentFileName
+    //        guard let outputURL = FileManagerHelper.getURL(for: segmentFileName, in: "ApplicationSupportDirectory") else {
+    //            throw NSError(domain: "ScreenCaptureService", code: -1,
+    //                          userInfo: [NSLocalizedDescriptionKey: "Unable to get Application Support directory URL"])
+    //        }
+    //
+    //        // Remove existing file if necessary - now checking the correct path
+    //        if FileManager.default.fileExists(atPath: outputURL.path) {
+    //            try FileManager.default.removeItem(at: outputURL)
+    //        }
+    //
+    //        // Initialize writer and input for segment
+    //        segmentWriter = try AVAssetWriter(outputURL: outputURL, fileType: .m4a)
+    //
+    //        let audioSettings = AudioSetting.setAudioConfiguration(
+    //            format: .mpeg4AAC,
+    //            channels: .mono,
+    //            sampleRate: .rate16K
+    //        )
+    //
+    //        segmentAudioInput = AVAssetWriterInput(
+    //            mediaType: .audio,
+    //            outputSettings: audioSettings
+    //        )
+    //        segmentAudioInput?.expectsMediaDataInRealTime = true
+    //
+    //        if let audioInput = segmentAudioInput,
+    //           segmentWriter!.canAdd(audioInput) {
+    //            segmentWriter!.add(audioInput)
+    //        }
+    //
+    //        segmentWriter!.startWriting()
+    //        segmentWriter!.startSession(atSourceTime: .zero)
+    //    }
     
     func stopCapture(isCancelled: Bool = false) {
         // Stop the stream
@@ -547,52 +547,61 @@ extension NewScreenCaptureService: SCStreamOutput, SCStreamDelegate {
         print("Error code: \(nsError.code)")
         print("Error user info: \(nsError.userInfo)")
         
+        // Create the error object
+        let systemError = SystemAudioListeningError(
+            error: error,
+            segmentIndex: currentSegmentIndex
+        )
+        
+        // Send error event to Flutter
+        ListeningStatusService.shared.sendSystemAudioListeningErrorEvent(systemError.toDict())
+        
         stopCapture()
     }
     
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
-           guard sampleBuffer.isValid, type == .audio, isRecording else { return }
-           
-           // Calculate audio level in dB
-           let dbLevel = calculateAudioLevel(from: sampleBuffer)
-           
-           // Convert to normalized 0-1 range
-           let normalizedLevel = normalizeAudioLevel(dbLevel)
-           
-           // Convert to normalized 0-1 range and update published property
-           DispatchQueue.main.async { [weak self] in
-               self?.noiseLevel = normalizedLevel
-           }
-           
-           // Write to full length recording if enabled
-           if let audioInput = fullLengthAudioInput, audioInput.isReadyForMoreMediaData {
-               if !audioInput.append(sampleBuffer) {
-                   print("Failed to append audio sample buffer to full length recording")
-               }
-           }
-           
-           // Write to current segment only if we have valid writer and input
-           if let writer = segmentWriter,
-              let audioInput = segmentAudioInput,
-              writer.status == .writing,
-              audioInput.isReadyForMoreMediaData {
-               if !audioInput.append(sampleBuffer) {
-                   print("Failed to append audio sample buffer to segment")
-               }
-           }
-           
-           // Check if we need to rotate to a new segment
-           let currentTime = CACurrentMediaTime()
-           let segmentElapsedTime = currentTime - currentSegmentStartTime
-           
-           // Prepare next segment a few seconds before current segment ends
-           if segmentElapsedTime >= (segmentDuration - prepareNextSegmentBeforeSeconds) && nextSegmentWriter == nil {
-               prepareNextSegment()
-           }
-           
-           // If segment duration is reached, rotate to a new segment
-           if segmentElapsedTime >= segmentDuration {
-               rotateSegment()
-           }
-       }
+        guard sampleBuffer.isValid, type == .audio, isRecording else { return }
+        
+        // Calculate audio level in dB
+        let dbLevel = calculateAudioLevel(from: sampleBuffer)
+        
+        // Convert to normalized 0-1 range
+        let normalizedLevel = normalizeAudioLevel(dbLevel)
+        
+        // Convert to normalized 0-1 range and update published property
+        DispatchQueue.main.async { [weak self] in
+            self?.noiseLevel = normalizedLevel
+        }
+        
+        // Write to full length recording if enabled
+        if let audioInput = fullLengthAudioInput, audioInput.isReadyForMoreMediaData {
+            if !audioInput.append(sampleBuffer) {
+                print("Failed to append audio sample buffer to full length recording")
+            }
+        }
+        
+        // Write to current segment only if we have valid writer and input
+        if let writer = segmentWriter,
+           let audioInput = segmentAudioInput,
+           writer.status == .writing,
+           audioInput.isReadyForMoreMediaData {
+            if !audioInput.append(sampleBuffer) {
+                print("Failed to append audio sample buffer to segment")
+            }
+        }
+        
+        // Check if we need to rotate to a new segment
+        let currentTime = CACurrentMediaTime()
+        let segmentElapsedTime = currentTime - currentSegmentStartTime
+        
+        // Prepare next segment a few seconds before current segment ends
+        if segmentElapsedTime >= (segmentDuration - prepareNextSegmentBeforeSeconds) && nextSegmentWriter == nil {
+            prepareNextSegment()
+        }
+        
+        // If segment duration is reached, rotate to a new segment
+        if segmentElapsedTime >= segmentDuration {
+            rotateSegment()
+        }
+    }
 }

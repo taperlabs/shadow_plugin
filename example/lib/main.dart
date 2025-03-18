@@ -249,12 +249,26 @@ class _MyAppState extends State<MyApp> {
       listeningEventStreamSubscription?.cancel();
     }
 
-    listeningEventStreamSubscription = _shadowPlugin.listeningStatusEvents.listen((event) {
+    listeningEventStreamSubscription = _shadowPlugin.listeningStatusEvents.listen((event) async {
       print('Flutter-side listening Event Stream: $event');
 
       try {
         // Convert event to Map (assuming it's already a JSON-like structure)
         final eventData = Map<String, dynamic>.from(event);
+
+        if (eventData["type"] == "system_audio_error") {
+          // Handle system audio error
+          print("System audio error: ${eventData["error_message"]}");
+          print("Error code: ${eventData["error_code"]}");
+          print("Segment index: ${eventData["segment_index"]}");
+
+          await testStopListening();
+
+          // Take appropriate action for system audio errors
+          // For example, you might want to stop the current listening session
+          // disConnectWebSocket(currentUUID);
+          return;
+        }
 
         // Extract required fields
         final String micAudio = eventData["microphone_segment"] ?? "";
