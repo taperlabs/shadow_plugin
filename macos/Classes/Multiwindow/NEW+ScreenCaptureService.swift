@@ -31,6 +31,7 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
     
     // MARK: - State Management
     private var isRecording = false
+    private var isStoppingCapture = false
     private var currentSegmentIndex = 0
     private var sysFileName: String = ""
     private var sysSegmentFileName: String = ""
@@ -284,6 +285,14 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
     //    }
     
     func stopCapture(isCancelled: Bool = false) {
+        
+        guard !isStoppingCapture else {
+            print("Stop capture already in progress")
+            return
+        }
+        
+        isStoppingCapture = true
+        
         // Stop the stream
         stream?.stopCapture { error in
             if let error = error {
@@ -294,20 +303,28 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
             }
         }
         
-        // Mark the audio input as finished
-        segmentAudioInput?.markAsFinished()
-        
-        // Finish writing
-        segmentWriter?.finishWriting { [weak self] in
-            if let error = self?.segmentWriter?.error {
-                print("Failed to finish writing: \(error)")
-                ShadowLogger.shared.log("[SystemAudioService] - Failed to finish writing \(error)")
-            } else {
-                print("Writing finished")
-                self?.finalizeLastSegment(isCancelled: isCancelled)
+        // Check writer state before finishing
+        if segmentWriter?.status == .writing {
+            // Mark the audio input as finished
+            segmentAudioInput?.markAsFinished()
+            
+            // Finish writing
+            segmentWriter?.finishWriting { [weak self] in
+                if let error = self?.segmentWriter?.error {
+                    print("Failed to finish writing: \(error)")
+                    ShadowLogger.shared.log("[SystemAudioService] - Failed to finish writing \(error)")
+                } else {
+                    print("Writing finished")
+                    ShadowLogger.shared.log("[SystemAudioService] - Writing Finished")
+                    self?.finalizeLastSegment(isCancelled: isCancelled)
+                }
+                // Clean up
+                self?.cleanup()
             }
-            // Clean up
-            self?.cleanup()
+        } else {
+            // Writer is not in writing state, just clean up
+            print("Writer not in writing state, skipping finishWriting")
+            cleanup()
         }
         
         // Also clean up prepared next segment, if any
@@ -386,6 +403,7 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
         segmentWriter = nil
         segmentAudioInput = nil
         stream = nil
+        isStoppingCapture = false  // Reset stopping flag
     }
     
     private func rotateSegment() {
