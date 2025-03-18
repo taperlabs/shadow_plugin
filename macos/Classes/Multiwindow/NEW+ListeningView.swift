@@ -38,6 +38,7 @@ struct NewListeningView: View {
         .onAppear{
             isControlBarExpanded = true
             viewModel.isRecording = true
+            _ = SleepUtility.preventSleep()
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 withAnimation {
@@ -47,6 +48,7 @@ struct NewListeningView: View {
             }
         }
         .onDisappear {
+            SleepUtility.allowSleep()
             print("listening View disappeared")
         }
         .onHover { hovering in
