@@ -118,7 +118,7 @@ struct ControlBarButton: View {
     let systemName: String
     let action: () -> Void
     var color: Color = .white
-    var minimumTapArea: CGFloat = 44
+    var minimumTapArea: CGFloat = 45
     
     var body: some View {
         Button(action: action) {
@@ -128,6 +128,7 @@ struct ControlBarButton: View {
                 .frame(maxHeight: .infinity)
                 .contentShape(Rectangle()) // Makes the entire frame area tappable
                 .frame(width: minimumTapArea, height: minimumTapArea) // Larger hit area
+                .background(Color.newBgColor.opacity(0.001))
         }
         .frame(width: 20, height: 20)
         .buttonStyle(.plain)
