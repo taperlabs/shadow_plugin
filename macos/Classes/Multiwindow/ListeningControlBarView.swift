@@ -202,8 +202,9 @@ struct ListeningControlBar: View {
                                viewModel.stopListening()
                                WindowManager.shared.closeCurrentWindow(for: .done)
                            },
-                           color: Color.brandPrimaryColor
+                           color: viewModel.countdownTimer != nil ? Color.gray: Color.brandPrimaryColor
                        )
+                       .disabled(viewModel.countdownTimer != nil)
                        
                        ControlDivider()
                    }
