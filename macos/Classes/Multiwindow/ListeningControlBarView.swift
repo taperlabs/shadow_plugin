@@ -43,76 +43,6 @@ struct LottieButton: View {
     }
 }
 
-
-//struct LottieButton: View {
-//    @EnvironmentObject var viewModel: ListeningViewModel
-//    @State private var animationID = UUID()
-//    @State private var isAnimationRunning = false
-//    let action: () -> Void
-//    
-//    // 애니메이션 전체 사이클의 예상 시간 (초)
-//    let animationDuration: TimeInterval = 1.0
-//    let noiseThreshold: Float = 0.1
-//    
-//    var body: some View {
-//        Button(action: {
-//
-//        }) {
-//            if let waveformLottie = viewModel.waveformLottie {
-//                LottieView(
-//                    lottieFile: waveformLottie,
-//                    loopMode: .playOnce,
-//                    autostart: true,
-//                    contentMode: .scaleAspectFit,
-//                    stickColors: viewModel.stickColors
-//                )
-//                .id(animationID)
-//                .frame(width: 20, height: 20)
-//            }
-//        }
-//        .buttonStyle(.plain)
-//        .onReceive(
-//             Publishers.CombineLatest(
-//                 viewModel.$micNoiseLevel,
-//                 viewModel.$sysNoiseLevel
-//             )
-//         ) { micNoise, sysNoise in
-//             let shouldAnimate = micNoise > noiseThreshold || sysNoise > noiseThreshold
-//             
-//             if !isAnimationRunning && shouldAnimate {
-//                 isAnimationRunning = true
-//                 animationID = UUID()
-//                 DispatchQueue.main.asyncAfter(deadline:.now() + animationDuration) {
-//                     isAnimationRunning = false
-//                 }
-//             }
-//         }
-//    }
-//}
-
-struct CountdownTimerView: View {
-    @State private var countdown = 3
-    let onComplete: () -> Void
-    
-    var body: some View {
-        Text("\(countdown)")
-            .foregroundColor(.white)
-            .font(.system(size: 15, weight: .bold))
-            .onAppear {
-                print("CotunDown Timer 렌더링 됐다")
-                // Start countdown timer
-                Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-                    if countdown > 0 {
-                        countdown -= 1
-                    } else {
-                        timer.invalidate()
-                        onComplete()
-                    }
-                }
-            }
-    }
-}
-
 // Custom button component
 struct ControlBarButton: View {
     let systemName: String
@@ -156,6 +86,8 @@ struct ListeningControlBar: View {
         }
     }
     
+    @State private var hasListenedForTenSeconds = false
+    
     // Define the button configurations
     struct ButtonConfig: Identifiable {
         let id = UUID()
@@ -184,7 +116,12 @@ struct ListeningControlBar: View {
                            action: {
                                print("Close")
                                if viewModel.countdownTimer == nil {
-                                   showingCancelConfirmation = true
+                                   if hasListenedForTenSeconds {
+                                       showingCancelConfirmation = true
+                                   } else {
+                                       viewModel.cancelListening()
+                                       WindowManager.shared.closeCurrentWindow(for: .cancel)
+                                   }
                                } else {
                                    viewModel.cancelListening()
                                    WindowManager.shared.closeCurrentWindow(for: .cancel)
@@ -240,6 +177,15 @@ struct ListeningControlBar: View {
         .shadow(color: .brandSecondaryColor.opacity(0.15), radius: 5, x: 0, y: 0)
         .onAppear{
             viewModel.startCountdownRecording()
+        }
+        .onChange(of: viewModel.isCountdownActive) { newValue in
+            if newValue == false {
+                print("isCountdownActive tracking -- \(newValue)")
+                // The countdown just finished, set the 10-second timer
+                DispatchQueue.main.asyncAfter(deadline: .now() + 9) {
+                    hasListenedForTenSeconds = true
+                }
+            }
         }
     }
 }

@@ -236,7 +236,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         listeningVM.cancelListening()
-        WindowManager.shared.closeCurrentWindow(for: .done)
+        WindowManager.shared.closeCurrentWindow(for: .cancel)
+        result("Cancelled Listening")
     }
     
     private func newHandleStopListening(call: FlutterMethodCall, result: @escaping FlutterResult) {

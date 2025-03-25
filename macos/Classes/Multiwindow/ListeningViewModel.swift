@@ -11,7 +11,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     private var newMicService: NewMicrophoneService
     private var newMicService2: MicrophoneService2 = MicrophoneService2()
     
-//    private var newMicService = NewMicrophoneService()
+    //    private var newMicService = NewMicrophoneService()
     private var newSysService = NewScreenCaptureService()
     
     private var microphoneService = MicrophoneService()
@@ -129,7 +129,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
                 }
             }
             newMicService2.startRecording(name: micFileName)
-//            try newMicService.startRecording(fileName: micFileName)
+            //            try newMicService.startRecording(fileName: micFileName)
         } catch let error {
             print(error.localizedDescription)
         }
@@ -137,7 +137,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     
     func stopListening() {
         // TODO: Stop Listening
-//        newMicService.stopRecording()
+        //        newMicService.stopRecording()
         newSysService.stopCapture()
         newMicService2.stopRecording()
         
@@ -154,10 +154,10 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     }
     
     func cancelListening() {
-//        newMicService.stopRecording(isCancelled: true)
+        //        newMicService.stopRecording(isCancelled: true)
         newMicService2.stopRecording(isCancelled: true)
         newSysService.stopCapture(isCancelled: true)
-
+        
         DispatchQueue.main.async { [weak self] in
             self?.isRecording = false
             self?.shouldStartRecording = false
@@ -188,7 +188,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
                 guard let self = self, self.isCountdownActive else { return }
                 
                 if let current = self.countdownNumber {
-                    if current > 0 {
+                    if current > 1 {
                         self.countdownNumber = current - 1
                     } else {
                         self.finishCountdownNew()
@@ -366,74 +366,74 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             .store(in: &cancellables)
     }
     
-//    private func setupSubscriptions() {
-//        
-//        newMicService2.$noiseLevel
-//            .receive(on: RunLoop.main)
-//            .assign(to: \.micNoiseLevel, on: self)
-//            .store(in: &cancellables)
-//            
-//        
-//        $micNoiseLevel
-//            .combineLatest($sysNoiseLevel)
-//            .map { [weak self] _, _ in
-//                self?.computeStickColors ?? [:]
-//            }
-//            .assign(to: &$stickColors)
-//        
-//        newSysService.$noiseLevel
-//            .receive(on: RunLoop.main)
-//            .assign(to: \.sysNoiseLevel, on: self)
-//            .store(in: &cancellables)
-//        
-////        newMicService.$noiseLevel
-////            .receive(on: RunLoop.main)
-////            .assign(to: \.micNoiseLevel, on: self)
-////            .store(in: &cancellables)
-//        
-//        // defaultInputDevice나 inputDevices가 변경될 때마다 defaultInputDeviceName 업데이트
-//        Publishers.CombineLatest($defaultInputDevice, $inputDevices)
-//            .receive(on: RunLoop.main)
-//            .sink { [weak self] (deviceID, devices) in
-//                self?.updateDefaultDeviceName()
-//            }
-//            .store(in: &cancellables)
-//        
-//        microphoneService.$currentTime
-//            .receive(on: RunLoop.main)
-//            .assign(to: \.currentTime, on: self)
-//            .store(in: &cancellables)
-//        
-//        microphoneService.$isRecording
-//            .receive(on: RunLoop.main)
-//            .assign(to: \.isRecording, on: self)
-//            .store(in: &cancellables)
-//        
-//        
-//        // Subscribe to noiseLevel
-//        microphoneService.$noiseLevel
-//            .receive(on: RunLoop.main)
-//            .assign(to: \.noiseLevel, on: self)
-//            .store(in: &cancellables)
-//        
-//        
-//        coreAudioService.$inputDevices
-//            .receive(on: RunLoop.main)
-//            .assign(to: \.inputDevices, on: self)
-//            .store(in: &cancellables)
-//        
-//        coreAudioService.$defaultInputDevice
-//            .receive(on: RunLoop.main)
-//            .assign(to: \.defaultInputDevice, on: self)
-//            .store(in: &cancellables)
-//        
-//        $isRecording
-//            .receive(on: RunLoop.main)
-//            .sink { [weak self] newValue in
-//                self?.sendEvent(["isRecording": newValue])
-//            }
-//            .store(in: &cancellables)
-//    }
+    //    private func setupSubscriptions() {
+    //
+    //        newMicService2.$noiseLevel
+    //            .receive(on: RunLoop.main)
+    //            .assign(to: \.micNoiseLevel, on: self)
+    //            .store(in: &cancellables)
+    //
+    //
+    //        $micNoiseLevel
+    //            .combineLatest($sysNoiseLevel)
+    //            .map { [weak self] _, _ in
+    //                self?.computeStickColors ?? [:]
+    //            }
+    //            .assign(to: &$stickColors)
+    //
+    //        newSysService.$noiseLevel
+    //            .receive(on: RunLoop.main)
+    //            .assign(to: \.sysNoiseLevel, on: self)
+    //            .store(in: &cancellables)
+    //
+    ////        newMicService.$noiseLevel
+    ////            .receive(on: RunLoop.main)
+    ////            .assign(to: \.micNoiseLevel, on: self)
+    ////            .store(in: &cancellables)
+    //
+    //        // defaultInputDevice나 inputDevices가 변경될 때마다 defaultInputDeviceName 업데이트
+    //        Publishers.CombineLatest($defaultInputDevice, $inputDevices)
+    //            .receive(on: RunLoop.main)
+    //            .sink { [weak self] (deviceID, devices) in
+    //                self?.updateDefaultDeviceName()
+    //            }
+    //            .store(in: &cancellables)
+    //
+    //        microphoneService.$currentTime
+    //            .receive(on: RunLoop.main)
+    //            .assign(to: \.currentTime, on: self)
+    //            .store(in: &cancellables)
+    //
+    //        microphoneService.$isRecording
+    //            .receive(on: RunLoop.main)
+    //            .assign(to: \.isRecording, on: self)
+    //            .store(in: &cancellables)
+    //
+    //
+    //        // Subscribe to noiseLevel
+    //        microphoneService.$noiseLevel
+    //            .receive(on: RunLoop.main)
+    //            .assign(to: \.noiseLevel, on: self)
+    //            .store(in: &cancellables)
+    //
+    //
+    //        coreAudioService.$inputDevices
+    //            .receive(on: RunLoop.main)
+    //            .assign(to: \.inputDevices, on: self)
+    //            .store(in: &cancellables)
+    //
+    //        coreAudioService.$defaultInputDevice
+    //            .receive(on: RunLoop.main)
+    //            .assign(to: \.defaultInputDevice, on: self)
+    //            .store(in: &cancellables)
+    //
+    //        $isRecording
+    //            .receive(on: RunLoop.main)
+    //            .sink { [weak self] newValue in
+    //                self?.sendEvent(["isRecording": newValue])
+    //            }
+    //            .store(in: &cancellables)
+    //    }
     
     func updateWaveformPath(_ path: String) {
         self.waveformLottie = path
