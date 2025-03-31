@@ -86,7 +86,7 @@ struct ListeningControlBar: View {
         }
     }
     
-    @State private var hasListenedForTenSeconds = false
+    @State private var hasListenedForNSeconds = false
     
     // Define the button configurations
     struct ButtonConfig: Identifiable {
@@ -116,7 +116,7 @@ struct ListeningControlBar: View {
                            action: {
                                print("Close")
                                if viewModel.countdownTimer == nil {
-                                   if hasListenedForTenSeconds {
+                                   if hasListenedForNSeconds {
                                        showingCancelConfirmation = true
                                    } else {
                                        viewModel.cancelListening()
@@ -182,8 +182,8 @@ struct ListeningControlBar: View {
             if newValue == false {
                 print("isCountdownActive tracking -- \(newValue)")
                 // The countdown just finished, set the 10-second timer
-                DispatchQueue.main.asyncAfter(deadline: .now() + 9) {
-                    hasListenedForTenSeconds = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 29) {
+                    hasListenedForNSeconds = true
                 }
             }
         }
