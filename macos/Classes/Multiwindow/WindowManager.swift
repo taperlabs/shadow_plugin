@@ -206,16 +206,42 @@ final class WindowManager: NSObject, NSWindowDelegate {
             
             self.currentWindow = listeningWindow
             
+            
+            guard let app = NSApplication.shared.delegate as? FlutterAppDelegate else {
+                debugPrint("failed to find flutter main window, application delegate is not FlutterAppDelegate")
+                return
+            }
+            guard let mainFlutterWindow = app.mainFlutterWindow else {
+                debugPrint("failed to find flutter main window")
+                return
+            }
+            
+            
+            // 메인 Flutter 앱 윈도우의 프레임 정보 로깅
+            let mainWindowFrame = mainFlutterWindow.frame
+            print("Main Flutter Window - Position ✅: (\(mainWindowFrame.origin.x), \(mainWindowFrame.origin.y)), Size: (\(mainWindowFrame.size.width), \(mainWindowFrame.size.height))")
+            
             if let screen = NSScreen.main {
                 let screenFrame = screen.frame
                 let windowSize = listeningWindow.frame.size
                 
-                // Calculate the bottom-left position
-                let xPos = screenFrame.maxX - windowSize.width - 350  // 오른쪽에서 20픽셀 여백
-                let yPos = screenFrame.minY + 200
+                // 메인 Flutter 윈도우의 우측 하단 좌표 계산
+                let xPos = mainWindowFrame.origin.x + mainWindowFrame.size.width - windowSize.width
+                let yPos = mainWindowFrame.origin.y
+
+                // 적절한 간격 추가 (필요시 조정)
+                let padding: CGFloat = 20
+                let xPosWithPadding = xPos - padding
+                let yPosWithPadding = yPos + padding
                 
-                // Set the window's new position
-                listeningWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+                // 로그 출력
+                debugPrint("New listeningWindow Position 🦊: (\(xPosWithPadding), \(yPosWithPadding))")
+//                // Calculate the bottom-left position
+//                let xPos = screenFrame.maxX - windowSize.width - 350  // 오른쪽에서 20픽셀 여백
+//                let yPos = screenFrame.minY + 200
+                
+                // 새 윈도우 위치 설정
+                listeningWindow.setFrameOrigin(NSPoint(x: xPosWithPadding, y: yPosWithPadding))
             }
         }
     }
