@@ -221,18 +221,18 @@ final class WindowManager: NSObject, NSWindowDelegate {
             let mainWindowFrame = mainFlutterWindow.frame
             print("Main Flutter Window - Position ✅: (\(mainWindowFrame.origin.x), \(mainWindowFrame.origin.y)), Size: (\(mainWindowFrame.size.width), \(mainWindowFrame.size.height))")
             
-            // 메인 Flutter 윈도우의 알려진 최종 위치와 크기를 직접 설정
+            // Flutter 메인 윈도우의 크기를 코드와 일치시킴
             let mainWindowWidth: CGFloat = 400
-            let mainWindowHeight: CGFloat = 840
+            let mainWindowHeight: CGFloat = 830  // 840에서 830으로 수정 (Flutter 코드에 맞춤)
 
-            // 화면의 오른쪽 끝에서 시작하는 메인 윈도우 위치 계산
             if let screen = NSScreen.main {
-                let screenFrame = screen.frame
+                let visibleFrame = screen.visibleFrame  // 메뉴바, 독 등을 제외한 실제 사용 가능 영역
                 
-                // 메인 윈도우의 예상 위치 계산
-                // 오른쪽 끝에 있고, 840 height가 화면 중앙에 오도록
-                let mainWindowX = screenFrame.maxX - mainWindowWidth
-                let mainWindowY = (screenFrame.height - mainWindowHeight) / 2 + screenFrame.minY
+                // Flutter 코드와 동일한 계산 방식 사용
+                let mainWindowX = visibleFrame.origin.x + visibleFrame.width - mainWindowWidth
+                let mainWindowY = visibleFrame.origin.y + (visibleFrame.height - mainWindowHeight) / 2
+                
+                debugPrint("Expected main window position: (\(mainWindowX), \(mainWindowY))")
                 
                 // listeningWindow 크기
                 let windowSize = listeningWindow.frame.size
@@ -241,10 +241,11 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 let xPos = mainWindowX + mainWindowWidth - windowSize.width
                 let yPos = mainWindowY
                 
-                // 약간의 패딩 추가 (필요시 조정)
-                let padding: CGFloat = 10
-                let xPosWithPadding = xPos - padding
-                let yPosWithPadding = yPos + padding + 18.5
+                // 패딩 추가
+                let xPadding: CGFloat = 10
+                let yPadding: CGFloat = 10
+                let xPosWithPadding = xPos - xPadding
+                let yPosWithPadding = yPos + yPadding + 7.0
                 
                 debugPrint("Positioning listeningWindow at: (\(xPosWithPadding), \(yPosWithPadding))")
                 listeningWindow.setFrameOrigin(NSPoint(x: xPosWithPadding, y: yPosWithPadding))
