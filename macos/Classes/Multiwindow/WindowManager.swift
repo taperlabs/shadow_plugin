@@ -261,17 +261,32 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 print("Visible frame: \(visibleFrame)")
                 print("Backing scale factor: \(scaleFactor)")
                 
-                
-                
                 let dockDifference = CGSize(
                     width: screenFrame.width - visibleFrame.width,
                     height: screenFrame.height - visibleFrame.height
                 )
                 print("Dock/menubar space: \(dockDifference)")
                 
+                // 화면 좌표 변환 검증
+                let flippedYOrigin = screenFrame.height - (mainWindowFrame.origin.y + mainWindowFrame.size.height)
+                print("Y origin (flipped): \(flippedYOrigin)")
+                
                 // 메인 Flutter 윈도우의 우측 하단 좌표 계산
                 let xPos = mainWindowFrame.origin.x + mainWindowFrame.size.width - windowSize.width
                 let yPos = mainWindowFrame.origin.y
+                
+                // main Flutter 윈도우의 우측 하단 좌표 계산 (정확히)
+                let mainWindowBottomRightX = mainWindowFrame.origin.x + mainWindowFrame.size.width
+                let mainWindowBottomRightY = mainWindowFrame.origin.y
+
+                // ListeningWindow 배치 (우측에 약간 간격을 두고)
+                let listeningWindowX = mainWindowBottomRightX - windowSize.width
+                let listeningWindowY = mainWindowBottomRightY
+
+                // 로그 출력
+                debugPrint("Main window bottom right: (\(mainWindowBottomRightX), \(mainWindowBottomRightY))")
+                debugPrint("Setting listening window to: (\(listeningWindowX), \(listeningWindowY))")
+                
 
                 // 적절한 간격 추가 (필요시 조정)
                 let padding: CGFloat = 20
@@ -279,10 +294,11 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 let yPosWithPadding = yPos + padding
                 
                 // 로그 출력
-                debugPrint("New listeningWindow Position 🦊: (\(xPosWithPadding), \(yPosWithPadding))")
+//                debugPrint("New listeningWindow Position 🦊: (\(xPosWithPadding), \(yPosWithPadding))")
                 
                 // 새 윈도우 위치 설정
-                listeningWindow.setFrameOrigin(NSPoint(x: xPosWithPadding, y: yPosWithPadding))
+//                listeningWindow.setFrameOrigin(NSPoint(x: xPosWithPadding, y: yPosWithPadding))
+                listeningWindow.setFrameOrigin(NSPoint(x: listeningWindowX - padding, y: listeningWindowY + padding))
             }
         }
     }
