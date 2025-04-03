@@ -221,58 +221,55 @@ final class WindowManager: NSObject, NSWindowDelegate {
             let mainWindowFrame = mainFlutterWindow.frame
             print("Main Flutter Window - Position ✅: (\(mainWindowFrame.origin.x), \(mainWindowFrame.origin.y)), Size: (\(mainWindowFrame.size.width), \(mainWindowFrame.size.height))")
             
-            // Flutter 메인 윈도우의 크기를 코드와 일치시킴
-            let mainWindowWidth: CGFloat = 400
-            let mainWindowHeight: CGFloat = 830  // 840에서 830으로 수정 (Flutter 코드에 맞춤)
-
-            if let screen = NSScreen.main {
-                let visibleFrame = screen.visibleFrame  // 메뉴바, 독 등을 제외한 실제 사용 가능 영역
-                
-                // Flutter 코드와 동일한 계산 방식 사용
-                let mainWindowX = visibleFrame.origin.x + visibleFrame.width - mainWindowWidth
-                let mainWindowY = visibleFrame.origin.y + (visibleFrame.height - mainWindowHeight) / 2
-                
-                debugPrint("Expected main window position: (\(mainWindowX), \(mainWindowY))")
-                
-                // listeningWindow 크기
-                let windowSize = listeningWindow.frame.size
-                
-                // 메인 윈도우 우측 하단에 배치
-                let xPos = mainWindowX + mainWindowWidth - windowSize.width
-                let yPos = mainWindowY
-                
-                // 패딩 추가
-                let xPadding: CGFloat = 10
-                let yPadding: CGFloat = 10
-                let xPosWithPadding = xPos - xPadding
-                let yPosWithPadding = yPos + yPadding + 7.0
-                
-                debugPrint("Positioning listeningWindow at: (\(xPosWithPadding), \(yPosWithPadding))")
-                listeningWindow.setFrameOrigin(NSPoint(x: xPosWithPadding, y: yPosWithPadding))
-            }
-            
+//            // Flutter 메인 윈도우의 크기를 코드와 일치시킴
+//            let mainWindowWidth: CGFloat = 400
+//            let mainWindowHeight: CGFloat = 800  // 840에서 830으로 수정 (Flutter 코드에 맞춤)
+//
 //            if let screen = NSScreen.main {
-//                let screenFrame = screen.frame
+//                let visibleFrame = screen.visibleFrame  // 메뉴바, 독 등을 제외한 실제 사용 가능 영역
+//                
+//                // Flutter 코드와 동일한 계산 방식 사용
+//                let mainWindowX = visibleFrame.origin.x + visibleFrame.width - mainWindowWidth
+//                let mainWindowY = visibleFrame.origin.y + (visibleFrame.height - mainWindowHeight) / 2
+//                
+//                debugPrint("Expected main window position: (\(mainWindowX), \(mainWindowY))")
+//                
+//                // listeningWindow 크기
 //                let windowSize = listeningWindow.frame.size
 //                
-//                // 메인 Flutter 윈도우의 우측 하단 좌표 계산
-//                let xPos = mainWindowFrame.origin.x + mainWindowFrame.size.width - windowSize.width
-//                let yPos = mainWindowFrame.origin.y
-//
-//                // 적절한 간격 추가 (필요시 조정)
-//                let padding: CGFloat = 20
-//                let xPosWithPadding = xPos - padding
-//                let yPosWithPadding = yPos + padding
+//                // 메인 윈도우 우측 하단에 배치
+//                let xPos = mainWindowX + mainWindowWidth - windowSize.width
+//                let yPos = mainWindowY
 //                
-//                // 로그 출력
-//                debugPrint("New listeningWindow Position 🦊: (\(xPosWithPadding), \(yPosWithPadding))")
-////                // Calculate the bottom-left position
-////                let xPos = screenFrame.maxX - windowSize.width - 350  // 오른쪽에서 20픽셀 여백
-////                let yPos = screenFrame.minY + 200
+//                // 패딩 추가
+//                let xPadding: CGFloat = 10
+//                let yPadding: CGFloat = 10
+//                let xPosWithPadding = xPos - xPadding
+//                let yPosWithPadding = yPos + yPadding
 //                
-//                // 새 윈도우 위치 설정
+//                debugPrint("Positioning listeningWindow at: (\(xPosWithPadding), \(yPosWithPadding))")
 //                listeningWindow.setFrameOrigin(NSPoint(x: xPosWithPadding, y: yPosWithPadding))
 //            }
+            
+            if let screen = NSScreen.main {
+                let screenFrame = screen.frame
+                let windowSize = listeningWindow.frame.size
+                
+                // 메인 Flutter 윈도우의 우측 하단 좌표 계산
+                let xPos = mainWindowFrame.origin.x + mainWindowFrame.size.width - windowSize.width
+                let yPos = mainWindowFrame.origin.y
+
+                // 적절한 간격 추가 (필요시 조정)
+                let padding: CGFloat = 20
+                let xPosWithPadding = xPos - padding
+                let yPosWithPadding = yPos + padding
+                
+                // 로그 출력
+                debugPrint("New listeningWindow Position 🦊: (\(xPosWithPadding), \(yPosWithPadding))")
+                
+                // 새 윈도우 위치 설정
+                listeningWindow.setFrameOrigin(NSPoint(x: xPosWithPadding, y: yPosWithPadding))
+            }
         }
     }
     
