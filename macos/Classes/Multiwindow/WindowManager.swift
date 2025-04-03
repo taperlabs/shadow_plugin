@@ -253,7 +253,21 @@ final class WindowManager: NSObject, NSWindowDelegate {
             
             if let screen = NSScreen.main {
                 let screenFrame = screen.frame
+                let visibleFrame = screen.visibleFrame
+                let scaleFactor = screen.backingScaleFactor
                 let windowSize = listeningWindow.frame.size
+                
+                print("Screen frame: \(screenFrame)")
+                print("Visible frame: \(visibleFrame)")
+                print("Backing scale factor: \(scaleFactor)")
+                
+                
+                
+                let dockDifference = CGSize(
+                    width: screenFrame.width - visibleFrame.width,
+                    height: screenFrame.height - visibleFrame.height
+                )
+                print("Dock/menubar space: \(dockDifference)")
                 
                 // 메인 Flutter 윈도우의 우측 하단 좌표 계산
                 let xPos = mainWindowFrame.origin.x + mainWindowFrame.size.width - windowSize.width
