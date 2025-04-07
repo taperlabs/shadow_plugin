@@ -578,7 +578,10 @@ extension NewScreenCaptureService: SCStreamOutput, SCStreamDelegate {
     }
     
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
-        guard sampleBuffer.isValid, type == .audio, isRecording else { return }
+        guard sampleBuffer.isValid, type == .audio, isRecording else {
+            print("Invalid Sample Buffer - \(sampleBuffer.isValid)")
+            return
+        }
         
         // Calculate audio level in dB
         let dbLevel = calculateAudioLevel(from: sampleBuffer)
@@ -592,11 +595,11 @@ extension NewScreenCaptureService: SCStreamOutput, SCStreamDelegate {
         }
         
         // Write to full length recording if enabled
-        if let audioInput = fullLengthAudioInput, audioInput.isReadyForMoreMediaData {
-            if !audioInput.append(sampleBuffer) {
-                print("Failed to append audio sample buffer to full length recording")
-            }
-        }
+//        if let audioInput = fullLengthAudioInput, audioInput.isReadyForMoreMediaData {
+//            if !audioInput.append(sampleBuffer) {
+//                print("Failed to append audio sample buffer to full length recording")
+//            }
+//        }
         
         // Write to current segment only if we have valid writer and input
         if let writer = segmentWriter,
