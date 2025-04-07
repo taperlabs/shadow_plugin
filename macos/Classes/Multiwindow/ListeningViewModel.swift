@@ -58,15 +58,25 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     }
     
     @Published private(set) var stickColors: [Int: Color] = [:]
+    private var lastActiveColors: [Int: Color] = [:]
     
     // Computed property that updates stickColors whenever noise levels change
     private var computeStickColors: [Int: Color] {
-        if sysNoiseLevel > 0 && micNoiseLevel == 0 {
-            return [1: .green, 2: .green, 3: .green, 4: .green]
+        if sysNoiseLevel > 0 && micNoiseLevel <= 0 {
+            // 시스템 오디오만 있을 때
+            lastActiveColors = [1: .green, 2: .green, 3: .green, 4: .green]
+            return lastActiveColors
         } else if sysNoiseLevel > 0 && micNoiseLevel > 0 {
-            return  [1: .green, 3: .green]
-        } else  {
-            return [:]
+            // 시스템 오디오와 마이크 모두 있을 때
+            lastActiveColors = [1: .green, 3: .green]
+            return lastActiveColors
+        } else if micNoiseLevel > 0 && sysNoiseLevel <= 0 {
+            // 마이크만 있을 때
+            lastActiveColors = [:]
+            return lastActiveColors
+        } else {
+            // 모든 소리가 없을 때 마지막 활성 색상 유지
+            return lastActiveColors
         }
     }
     
