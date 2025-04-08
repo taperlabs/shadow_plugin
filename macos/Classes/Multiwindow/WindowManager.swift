@@ -233,8 +233,8 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 // X 위치: 오른쪽에 최대한 붙임
                 let xPos = visibleFrame.origin.x + visibleFrame.width - windowSize.width
                 
-                // Y 위치: visible frame의 아래쪽이지만 윈도우 높이를 고려하여 항상 화면 안에 표시
-                let yPos = visibleFrame.origin.y + windowSize.height
+                // Y 위치: visible frame의 정중앙에 위치시킴
+                let yPos = visibleFrame.origin.y + (visibleFrame.height - windowSize.height) / 2
                 
                 print("Screen frame: \(screenFrame)")
                 print("Visible frame: \(visibleFrame)")
