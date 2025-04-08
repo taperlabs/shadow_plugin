@@ -233,15 +233,8 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 // X 위치: 오른쪽에 최대한 붙임
                 let xPos = visibleFrame.origin.x + visibleFrame.width - windowSize.width
                 
-                // Y 위치: 메인 Flutter 윈도우의 Y 위치를 기준으로 설정
-                // 예: 메인 윈도우와 같은 Y 위치에 배치
-                let yPos = mainWindowFrame.origin.y
-                
-                // 또는 메인 윈도우 아래에 배치하려면:
-                // let yPos = mainWindowFrame.origin.y - windowSize.height - 10 // 10은 간격
-                
-                // 또는 메인 윈도우 위에 배치하려면:
-                // let yPos = mainWindowFrame.origin.y + mainWindowFrame.size.height + 10 // 10은 간격
+                // Y 위치: visible frame의 가장 아래쪽에 배치
+                let yPos = visibleFrame.origin.y
                 
                 print("Screen frame: \(screenFrame)")
                 print("Visible frame: \(visibleFrame)")
@@ -255,6 +248,11 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 print("Current window position after: \(listeningWindow.frame.origin)")
                 print("Window is visible: \(listeningWindow.isVisible)")
                 print("Window level: \(listeningWindow.level.rawValue)")
+                
+                print("Window bottom edge will be at: \(yPos)")
+                print("Window top edge will be at: \(yPos + windowSize.height)")
+                print("Visible frame bottom: \(visibleFrame.origin.y)")
+                print("Visible frame top: \(visibleFrame.origin.y + visibleFrame.height)")
             }
             
 //            if let screen = NSScreen.main {
