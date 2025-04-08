@@ -226,41 +226,73 @@ final class WindowManager: NSObject, NSWindowDelegate {
             print("Main Flutter Window - Position ✅: (\(mainWindowFrame.origin.x), \(mainWindowFrame.origin.y)), Size: (\(mainWindowFrame.size.width), \(mainWindowFrame.size.height))")
             
             if let screen = NSScreen.main {
-                // 실제 사용 가능한 화면 영역 (dock, 메뉴바 등 제외)
                 let visibleFrame = screen.visibleFrame
                 let screenFrame = screen.frame
                 let windowSize = listeningWindow.frame.size
                 
-                // x축으로는 오른쪽에 최대한 붙이고, y축으로는 중앙에 위치
+                // X 위치: 오른쪽에 최대한 붙임
                 let xPos = visibleFrame.origin.x + visibleFrame.width - windowSize.width
-                let yPos = visibleFrame.origin.y + (visibleFrame.height - windowSize.height) / 2
                 
-                // 디버깅을 위한 자세한 로깅
+                // Y 위치: 메인 Flutter 윈도우의 Y 위치를 기준으로 설정
+                // 예: 메인 윈도우와 같은 Y 위치에 배치
+                let yPos = mainWindowFrame.origin.y
+                
+                // 또는 메인 윈도우 아래에 배치하려면:
+                // let yPos = mainWindowFrame.origin.y - windowSize.height - 10 // 10은 간격
+                
+                // 또는 메인 윈도우 위에 배치하려면:
+                // let yPos = mainWindowFrame.origin.y + mainWindowFrame.size.height + 10 // 10은 간격
+                
                 print("Screen frame: \(screenFrame)")
                 print("Visible frame: \(visibleFrame)")
                 print("Window size: \(windowSize)")
                 print("Calculated position: (\(xPos), \(yPos))")
                 
-                // 다른 방법 시도 - 작은 여백 추가
-                let margin: CGFloat = 0  // 필요시 조정
-                let finalX = xPos - margin
-                let finalY = yPos
-                
-                print("Final position with margin: (\(finalX), \(finalY))")
-                
-                // 윈도우 위치 설정 전에 현재 위치 확인
-                print("Current window position before: \(listeningWindow.frame.origin)")
-                
                 // 윈도우 위치 설정
-                listeningWindow.setFrameOrigin(NSPoint(x: finalX, y: finalY))
+                listeningWindow.setFrameOrigin(NSPoint(x: xPos, y: yPos))
                 
                 // 설정 후 위치 확인
                 print("Current window position after: \(listeningWindow.frame.origin)")
-                
-                // 추가 확인을 위한 윈도우 속성 확인
                 print("Window is visible: \(listeningWindow.isVisible)")
                 print("Window level: \(listeningWindow.level.rawValue)")
             }
+            
+//            if let screen = NSScreen.main {
+//                // 실제 사용 가능한 화면 영역 (dock, 메뉴바 등 제외)
+//                let visibleFrame = screen.visibleFrame
+//                let screenFrame = screen.frame
+//                let windowSize = listeningWindow.frame.size
+//                
+//                // x축으로는 오른쪽에 최대한 붙이고, y축으로는 중앙에 위치
+//                let xPos = visibleFrame.origin.x + visibleFrame.width - windowSize.width
+//                let yPos = visibleFrame.origin.y + (visibleFrame.height - windowSize.height) / 2
+//                
+//                // 디버깅을 위한 자세한 로깅
+//                print("Screen frame: \(screenFrame)")
+//                print("Visible frame: \(visibleFrame)")
+//                print("Window size: \(windowSize)")
+//                print("Calculated position: (\(xPos), \(yPos))")
+//                
+//                // 다른 방법 시도 - 작은 여백 추가
+//                let margin: CGFloat = 0  // 필요시 조정
+//                let finalX = xPos - margin
+//                let finalY = yPos
+//                
+//                print("Final position with margin: (\(finalX), \(finalY))")
+//                
+//                // 윈도우 위치 설정 전에 현재 위치 확인
+//                print("Current window position before: \(listeningWindow.frame.origin)")
+//                
+//                // 윈도우 위치 설정
+//                listeningWindow.setFrameOrigin(NSPoint(x: finalX, y: finalY))
+//                
+//                // 설정 후 위치 확인
+//                print("Current window position after: \(listeningWindow.frame.origin)")
+//                
+//                // 추가 확인을 위한 윈도우 속성 확인
+//                print("Window is visible: \(listeningWindow.isVisible)")
+//                print("Window level: \(listeningWindow.level.rawValue)")
+//            }
             
             //            // Flutter 메인 윈도우의 크기를 코드와 일치시킴
             //            let mainWindowWidth: CGFloat = 400
