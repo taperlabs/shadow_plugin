@@ -29,13 +29,14 @@ final class ShadowServerHandler {
         let configuration = NSWorkspace.OpenConfiguration()
         
         workspace.openApplication(at: appPathURL, configuration: configuration) { (app, error) in
+            result("success")
             if let error = error {
                 print("Failed to launch application: \(error)")
-                result("failed")
+//                result("failed")
                 ShadowLogger.shared.log("Failed to launch Shadow Server: \(error.localizedDescription)")
             } else {
                 print("Application launched successfully")
-                result("success")
+//                result("success")
                 ShadowLogger.shared.log("Application launched successfully")
             }
         }
