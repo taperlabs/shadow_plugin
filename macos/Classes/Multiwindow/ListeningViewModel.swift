@@ -57,8 +57,9 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         return micNoiseLevel > 0 || sysNoiseLevel > 0
     }
     
-    @Published private(set) var stickColors: [Int: Color] = [:]
-    private var lastActiveColors: [Int: Color] = [:]
+    @Published private(set) var stickColors: [Int: Color] = [1: .gray, 2: .gray, 3: .gray, 4: .gray]
+    private var lastActiveColors: [Int: Color] = [1: .gray, 2: .gray, 3: .gray, 4: .gray]
+//    private var lastActiveColors: [Int: Color] = [:]
     
     // Computed property that updates stickColors whenever noise levels change
     private var computeStickColors: [Int: Color] {
