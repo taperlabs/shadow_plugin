@@ -231,11 +231,11 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 let windowSize = listeningWindow.frame.size
                 
                 // X 위치: 오른쪽에 붙이되 왼쪽으로 6pt 이동 (5~7pt 사이의 값)
-                let xOffset: CGFloat = 25
+                let xOffset: CGFloat = 30
                 let xPos = visibleFrame.origin.x + visibleFrame.width - windowSize.width - xOffset
                 
                 // Y 위치: visible frame의 정중앙에서 위로 11pt 이동 (10~12pt 사이의 값)
-                let yOffset: CGFloat = 35
+                let yOffset: CGFloat = 55
                 let yPos = visibleFrame.origin.y + (visibleFrame.height - windowSize.height) / 2 + yOffset
                 
                 print("Screen frame: \(screenFrame)")
