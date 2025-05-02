@@ -22,6 +22,14 @@ class Shadow {
 
   Stream<dynamic> get listeningStatusEvents => ShadowPlatform.instance.listeningStatusEvents;
 
+  Future<bool> checkSystemAudioPermission() {
+    return ShadowPlatform.instance.checkSystemAudioPermission();
+  }
+
+  Future<void> requestSystemAudioPermission() {
+    return ShadowPlatform.instance.requestSystemAudioPermission();
+  }
+
   Future<void> testStartListening({
     Map<String, dynamic>? listeningConfig,
   }) {

@@ -3,6 +3,10 @@ import Foundation
 //MARK: - MethodChannel Call 상수
 enum MethodChannelCall: String {
     
+    //System Audio Permission
+    case checkSystemAudioPermission = "checkSystemAudioPermission"
+    case requestSystemAudioPermission = "requestSystemAudioPermission"
+    
     //Test Listening
     case testStartListening = "testStartListening"
     case testStopListening = "testStopListening"

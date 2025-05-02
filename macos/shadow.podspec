@@ -19,7 +19,7 @@ A new Flutter plugin project.
 
   s.dependency 'lottie-ios'
 
-  s.platform = :osx, '13.0'
+  s.platform = :osx, '14.2'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'
 end

@@ -130,7 +130,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     
     // Start a timer to check window titles every second
     private func startWindowCheckTimer() {
-        windowCheckTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+        windowCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             self?.fetchWindows()
         }
     }

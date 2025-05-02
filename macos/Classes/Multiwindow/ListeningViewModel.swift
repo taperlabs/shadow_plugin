@@ -14,6 +14,8 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     //    private var newMicService = NewMicrophoneService()
     private var newSysService = NewScreenCaptureService()
     
+    private let newSysOnlyService = SystemAudioOnlyService()
+    
     private var microphoneService = MicrophoneService()
     private var screenCaptureService = ScreenCaptureService()
     private var coreAudioService = CoreAudioService()
@@ -134,7 +136,8 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         do {
             Task {
                 do {
-                    try await newSysService.startCapture(fileName: sysFileName)
+//                    try await newSysService.startCapture(fileName: sysFileName)
+                    try newSysOnlyService.startRecording(sysFileName: sysFileName)
                 } catch let error {
                     print("error in startListening -- \(error.localizedDescription)")
                 }
@@ -149,7 +152,8 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     func stopListening() {
         // TODO: Stop Listening
         //        newMicService.stopRecording()
-        newSysService.stopCapture()
+//        newSysService.stopCapture()
+        newSysOnlyService.stopRecording()
         newMicService2.stopRecording()
         
         // Clean up all references
@@ -167,7 +171,8 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     func cancelListening() {
         //        newMicService.stopRecording(isCancelled: true)
         newMicService2.stopRecording(isCancelled: true)
-        newSysService.stopCapture(isCancelled: true)
+//        newSysService.stopCapture(isCancelled: true)
+        newSysOnlyService.cancelRecording()
         
         DispatchQueue.main.async { [weak self] in
             self?.isRecording = false

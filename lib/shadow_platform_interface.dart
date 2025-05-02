@@ -64,6 +64,14 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('listeningStatusEvents has not been implemented.');
   }
 
+  Future<bool> checkSystemAudioPermission() {
+    throw UnimplementedError('checkSystemAudioPermission() has not been implemented.');
+  }
+
+  Future<void> requestSystemAudioPermission() {
+    throw UnimplementedError('requestSystemAudioPermission() has not been implemented.');
+  }
+
   Future<void> testStartListening({
     Map<String, dynamic>? listeningConfig,
   }) {

@@ -787,6 +787,21 @@ class _MyAppState extends State<MyApp> {
     await _shadowPlugin.stopShadowServer();
   }
 
+  Future<bool> checkSystemAudioPermission() async {
+    bool granted = await _shadowPlugin.checkSystemAudioPermission();
+    print("System Audio Permission: $granted");
+    return granted;
+  }
+
+  Future<void> requestSystemAudioPermission() async {
+    try {
+      await _shadowPlugin.requestSystemAudioPermission();
+      print("requestSystemAudioPermission called successfully");
+    } on PlatformException catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -805,6 +820,9 @@ class _MyAppState extends State<MyApp> {
               Text('$isInMeeting', style: Theme.of(context).textTheme.headlineMedium),
 
               // CustomButton("Weboskcet Test", () => connectWebSocket()),
+
+              CustomButton("Check System Audio Listening Permission", () async => await checkSystemAudioPermission()),
+              CustomButton("Request System Audio Listening Permission", () async => await requestSystemAudioPermission()),
 
               CustomButton("Test Start Listening", () => testStartListening()),
               CustomButton("Test Stop Listening", () => testStopListening()),

@@ -55,6 +55,17 @@ class MethodChannelShadow extends ShadowPlatform {
   Stream<dynamic> get listeningStatusEvents => _listeningStatusEventChannel.receiveBroadcastStream();
 
   @override
+  Future<bool> checkSystemAudioPermission() async {
+    final result = await methodChannel.invokeMethod<bool>('checkSystemAudioPermission');
+    return result ?? false;
+  }
+
+  @override
+  Future<void> requestSystemAudioPermission() async {
+    return methodChannel.invokeMethod('requestSystemAudioPermission');
+  }
+
+  @override
   Future<void> testStartListening({
     Map<String, dynamic>? listeningConfig,
   }) async {

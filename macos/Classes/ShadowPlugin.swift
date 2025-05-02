@@ -38,6 +38,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     var autopilotClass = Autopilot()
     let coreAudioHandler = CoreAudioHandler()
     let screenCaptureKitBugEventsClass = ScreenCaptureKitBugHandler()
+    var systemAudioOnlyPermission = SystemAudioOnlyPermission()
 
     
     func isFontAvailable(_ fontName: String) -> Bool {
@@ -366,6 +367,15 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         }
         
         switch method {
+            
+        case .checkSystemAudioPermission:
+            print("Cehck System Audio Permission")
+            result("Cehck System Audio Permission")
+        
+        case .requestSystemAudioPermission:
+            print("requestSystemAudioPermission")
+            result("requestSystemAudioPermission")
+            systemAudioOnlyPermission.request()
             
         case .testStopListening:
             print("TEST STOP LISTENING")

@@ -46,6 +46,8 @@ final class ListeningCoordinator {
     }
     
     func handleSystemAudioSegment(index: Int, fileName: String) {
+        print("🖥️ \(index) -- \(fileName) got called for System Audio")
+        
         updateSegmentEvent(index: index) { event in
             AudioSegmentEvent(
                 microphoneFile: event?.microphoneFile,
@@ -61,6 +63,8 @@ final class ListeningCoordinator {
         let currentEvent = currentSegmentEvents[index]
         let updatedEvent = updateHandler(currentEvent)
         currentSegmentEvents[index] = updatedEvent
+        
+        print("🗂️ Update Segment Event Called ")
         
         // If we have both audio files, send the event
         if updatedEvent.microphoneFile != nil && updatedEvent.systemAudioFile != nil {

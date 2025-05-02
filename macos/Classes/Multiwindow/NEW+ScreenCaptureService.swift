@@ -455,7 +455,9 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
     }
     
     private func configureStream() async throws {
-        let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
+        let content = try await SCShareableContent.current
+        print("Content 새로 뽑았습니다~~ \(content)")
+        //        let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
         guard let display = content.displays.first else {
             throw NSError(domain: "ScreenCaptureService", code: -1,
                           userInfo: [NSLocalizedDescriptionKey: "No displays found"])
@@ -559,11 +561,20 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
 
 extension NewScreenCaptureService: SCStreamOutput, SCStreamDelegate {
     func stream(_ stream: SCStream, didStopWithError error: Error) {
+        
+        guard let nsError = error as NSError? else {
+            print("SCStream stopped w/o NSError – replayd crash?")
+            ShadowLogger.shared.logCritical("SCStream stopped w/o NSError – replayd crash?")
+            stopCapture(); return
+        }
+        
         print("Stream did stop with error: \(error.localizedDescription)")
-        let nsError = error as NSError
+//        let nsError = error as NSError
         print("Error domain: \(nsError.domain)")
         print("Error code: \(nsError.code)")
         print("Error user info: \(nsError.userInfo)")
+        
+        ShadowLogger.shared.logCritical("Stream did stop with error: \(error.localizedDescription)")
         
         // Create the error object
         let systemError = SystemAudioListeningError(
@@ -577,9 +588,10 @@ extension NewScreenCaptureService: SCStreamOutput, SCStreamDelegate {
         stopCapture()
     }
     
+    
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
         guard sampleBuffer.isValid, type == .audio, isRecording else {
-            print("Invalid Sample Buffer - \(sampleBuffer.isValid)")
+            print("Invalid Sample Buffer - \(sampleBuffer.isValid) -- type - \(type), -- isRecording - \(isRecording)")
             return
         }
         
@@ -595,11 +607,11 @@ extension NewScreenCaptureService: SCStreamOutput, SCStreamDelegate {
         }
         
         // Write to full length recording if enabled
-//        if let audioInput = fullLengthAudioInput, audioInput.isReadyForMoreMediaData {
-//            if !audioInput.append(sampleBuffer) {
-//                print("Failed to append audio sample buffer to full length recording")
-//            }
-//        }
+        //        if let audioInput = fullLengthAudioInput, audioInput.isReadyForMoreMediaData {
+        //            if !audioInput.append(sampleBuffer) {
+        //                print("Failed to append audio sample buffer to full length recording")
+        //            }
+        //        }
         
         // Write to current segment only if we have valid writer and input
         if let writer = segmentWriter,
