@@ -134,14 +134,15 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             return
         }
         do {
-            Task {
-                do {
-//                    try await newSysService.startCapture(fileName: sysFileName)
-                    try newSysOnlyService.startRecording(sysFileName: sysFileName)
-                } catch let error {
-                    print("error in startListening -- \(error.localizedDescription)")
-                }
-            }
+//            Task {
+//                do {
+////                    try await newSysService.startCapture(fileName: sysFileName)
+//                   
+//                } catch let error {
+//                    print("error in startListening -- \(error.localizedDescription)")
+//                }
+//            }
+            try newSysOnlyService.startRecording(sysFileName: sysFileName)
             newMicService2.startRecording(name: micFileName)
             //            try newMicService.startRecording(fileName: micFileName)
         } catch let error {
@@ -308,6 +309,13 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     private func setupSubscriptions() {
         // Replace all assign(to:on:) with sink using [weak self]
         
+        newSysOnlyService.$noiseLevel
+            .receive(on: RunLoop.main)
+            .sink { [weak self] value in
+                self?.sysNoiseLevel = value
+            }
+            .store(in: &cancellables)
+        
         newMicService2.$noiseLevel
             .receive(on: RunLoop.main)
             .sink { [weak self] value in
@@ -325,12 +333,12 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             }
             .store(in: &cancellables)
         
-        newSysService.$noiseLevel
-            .receive(on: RunLoop.main)
-            .sink { [weak self] value in
-                self?.sysNoiseLevel = value
-            }
-            .store(in: &cancellables)
+//        newSysService.$noiseLevel
+//            .receive(on: RunLoop.main)
+//            .sink { [weak self] value in
+//                self?.sysNoiseLevel = value
+//            }
+//            .store(in: &cancellables)
         
         Publishers.CombineLatest($defaultInputDevice, $inputDevices)
             .receive(on: RunLoop.main)

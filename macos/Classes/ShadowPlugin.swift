@@ -370,7 +370,8 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             
         case .checkSystemAudioPermission:
             print("Cehck System Audio Permission")
-            result("Cehck System Audio Permission")
+            let permission = systemAudioOnlyPermission.checkPermissionStatus()
+            result(permission)
         
         case .requestSystemAudioPermission:
             print("requestSystemAudioPermission")

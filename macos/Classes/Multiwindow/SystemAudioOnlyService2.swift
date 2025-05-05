@@ -44,9 +44,48 @@ class SystemAudioOnlyService: ObservableObject {
     // Keep track of running state
     @Published private(set) var isRunning = false
     
+    @Published private(set) var noiseLevel: Float = 0.0
+    
     // Also add cleanup in deinit to ensure resources are freed
     deinit {
         stopRecording()
+    }
+    
+    private func calculateNoiseLevel(from buffer: AVAudioPCMBuffer) -> Float {
+        guard let channelData = buffer.floatChannelData else {
+            return 0.0
+        }
+        
+        let channelCount = Int(buffer.format.channelCount)
+        let frameLength = Int(buffer.frameLength)
+        
+        // Calculate RMS value across all channels
+        var rms: Float = 0.0
+        
+        for channel in 0..<channelCount {
+            let channelDataPtr = channelData[channel]
+            
+            for frame in 0..<frameLength {
+                let sample = channelDataPtr[frame]
+                rms += sample * sample
+            }
+        }
+        
+        // Average across all samples
+        rms = rms / Float(frameLength * channelCount)
+        rms = sqrt(rms)
+        
+        // Convert to decibels (relative to full scale)
+        // Avoid log(0) by adding a small epsilon
+        let epsilon: Float = 0.000001
+        var decibels: Float = 20.0 * log10(rms + epsilon)
+        
+        // Normalize to a 0...1 scale for UI purposes
+        // Typical values: -60dB (quiet) to 0dB (maximum)
+        decibels = max(-80.0, min(0.0, decibels))
+        let normalizedLevel = (decibels + 80.0) / 80.0
+        
+        return normalizedLevel
     }
     
     func getPropertyAddress(selector: AudioObjectPropertySelector,
@@ -299,6 +338,14 @@ class SystemAudioOnlyService: ObservableObject {
                 ) else {
                     print("❌ Failed to create PCM buffer")
                     return
+                }
+                
+                // ADD THIS CODE HERE for noise level calculation
+                let currentNoiseLevel = self.calculateNoiseLevel(from: buffer)
+                // Update the noise level on the main thread
+                DispatchQueue.main.async { [weak self] in
+//                    print("🤖 Noise Level ==== \(self?.noiseLevel)")
+                    self?.noiseLevel = currentNoiseLevel
                 }
                 
                 // Calculate presentation time

@@ -16,7 +16,7 @@ final class SystemAudioOnlyPermission {
     private(set) var status: Status = .unknown
 
     init() {
-        print("🦊 Init 입니다!!!!")
+        print("System Audio Permission 🦊 Init 입니다!!!!")
 //        #if ENABLE_TCC_SPI
         NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             guard let self else { return }
@@ -27,6 +27,15 @@ final class SystemAudioOnlyPermission {
 //        #else
         status = .authorized
 //        #endif  ENABLE_TCC_SPI
+    }
+    
+    /// Returns whether the app has audio capture permission
+    /// - Returns: `true` if authorized, `false` if denied or unknown
+    func checkPermissionStatus() -> Bool {
+        // First update the status to ensure it's current
+        updateStatus()
+        // Return true only if explicitly authorized
+        return status == .authorized
     }
 
     func request() {

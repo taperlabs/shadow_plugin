@@ -32,6 +32,8 @@ final class ListeningCoordinator {
     
     // MARK: - Event Handling
     func handleMicrophoneSegment(index: Int, fileName: String, isFinished: Bool = false, isCancelled: Bool = false) {
+        print("🎙️ \(index) -- \(fileName) got called for Mic Audio")
+        
         isFinishedListening = isFinished
         isCancelledListening = isCancelled
         updateSegmentEvent(index: index) { event in
