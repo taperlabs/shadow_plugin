@@ -19,17 +19,12 @@ class SystemAudioOnlyService: ObservableObject {
     
     // File rotation properties
     private var rotationTimer: Timer?
-    private var segmentCounter: Int = 0
     private var segmentFileURLs: [Int: URL] = [:]
-    private var baseFileURL: URL?
     private var isRotationInProgress = false
     private let rotationInterval: TimeInterval = 60.0 // 60 seconds per file
-    
-    
-    private var currentFileName: String = ""
+
+    // Track Segment Index
     private var currentSegmentIndex: Int = 0
-    private var nextSegmentIndex: Int = 1
-    private var nextFileName: String = ""
     
     // Track segment start time with high precision
     private var segmentStartTime: CFTimeInterval = 0
@@ -95,27 +90,30 @@ class SystemAudioOnlyService: ObservableObject {
     }
     
     // New method to create a file URL for the current segment
-    private func createFileURL() -> URL? {
+    private func createFileURL(segmentIndex index: Int) -> URL? {
         guard let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             print("❌ Unable to find directory URL")
             return nil
         }
-        
+        print("🦊 CREATE FILE URL -- \(index)")
         let appSpecificDirectoryURL = appSupportDirectory.appendingPathComponent("com.taperlabs.shadow")
-        
         // Use the format: UUID-BaseFilename-SegmentNumber.m4a
-        let filename = "\(baseFilename)-\(segmentCounter).m4a"
+        let filename = "\(baseFilename)-\(index).m4a"
         return appSpecificDirectoryURL.appendingPathComponent(filename)
     }
     
     // New method to setup a new asset writer
     private func setupNewAssetWriter(with originalStreamDescription: AudioStreamBasicDescription, isInitial: Bool = false) throws -> (AVAssetWriter, AVAssetWriterInput) {
-        guard let fileURL = createFileURL() else {
+        currentSegmentIndex = isInitial ? currentSegmentIndex : currentSegmentIndex + 1
+        let indexToUse = currentSegmentIndex
+        
+        guard let fileURL = createFileURL(segmentIndex: indexToUse) else {
             throw NSError(domain: "Unable to create file URL", code: -1)
         }
         
+        
         // Store the URL for this segment
-        segmentFileURLs[segmentCounter] = fileURL
+        segmentFileURLs[currentSegmentIndex] = fileURL
         
         // Remove existing file if needed
         try? FileManager.default.removeItem(at: fileURL)
@@ -146,14 +144,6 @@ class SystemAudioOnlyService: ObservableObject {
         writer.startWriting()
         writer.startSession(atSourceTime: .zero)
         
-        // Increment segment counter for next file
-        if isInitial {
-            print("Skipping += segmentCounter because It's Initial")
-            return (writer, writerInput)
-        }
-        currentSegmentIndex = segmentCounter
-        segmentCounter += 1
-        
         print("📝 Created new file segment: \(fileURL.lastPathComponent)")
         return (writer, writerInput)
     }
@@ -164,7 +154,6 @@ class SystemAudioOnlyService: ObservableObject {
         let currentTime = CACurrentMediaTime()
         let elapsedTime = currentTime - segmentStartTime
         print("🕒 Rotation triggered at \(elapsedTime) seconds since last rotation")
-        
         let completedSegmentIndex = self.currentSegmentIndex - 1
         let completedFileURL = self.segmentFileURLs[completedSegmentIndex]
         let completedFileName = completedFileURL?.lastPathComponent ?? "\(self.baseFilename)-\(completedSegmentIndex).m4a"
@@ -189,7 +178,6 @@ class SystemAudioOnlyService: ObservableObject {
             // Finish old writer asynchronously
             oldWriter?.finishWriting { [weak self] in
                 print("✅ Finished writing previous audio segment")
-                
                 // Notify the ListeningCoordinator about the completed segment
                 DispatchQueue.main.async {
                     ListeningCoordinator.shared.handleSystemAudioSegment(
@@ -285,7 +273,7 @@ class SystemAudioOnlyService: ObservableObject {
         print(" Channels: \(originalStreamDescription.mChannelsPerFrame)")
         
         // Initialize first file and asset writer
-        let (writer, writerInput) = try setupNewAssetWriter(with: originalStreamDescription)
+        let (writer, writerInput) = try setupNewAssetWriter(with: originalStreamDescription, isInitial: true)
         self.assetWriter = writer
         self.assetWriterInput = writerInput
         
@@ -545,13 +533,16 @@ class SystemAudioOnlyService: ObservableObject {
     func stopRecording(isCancelled: Bool = false) {
         print("\n🔄 Starting cleanup process...")
         
-        // Stop all timers
-        rotationTimer?.invalidate()
-        rotationTimer = nil
-        prepareRotationTimer?.invalidate()
-        prepareRotationTimer = nil
-        self.sessionId = ""
-        self.baseFilename = ""
+        
+        DispatchQueue.main.async { [weak self] in
+            // Stop all timers
+            self?.rotationTimer?.invalidate()
+            self?.rotationTimer = nil
+            self?.prepareRotationTimer?.invalidate()
+            self?.prepareRotationTimer = nil
+            self?.sessionId = ""
+            self?.baseFilename = ""
+        }
         
         // First stop and destroy the IO proc if it exists
         if let procID = procID {
@@ -589,8 +580,15 @@ class SystemAudioOnlyService: ObservableObject {
         
         writerQueue.async { [weak self] in
             guard let self = self else { return }
+            let segmentIndex: Int
             // Capture the current segment info before cleanup
-            let finalSegmentIndex = self.currentSegmentIndex
+            if self.nextAssetWriter == nil && self.nextAssetWriterInput == nil {
+                segmentIndex = self.currentSegmentIndex
+            } else {
+                segmentIndex = self.currentSegmentIndex - 1
+            }
+            
+            let finalSegmentIndex = segmentIndex
             let finalFileURL = self.segmentFileURLs[finalSegmentIndex]
             let finalFileName = finalFileURL?.lastPathComponent ?? "\(self.baseFilename)-\(finalSegmentIndex).m4a"
             // Finish current recording
@@ -604,7 +602,7 @@ class SystemAudioOnlyService: ObservableObject {
             // Finish writing the current segment
             currentInput?.markAsFinished()
             currentWriter?.finishWriting {
-                print("✅ Finished writing final audio segment")
+                print("✅ Finished writing final audio segment -- Index : \(finalSegmentIndex), FileName : \(finalFileName)")
                 
                 DispatchQueue.main.async {
                     ListeningCoordinator.shared.handleSystemAudioSegment(
@@ -626,8 +624,6 @@ class SystemAudioOnlyService: ObservableObject {
             self.assetWriterInput = nil
             self.nextAssetWriter = nil
             self.nextAssetWriterInput = nil
-            self.segmentCounter = 0
-            self.currentFileName = ""
             self.currentSegmentIndex = 0
             self.isRotationInProgress = false
         }
@@ -640,7 +636,6 @@ class SystemAudioOnlyService: ObservableObject {
     
     func startRecording(sysFileName: String) throws {
         // Reset state
-        segmentCounter = 0
         isRotationInProgress = false
         
         // Set session identification properties

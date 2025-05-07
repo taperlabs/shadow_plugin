@@ -67,12 +67,19 @@ class WebsocketManager {
       print("WebSocket with id $id is already connected.");
       return;
     }
+    const String WHISPER_SMALL = "whisper-small-mlx";
+    const String WHISPER_TURBO = "whisper-turbo";
+    const String WHISPER_LARGE_V3_TURBO = "whisper-large-v3-turbo";
+
+    final uri = Uri.parse('$_baseUrl/$id').replace(queryParameters: {
+      'whisper_model': WHISPER_SMALL,
+    });
 
     // Use the base URL with the UUID
-    final String url = "$_baseUrl/$id";
-    final channel = WebSocketChannel.connect(Uri.parse(url));
+    // final String url = "$_baseUrl/$id";
+    final channel = WebSocketChannel.connect(uri);
     _channels[id] = channel;
-    print("WebSocket connected to $url!");
+    print("WebSocket connected to $uri!");
 
     channel.stream.listen(
       (message) {
