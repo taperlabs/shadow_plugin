@@ -12,7 +12,7 @@ class SystemAudioOnlyService: ObservableObject {
     // Asset Writer properties
     private var assetWriter: AVAssetWriter?
     private var assetWriterInput: AVAssetWriterInput?
-    private let prepareIntervalBeforeRotation: TimeInterval = 5 // Prepare new writer 5 seconds before rotation
+    private let prepareIntervalBeforeRotation: TimeInterval = 3.0 // Prepare new writer 5 seconds before rotation
     private var prepareRotationTimer: Timer?
     private var nextAssetWriter: AVAssetWriter?
     private var nextAssetWriterInput: AVAssetWriterInput?
@@ -21,7 +21,7 @@ class SystemAudioOnlyService: ObservableObject {
     private var rotationTimer: Timer?
     private var segmentFileURLs: [Int: URL] = [:]
     private var isRotationInProgress = false
-    private let rotationInterval: TimeInterval = 60.0 // 60 seconds per file
+    private let rotationInterval: TimeInterval = 10.0 // 60 seconds per file
 
     // Track Segment Index
     private var currentSegmentIndex: Int = 0
@@ -40,6 +40,13 @@ class SystemAudioOnlyService: ObservableObject {
     @Published private(set) var isRunning = false
     
     @Published private(set) var noiseLevel: Float = 0.0
+    
+    /// A dedicated serial queue for rotation timers
+    private let rotationTimerQueue = DispatchQueue(label: "com.yourapp.rotationTimerQueue")
+
+    /// Dispatch timers
+    private var prepareRotationTimerDS: DispatchSourceTimer?
+    private var rotationTimerDS: DispatchSourceTimer?
     
     // Also add cleanup in deinit to ensure resources are freed
     deinit {
@@ -140,6 +147,15 @@ class SystemAudioOnlyService: ObservableObject {
             throw NSError(domain: "Cannot add writer input", code: -1)
         }
         
+        if isInitial {
+            let hostClock      = CMClockGetHostTimeClock()
+            let startHostTime  = CMClockGetTime(hostClock) + CMTime(seconds: 1.0, preferredTimescale: 1)
+            writer.startWriting()
+            writer.startSession(atSourceTime: startHostTime)
+            print("📝 Created new file segment: \(fileURL.lastPathComponent)")
+            return (writer, writerInput)
+        }
+        
         // Start asset writer
         writer.startWriting()
         writer.startSession(atSourceTime: .zero)
@@ -196,6 +212,8 @@ class SystemAudioOnlyService: ObservableObject {
                 self.assetWriterInput = preparedInput
                 self.nextAssetWriter = nil
                 self.nextAssetWriterInput = nil
+                
+                print("🖥️ Started pre-prepared recording segment \(currentSegmentIndex) with file:")
             } else {
                 // Fallback: create a new writer on the spot
                 print("⚠️ No prepared writer available, creating one now")
@@ -432,8 +450,120 @@ class SystemAudioOnlyService: ObservableObject {
         }
         
         // Start rotation timer
-        startRotationTimer()
+//        startRotationTimer()
     }
+    
+//    private func startRotationTimer() {
+//        print("🎉 StartRotationTimer")
+//        
+//        // Record current time as segment start
+//        segmentStartTime = CACurrentMediaTime()
+//        
+//        // Cancel any existing timers
+//        prepareRotationTimerDS?.cancel()
+//        rotationTimerDS?.cancel()
+//        prepareRotationTimer = nil
+//        rotationTimer = nil
+//        
+//        // Create a single high-precision timer that checks continuously
+//        let timer = DispatchSource.makeTimerSource(queue: rotationTimerQueue)
+//        
+//        // Fire every 10ms, with minimal leeway for maximum precision
+//        timer.schedule(
+//            deadline: .now(),
+//            repeating: .milliseconds(10),
+//            leeway: .nanoseconds(0)
+//        )
+//        
+//        timer.setEventHandler { [weak self] in
+//            guard let self = self,
+//                  !self.isRotationInProgress,
+//                  self.isRunning else { return }
+//            
+//            let currentTime = CACurrentMediaTime()
+//            let elapsedTime = currentTime - self.segmentStartTime
+//            
+//            // Log elapsedTime for debugging (uncomment when needed)
+//             print("⏱️ System Audio elapsedTime: \(elapsedTime)")
+//            
+//            // Prepare next writer slightly before rotation
+//            if elapsedTime >= (self.rotationInterval - self.prepareIntervalBeforeRotation) &&
+//               self.nextAssetWriter == nil {
+//                // Call prepareNextWriter on main thread for UI safety
+////                DispatchQueue.main.async {
+//                    print("⏱ Preparing next writer at \(elapsedTime)s")
+//                    self.prepareNextWriter()
+////                }
+//            }
+//            
+//            // Rotate when duration reached
+//            if elapsedTime >= self.rotationInterval {
+//                // Call rotateFile on main thread for UI safety
+////                DispatchQueue.main.async {
+//                    print("🔄 Rotating file at \(elapsedTime)s")
+//                    self.rotateFile()
+////                }
+//            }
+//        }
+//        
+//        // Start the timer
+//        timer.resume()
+//        rotationTimerDS = timer
+//        
+//        print("✅ Rotation timer scheduled on rotationTimerQueue")
+//    }
+    
+//    private func startRotationTimer() {
+//        print("🎉 StartRotationTimer")
+//        
+//        // Record current time as segment start
+//        segmentStartTime = CACurrentMediaTime()
+//        
+//        // Cancel any existing timers
+//        prepareRotationTimerDS?.cancel()
+//        rotationTimerDS?.cancel()
+//        prepareRotationTimer = nil
+//        rotationTimer = nil
+//        
+//        // Prepare the "prepare next writer" timer
+//        let prepareTimer = DispatchSource.makeTimerSource(queue: rotationTimerQueue)
+//        let prepareInterval = rotationInterval - prepareIntervalBeforeRotation
+//        prepareTimer.schedule(
+//            deadline: .now() + prepareInterval,
+//            repeating: prepareInterval,
+//            leeway: .nanoseconds(0)   // zero tolerance for maximum precision
+//        )
+//        prepareTimer.setEventHandler { [weak self] in
+//            guard let self = self else { return }
+//            // Always call UI-safe methods on main
+//            DispatchQueue.main.async {
+//                print("⏱ Preparing next writer")
+//                self.prepareNextWriter()
+//            }
+//        }
+//        prepareTimer.resume()
+//        prepareRotationTimerDS = prepareTimer
+//        
+//        // Prepare the "rotate file" timer
+//        let rotateTimer = DispatchSource.makeTimerSource(queue: rotationTimerQueue)
+//        let rotateInterval = rotationInterval
+//        rotateTimer.schedule(
+//            deadline: .now() + rotateInterval,
+//            repeating: rotateInterval,
+//            leeway: .nanoseconds(0)
+//        )
+//        rotateTimer.setEventHandler { [weak self] in
+//            guard let self = self else { return }
+//            DispatchQueue.main.async {
+//                print("🔄 Rotating file")
+//                self.rotateFile()
+//            }
+//        }
+//        rotateTimer.resume()
+//        rotationTimerDS = rotateTimer
+//        
+//        print("✅ Rotation timers scheduled on rotationTimerQueue")
+//    }
     
     private func startRotationTimer() {
         print("🎉 StartRotationTimer")
@@ -530,12 +660,21 @@ class SystemAudioOnlyService: ObservableObject {
         }
     }
     
+    private func stopRotationTimer() {
+        prepareRotationTimerDS?.cancel()
+        rotationTimerDS?.cancel()
+        prepareRotationTimerDS = nil
+        rotationTimerDS = nil
+        print("🛑 Rotation timers stopped")
+    }
+    
     func stopRecording(isCancelled: Bool = false) {
         print("\n🔄 Starting cleanup process...")
         
         
         DispatchQueue.main.async { [weak self] in
             // Stop all timers
+            self?.stopRotationTimer()
             self?.rotationTimer?.invalidate()
             self?.rotationTimer = nil
             self?.prepareRotationTimer?.invalidate()
@@ -751,5 +890,20 @@ class SystemAudioOnlyService: ObservableObject {
         //        try verifyDeviceSetup()
         try startIOProc()
         isRunning = true
+        
+        AudioSegmentCoordinator.shared.registerSystemAudioService(self)
+    }
+}
+
+
+extension SystemAudioOnlyService: AudioSegmentService {
+    func prepareNextSegment() {
+        print("📝 SystemAudioService: Preparing next segment via coordinator")
+        self.prepareNextWriter()
+    }
+    
+    func rotateSegment() {
+        print("🔄 SystemAudioService: Rotating segment via coordinator")
+        self.rotateFile()
     }
 }

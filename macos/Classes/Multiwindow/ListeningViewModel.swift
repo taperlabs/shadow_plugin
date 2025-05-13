@@ -11,6 +11,8 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     private var newMicService: NewMicrophoneService
     private var newMicService2: MicrophoneService2 = MicrophoneService2()
     
+    private let coordinator = AudioSegmentCoordinator.shared
+    
     //    private var newMicService = NewMicrophoneService()
     private var newSysService = NewScreenCaptureService()
     
@@ -142,10 +144,11 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
 //                    print("error in startListening -- \(error.localizedDescription)")
 //                }
 //            }
-            try newSysOnlyService.startRecording(sysFileName: sysFileName)
             newMicService2.startRecording(name: micFileName)
+            try newSysOnlyService.startRecording(sysFileName: sysFileName)
             //            try newMicService.startRecording(fileName: micFileName)
         } catch let error {
+            ShadowLogger.shared.logCritical("Failed to start Listening -- \(error.localizedDescription)")
             print(error.localizedDescription)
         }
     }

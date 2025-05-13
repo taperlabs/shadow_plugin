@@ -21,7 +21,7 @@ final class MicrophoneService2: NSObject, ObservableObject {
     private var baseFileName: String = ""
     private var micSegmentFileName: String = ""
     private var nextMicSegmentFileName: String = ""
-    private let segmentDuration: TimeInterval = 60.0
+    private let segmentDuration: TimeInterval = 10.0
     // 다음 세그먼트 미리 준비 시점 (세그먼트 종료 몇 초 전)
     private let prepareNextSegmentBeforeSeconds: TimeInterval = 3.0
     
@@ -32,6 +32,10 @@ final class MicrophoneService2: NSObject, ObservableObject {
     @Published private(set) var isRecording: Bool = false
     @Published private(set) var noiseLevel: Float = 0.0
     
+    private let sampleRate: Double = 16_000
+    private var segmentTimerDS: DispatchSourceTimer?
+    private let segmentTimerDSQueue = DispatchQueue(label: "com.yourapp.segmentTimerQueue")
+    
     /// 시작할 때 base 파일 이름을 받고 첫 번째 세그먼트 녹음을 시작
     func startRecording(name: String) {
         // 마이크 권한 요청
@@ -39,11 +43,14 @@ final class MicrophoneService2: NSObject, ObservableObject {
             guard let self = self else { return }
             if granted {
                 DispatchQueue.main.async { [weak self] in
-                    self?.baseFileName = name
-                    self?.segmentIndex = 0
-                    self?.startNewSegment()
-                    self?.startTimers()
-                    self?.isRecording = true
+                    guard let self = self else { return }
+                    self.baseFileName = name
+                    self.segmentIndex = 0
+                    self.startNewSegment()
+                    self.startTimers()
+                    self.isRecording = true
+                    
+                    AudioSegmentCoordinator.shared.registerMicrophoneService(self)
                 }
             } else {
                 print("Microphone permission not granted")
@@ -65,15 +72,19 @@ final class MicrophoneService2: NSObject, ObservableObject {
             nextMicSegmentFileName = ""
             
             // 녹음 시작
+
+            audioRecorder?.prepareToRecord()
             audioRecorder?.record()
+            
+//            audioRecorder?.record(atTime: audioRecorder!.deviceCurrentTime + 0.5)
             
             // 세그먼트 시작 시간 기록
             segmentStartTime = CACurrentMediaTime()
             
             // 세그먼트 타이머 시작
-            startSegmentTimer()
+//            startSegmentTimer()
             
-            print("Started pre-prepared recording segment \(segmentIndex) with file: \(micSegmentFileName)")
+            print("🎙️ Started pre-prepared recording segment \(segmentIndex) with file: \(micSegmentFileName)")
         } else {
             // 미리 준비된 recorder가 없는 경우, 새로 생성
             let baseFile = baseFileName.replacingOccurrences(of: ".m4a", with: "")
@@ -106,7 +117,7 @@ final class MicrophoneService2: NSObject, ObservableObject {
                 segmentStartTime = CACurrentMediaTime()
                 
                 // 세그먼트 타이머 시작
-                startSegmentTimer()
+//                startSegmentTimer()
                 
                 print("Started recording segment \(segmentIndex) at \(audioFileURL.absoluteString)")
             } catch {
@@ -119,7 +130,7 @@ final class MicrophoneService2: NSObject, ObservableObject {
     }
     
     /// 다음 세그먼트 미리 준비
-    private func prepareNextSegment() {
+    private func prepareNextSegmentRecorder() {
         // 베이스 파일명을 이용해 다음 세그먼트 파일명 준비
         let baseFile = baseFileName.replacingOccurrences(of: ".m4a", with: "")
         let nextSegmentMicAudio = "\(baseFile)-\(nextSegmentIndex).m4a"
@@ -144,38 +155,83 @@ final class MicrophoneService2: NSObject, ObservableObject {
             nextAudioRecorder?.isMeteringEnabled = true
             nextAudioRecorder?.prepareToRecord()
             
-            print("Prepared next segment \(nextSegmentIndex) at \(nextAudioFileURL.absoluteString)")
+            print("🎙️ Prepared next segment \(nextSegmentIndex) at \(nextAudioFileURL.absoluteString)")
         } catch {
             print("Failed to initialize next AVAudioRecorder: \(error.localizedDescription)")
         }
     }
     
-    // 세그먼트 타이머 시작 (60초마다 세그먼트 변경)
     private func startSegmentTimer() {
-        segmentTimer?.invalidate()
-        
-        // 0.1초마다 현재 세그먼트 녹음 시간을 체크
-        segmentTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        // Cancel any existing timer
+        segmentTimerDS?.cancel()
+        segmentTimer = nil
+
+        // Create a new DispatchSourceTimer
+        let timer = DispatchSource.makeTimerSource(queue: segmentTimerDSQueue)
+        // Fire every 0.01s (10ms), leeway 1ms for power efficiency
+        timer.schedule(deadline: .now(),
+                       repeating: .milliseconds(10),
+                       leeway: .nanoseconds(0))
+
+        timer.setEventHandler { [weak self] in
             guard let self = self,
                   let segmentStartTime = self.segmentStartTime,
                   self.isRecording,
                   !self.isFinishedListening,
-                  !self.isCancelled else { return }
-            
+                  !self.isCancelled else {
+                return
+            }
+
             let currentTime = CACurrentMediaTime()
             let elapsedTime = currentTime - segmentStartTime
             
-            // 세그먼트 종료 몇 초 전에 다음 세그먼트 미리 준비
-            if elapsedTime >= (self.segmentDuration - self.prepareNextSegmentBeforeSeconds) && self.nextAudioRecorder == nil {
-                self.prepareNextSegment()
+            print("🔥 elapsedTime: currentTime = \(elapsedTime)")
+
+            // Prepare next segment slightly before current ends
+            if elapsedTime >= (self.segmentDuration - self.prepareNextSegmentBeforeSeconds),
+               self.nextAudioRecorder == nil {
+                self.prepareNextSegmentRecorder()
             }
-            
-            // 세그먼트 지속 시간이 지나면 다음 세그먼트로 전환
+
+            // Switch segments when duration reached
             if elapsedTime >= self.segmentDuration {
                 self.switchToNextSegment()
             }
         }
+
+        // Start the timer
+        timer.resume()
+        segmentTimerDS = timer
     }
+    
+    // 세그먼트 타이머 시작 (60초마다 세그먼트 변경)
+//    private func startSegmentTimer() {
+//        segmentTimer?.invalidate()
+//        
+//        // 0.1초마다 현재 세그먼트 녹음 시간을 체크
+//        segmentTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] _ in
+//            guard let self = self,
+//                  let segmentStartTime = self.segmentStartTime,
+//                  self.isRecording,
+//                  !self.isFinishedListening,
+//                  !self.isCancelled else { return }
+//            
+//            let currentTime = CACurrentMediaTime()
+//            let elapsedTime = currentTime - segmentStartTime
+//            
+////            print("🔥 elapsedTime: currentTime = \(elapsedTime)")
+//            
+//            // 세그먼트 종료 몇 초 전에 다음 세그먼트 미리 준비
+//            if elapsedTime >= (self.segmentDuration - self.prepareNextSegmentBeforeSeconds) && self.nextAudioRecorder == nil {
+//                self.prepareNextSegment()
+//            }
+//            
+//            // 세그먼트 지속 시간이 지나면 다음 세그먼트로 전환
+//            if elapsedTime >= self.segmentDuration {
+//                self.switchToNextSegment()
+//            }
+//        }
+//    }
     
     // 다음 세그먼트로 전환
     private func switchToNextSegment() {
@@ -215,6 +271,9 @@ final class MicrophoneService2: NSObject, ObservableObject {
     /// 녹음 중지 (전체 녹음 종료)
     func stopRecording(isCancelled: Bool = false) {
         print("stopRecording with isCancelled = \(isCancelled)")
+        
+        segmentTimerDS?.cancel()
+        AudioSegmentCoordinator.shared.stopCoordination()
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -310,9 +369,20 @@ final class MicrophoneService2: NSObject, ObservableObject {
     }
 }
 
+
 // MARK: - AVAudioRecorderDelegate
 
-extension MicrophoneService2: AVAudioRecorderDelegate {
+extension MicrophoneService2: AVAudioRecorderDelegate, AudioSegmentService {
+    func prepareNextSegment() {
+        print("📝 MicrophoneService: Preparing next segment via coordinator")
+        prepareNextSegmentRecorder()
+    }
+    
+    func rotateSegment() {
+        print("🔄 MicrophoneService: Rotating segment via coordinator")
+        switchToNextSegment()
+    }
+    
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         // 이제 대부분의 로직은 switchToNextSegment와 stopRecording에서 직접 처리하므로
         // 여기서는 예상치 못한 recorder 중단만 처리.

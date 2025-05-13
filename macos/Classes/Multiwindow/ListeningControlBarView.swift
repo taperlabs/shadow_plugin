@@ -153,6 +153,10 @@ struct ListeningControlBar: View {
                            .font(.system(size: 15, weight: .bold))
                    } else {
                        LottieButton()
+                           .onTapGesture {
+                               WindowManager.shared.showMainAppWindow()
+                               print("Lottie Button Clicked!!!")
+                           }
                    }
                }
         .confirmationDialog("Are you sure you want to cancel?",

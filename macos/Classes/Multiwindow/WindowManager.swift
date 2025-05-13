@@ -573,6 +573,18 @@ final class WindowManager: NSObject, NSWindowDelegate {
             window.center()
         }
     }
+    
+    func showMainAppWindow() {
+        guard let app = NSApplication.shared.delegate as? FlutterAppDelegate else {
+            debugPrint("failed to find flutter main window, application delegate is not FlutterAppDelegate")
+            return
+        }
+        guard let mainFlutterWindow = app.mainFlutterWindow else {
+            debugPrint("failed to find flutter main window")
+            return
+        }
+        mainFlutterWindow.makeKeyAndOrderFront(nil)
+    }
 }
 
 extension WindowManager {
