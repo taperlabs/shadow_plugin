@@ -204,35 +204,6 @@ final class MicrophoneService2: NSObject, ObservableObject {
         segmentTimerDS = timer
     }
     
-    // 세그먼트 타이머 시작 (60초마다 세그먼트 변경)
-//    private func startSegmentTimer() {
-//        segmentTimer?.invalidate()
-//        
-//        // 0.1초마다 현재 세그먼트 녹음 시간을 체크
-//        segmentTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] _ in
-//            guard let self = self,
-//                  let segmentStartTime = self.segmentStartTime,
-//                  self.isRecording,
-//                  !self.isFinishedListening,
-//                  !self.isCancelled else { return }
-//            
-//            let currentTime = CACurrentMediaTime()
-//            let elapsedTime = currentTime - segmentStartTime
-//            
-////            print("🔥 elapsedTime: currentTime = \(elapsedTime)")
-//            
-//            // 세그먼트 종료 몇 초 전에 다음 세그먼트 미리 준비
-//            if elapsedTime >= (self.segmentDuration - self.prepareNextSegmentBeforeSeconds) && self.nextAudioRecorder == nil {
-//                self.prepareNextSegment()
-//            }
-//            
-//            // 세그먼트 지속 시간이 지나면 다음 세그먼트로 전환
-//            if elapsedTime >= self.segmentDuration {
-//                self.switchToNextSegment()
-//            }
-//        }
-//    }
-    
     // 다음 세그먼트로 전환
     private func switchToNextSegment() {
         guard let recorder = audioRecorder else { return }

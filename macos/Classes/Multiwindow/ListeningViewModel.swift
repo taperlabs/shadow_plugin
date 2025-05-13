@@ -136,20 +136,16 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             return
         }
         do {
-//            Task {
-//                do {
-////                    try await newSysService.startCapture(fileName: sysFileName)
-//                   
-//                } catch let error {
-//                    print("error in startListening -- \(error.localizedDescription)")
-//                }
-//            }
             newMicService2.startRecording(name: micFileName)
             try newSysOnlyService.startRecording(sysFileName: sysFileName)
-            //            try newMicService.startRecording(fileName: micFileName)
         } catch let error {
             ShadowLogger.shared.logCritical("Failed to start Listening -- \(error.localizedDescription)")
             print(error.localizedDescription)
+            let systemError = SystemAudioListeningError(
+                error: error,
+                segmentIndex: 0
+            )
+            ListeningStatusService.shared.sendSystemAudioListeningErrorEvent(systemError.toDict())
         }
     }
     
