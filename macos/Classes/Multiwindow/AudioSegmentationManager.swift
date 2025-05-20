@@ -3,8 +3,8 @@ import QuartzCore
 
 // Protocol that audio services must conform to
 protocol AudioSegmentService: AnyObject {
-    func prepareNextSegment()
-    func rotateSegment()
+    func prepareNextSegment(nextSegmentIndex: Int)
+    func rotateSegment(currentSegmentIndex: Int)
 }
 
 
@@ -17,7 +17,7 @@ class AudioSegmentCoordinator: ObservableObject {
     private weak var microphoneService: AudioSegmentService?
     
     // Timing configuration
-    private let segmentDuration: TimeInterval = 60.0
+    private let segmentDuration: TimeInterval = 10.0
     private let prepareBeforeRotation: TimeInterval = 3.0
     
     // Timing state
@@ -33,8 +33,8 @@ class AudioSegmentCoordinator: ObservableObject {
     @Published private(set) var elapsedTime: TimeInterval = 0
     @Published private(set) var nextRotationTime: TimeInterval = 60.0
     
-    private var hasPreparedCurrentSegment = false
-    private var hasRotatedCurrentSegment = false
+    private var hasPreparedCurrentSegment: Bool = false
+    private var hasRotatedCurrentSegment: Bool = false
     
     private init() {}
     
@@ -47,7 +47,6 @@ class AudioSegmentCoordinator: ObservableObject {
     func registerMicrophoneService(_ service: AudioSegmentService) {
         microphoneService = service
         print("✅ Microphone Service registered with coordinator")
-        startCoordination()
     }
     
     // Start coordinated recording
@@ -61,7 +60,7 @@ class AudioSegmentCoordinator: ObservableObject {
         currentSegmentIndex = 0
         segmentStartTime = CACurrentMediaTime()
         
-        print("🎬 Starting audio segment coordination at time: \(segmentStartTime)")
+        print("🎬 Starting audio segment coordination at time: \(segmentStartTime), for segment index - \(currentSegmentIndex)")
         
         // Start high-precision timer
         startCoordinationTimer()
@@ -95,9 +94,6 @@ class AudioSegmentCoordinator: ObservableObject {
             let currentTime = CACurrentMediaTime()
             let elapsedTime = currentTime - self.segmentStartTime
             
-            // 경과 시간을 이용해 현재 세그먼트 번호 계산
-            let calculatedSegmentNumber = Int(elapsedTime / self.segmentDuration)
-            
             // prepare 이벤트 처리 - 세그먼트가 바뀔 때 플래그 리셋
             let timeUntilNextRotation = self.segmentDuration - elapsedTime.truncatingRemainder(dividingBy: self.segmentDuration)
             if timeUntilNextRotation <= self.prepareBeforeRotation && timeUntilNextRotation > self.prepareBeforeRotation - 0.1 {
@@ -115,7 +111,6 @@ class AudioSegmentCoordinator: ObservableObject {
                 if !self.hasRotatedCurrentSegment {
                     print("🔄 Coordinator triggering rotation at elapsed time: \(elapsedTime)")
                     self.notifyServicesToRotate()
-                    self.currentSegmentIndex += 1
                     
                     // 로테이션 후에는 플래그 리셋
                     segmentStartTime = CACurrentMediaTime()
@@ -130,21 +125,42 @@ class AudioSegmentCoordinator: ObservableObject {
     }
     
     private func notifyServicesToPrepare() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            print("📝 Coordinator notifying services to prepare segment \(self.currentSegmentIndex + 1)")
-            self.systemAudioService?.prepareNextSegment()
-            self.microphoneService?.prepareNextSegment()
-        }
+        let nextSegmentIndex = self.currentSegmentIndex + 1
+        systemAudioService?.prepareNextSegment(nextSegmentIndex: nextSegmentIndex)
+        microphoneService?.prepareNextSegment(nextSegmentIndex: nextSegmentIndex)
+        print("📝 Coordinator notifying services to prepare segment \(nextSegmentIndex)")
+    }
+
+    private func notifyServicesToRotate() {
+        let currentIndex = self.currentSegmentIndex
+        systemAudioService?.rotateSegment(currentSegmentIndex: currentIndex)
+        microphoneService?.rotateSegment(currentSegmentIndex: currentIndex)
+        print("🔄 Coordinator notifying services to rotate to segment \(currentIndex)")
+        self.currentSegmentIndex += 1
+        // rotate 후 index를 증가 (여기서만 증가)
     }
     
-    private func notifyServicesToRotate() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            print("🔄 Coordinator notifying services to rotate to segment \(self.currentSegmentIndex)")
-            self.systemAudioService?.rotateSegment()
-            self.microphoneService?.rotateSegment()
-        }
+//    private func notifyServicesToPrepare() {
+//        DispatchQueue.main.async { [weak self] in
+//            guard let self = self else { return }
+//            print("📝 Coordinator notifying services to prepare segment \(self.currentSegmentIndex + 1)")
+//            let nextSegmentIndex: Int = self.currentSegmentIndex + 1
+//            self.systemAudioService?.prepareNextSegment(nextSegmentIndex: nextSegmentIndex)
+//            self.microphoneService?.prepareNextSegment(nextSegmentIndex: nextSegmentIndex)
+//        }
+//    }
+//    
+//    private func notifyServicesToRotate() {
+//        DispatchQueue.main.async { [weak self] in
+//            guard let self = self else { return }
+//            print("🔄 Coordinator notifying services to rotate to segment \(self.currentSegmentIndex)")
+//            self.systemAudioService?.rotateSegment(currentSegmentIndex: self.currentSegmentIndex)
+//            self.microphoneService?.rotateSegment(currentSegmentIndex: self.currentSegmentIndex)
+//        }
+//    }
+    
+    func getCurrentSegmentIndex() -> Int {
+        return currentSegmentIndex
     }
     
     // For debugging

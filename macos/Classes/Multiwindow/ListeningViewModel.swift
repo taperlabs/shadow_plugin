@@ -136,6 +136,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             return
         }
         do {
+            coordinator.startCoordination()
             newMicService2.startRecording(name: micFileName)
             try newSysOnlyService.startRecording(sysFileName: sysFileName)
         } catch let error {
@@ -156,6 +157,8 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         newSysOnlyService.stopRecording()
         newMicService2.stopRecording()
         
+        coordinator.stopCoordination()
+        
         // Clean up all references
         cancellables.removeAll()
         
@@ -173,6 +176,8 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         newMicService2.stopRecording(isCancelled: true)
 //        newSysService.stopCapture(isCancelled: true)
         newSysOnlyService.cancelRecording()
+        
+        coordinator.stopCoordination()
         
         DispatchQueue.main.async { [weak self] in
             self?.isRecording = false

@@ -12,7 +12,6 @@ class SystemAudioOnlyService: ObservableObject {
     // Asset Writer properties
     private var assetWriter: AVAssetWriter?
     private var assetWriterInput: AVAssetWriterInput?
-    private let prepareIntervalBeforeRotation: TimeInterval = 3.0 // Prepare new writer 5 seconds before rotation
     private var prepareRotationTimer: Timer?
     private var nextAssetWriter: AVAssetWriter?
     private var nextAssetWriterInput: AVAssetWriterInput?
@@ -21,13 +20,7 @@ class SystemAudioOnlyService: ObservableObject {
     private var rotationTimer: Timer?
     private var segmentFileURLs: [Int: URL] = [:]
     private var isRotationInProgress = false
-    private let rotationInterval: TimeInterval = 10.0 // 60 seconds per file
-
-    // Track Segment Index
-    private var currentSegmentIndex: Int = 0
     
-    // Track segment start time with high precision
-    private var segmentStartTime: CFTimeInterval = 0
     
     // Queue for thread safety
     private let writerQueue = DispatchQueue(label: "com.audiorecorder.writer", qos: .userInitiated)
@@ -43,7 +36,7 @@ class SystemAudioOnlyService: ObservableObject {
     
     /// A dedicated serial queue for rotation timers
     private let rotationTimerQueue = DispatchQueue(label: "com.yourapp.rotationTimerQueue")
-
+    
     /// Dispatch timers
     private var prepareRotationTimerDS: DispatchSourceTimer?
     private var rotationTimerDS: DispatchSourceTimer?
@@ -110,17 +103,15 @@ class SystemAudioOnlyService: ObservableObject {
     }
     
     // New method to setup a new asset writer
-    private func setupNewAssetWriter(with originalStreamDescription: AudioStreamBasicDescription, isInitial: Bool = false) throws -> (AVAssetWriter, AVAssetWriterInput) {
-        currentSegmentIndex = isInitial ? currentSegmentIndex : currentSegmentIndex + 1
-        let indexToUse = currentSegmentIndex
+    private func setupNewAssetWriter(with originalStreamDescription: AudioStreamBasicDescription, segmentIndex: Int) throws -> (AVAssetWriter, AVAssetWriterInput) {
         
-        guard let fileURL = createFileURL(segmentIndex: indexToUse) else {
+        guard let fileURL = createFileURL(segmentIndex: segmentIndex) else {
             throw NSError(domain: "Unable to create file URL", code: -1)
         }
         
         
         // Store the URL for this segment
-        segmentFileURLs[currentSegmentIndex] = fileURL
+        segmentFileURLs[segmentIndex] = fileURL
         
         // Remove existing file if needed
         try? FileManager.default.removeItem(at: fileURL)
@@ -147,30 +138,25 @@ class SystemAudioOnlyService: ObservableObject {
             throw NSError(domain: "Cannot add writer input", code: -1)
         }
         
-        if isInitial {
-            let hostClock      = CMClockGetHostTimeClock()
-            let startHostTime  = CMClockGetTime(hostClock) + CMTime(seconds: 1.0, preferredTimescale: 1)
-            writer.startWriting()
-            writer.startSession(atSourceTime: startHostTime)
-            print("📝 Created new file segment: \(fileURL.lastPathComponent)")
-            return (writer, writerInput)
-        }
-        
         // Start asset writer
         writer.startWriting()
-        writer.startSession(atSourceTime: .zero)
+        
+        // For initial segment, use hostClock timing
+        if segmentIndex == 0 {
+            let hostClock = CMClockGetHostTimeClock()
+            let startHostTime = CMClockGetTime(hostClock) + CMTime(seconds: 1.0, preferredTimescale: 1)
+            writer.startSession(atSourceTime: startHostTime)
+        } else {
+            writer.startSession(atSourceTime: .zero)
+        }
         
         print("📝 Created new file segment: \(fileURL.lastPathComponent)")
         return (writer, writerInput)
     }
     
     // New method to handle file rotation
-    @objc private func rotateFile() {
-        // Calculate actual elapsed time since last rotation
-        let currentTime = CACurrentMediaTime()
-        let elapsedTime = currentTime - segmentStartTime
-        print("🕒 Rotation triggered at \(elapsedTime) seconds since last rotation")
-        let completedSegmentIndex = self.currentSegmentIndex - 1
+    private func rotateFile(currentIndex: Int) {
+        let completedSegmentIndex = currentIndex
         let completedFileURL = self.segmentFileURLs[completedSegmentIndex]
         let completedFileName = completedFileURL?.lastPathComponent ?? "\(self.baseFilename)-\(completedSegmentIndex).m4a"
         
@@ -203,6 +189,9 @@ class SystemAudioOnlyService: ObservableObject {
                 }
             }
             
+            // The new segment index will be currentIndex + 1
+            let newSegmentIndex = currentIndex + 1
+            
             // Check if we have a prepared writer ready
             if let preparedWriter = self.nextAssetWriter, let preparedInput = self.nextAssetWriterInput {
                 print("✅ Using pre-prepared writer for seamless transition")
@@ -213,7 +202,7 @@ class SystemAudioOnlyService: ObservableObject {
                 self.nextAssetWriter = nil
                 self.nextAssetWriterInput = nil
                 
-                print("🖥️ Started pre-prepared recording segment \(currentSegmentIndex) with file:")
+                print("🖥️ Started pre-prepared recording segment \(newSegmentIndex) with file:")
             } else {
                 // Fallback: create a new writer on the spot
                 print("⚠️ No prepared writer available, creating one now")
@@ -245,7 +234,7 @@ class SystemAudioOnlyService: ObservableObject {
                 
                 // Create a new writer
                 do {
-                    let (newWriter, newInput) = try self.setupNewAssetWriter(with: originalStreamDescription)
+                    let (newWriter, newInput) = try self.setupNewAssetWriter(with: originalStreamDescription,segmentIndex: newSegmentIndex)
                     self.assetWriter = newWriter
                     self.assetWriterInput = newInput
                 } catch {
@@ -254,12 +243,6 @@ class SystemAudioOnlyService: ObservableObject {
                     return
                 }
             }
-            
-            // Update segment start time for next segment
-            self.segmentStartTime = CACurrentMediaTime()
-            
- 
-            
             self.isRotationInProgress = false
         }
     }
@@ -290,13 +273,12 @@ class SystemAudioOnlyService: ObservableObject {
         print(" Sample Rate: \(originalStreamDescription.mSampleRate)")
         print(" Channels: \(originalStreamDescription.mChannelsPerFrame)")
         
+        let initialSegmentIndex = AudioSegmentCoordinator.shared.getCurrentSegmentIndex()
+        
         // Initialize first file and asset writer
-        let (writer, writerInput) = try setupNewAssetWriter(with: originalStreamDescription, isInitial: true)
+        let (writer, writerInput) = try setupNewAssetWriter(with: originalStreamDescription, segmentIndex: initialSegmentIndex)
         self.assetWriter = writer
         self.assetWriterInput = writerInput
-        
-        // Initialize with precise timing using CACurrentMediaTime
-        self.segmentStartTime = CACurrentMediaTime()
         
         // Create format for working with the input
         guard let inputFormat = AVAudioFormat(streamDescription: &originalStreamDescription) else {
@@ -350,7 +332,7 @@ class SystemAudioOnlyService: ObservableObject {
                 let currentNoiseLevel = self.calculateNoiseLevel(from: buffer)
                 // Update the noise level on the main thread
                 DispatchQueue.main.async { [weak self] in
-//                    print("🤖 Noise Level ==== \(self?.noiseLevel)")
+                    //                    print("🤖 Noise Level ==== \(self?.noiseLevel)")
                     self?.noiseLevel = currentNoiseLevel
                 }
                 
@@ -448,64 +430,12 @@ class SystemAudioOnlyService: ObservableObject {
             AudioDeviceDestroyIOProcID(aggregateDevice, procID!)
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(startStatus))
         }
-        
-        // Start rotation timer
-//        startRotationTimer()
     }
     
-    private func startRotationTimer() {
-        print("🎉 StartRotationTimer")
-        // Invalidate any existing timers
-        rotationTimer?.invalidate()
-        prepareRotationTimer?.invalidate()
-        
-        // Record current time as segment start time
-        segmentStartTime = CACurrentMediaTime()
-        
-        // Dispatch the actual timer scheduling to the main thread
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else {
-                print("Timer scheduling skipped: self is nil")
-                return
-            }
-            
-            // Ensure we don't accidentally create multiple timers if start gets called rapidly
-            // (Though the invalidation above should mostly handle this)
-            self.prepareRotationTimer?.invalidate()
-            self.rotationTimer?.invalidate()
-            
-            print("Scheduling timers on Main RunLoop...")
-            
-            // Timer for preparing the next writer
-            self.prepareRotationTimer = Timer.scheduledTimer(
-                timeInterval: self.rotationInterval - self.prepareIntervalBeforeRotation,
-                target: self, // Use the captured weak self
-                selector: #selector(self.prepareNextWriter),
-                userInfo: nil,
-                repeats: true
-            )
-            // Optional: More robust against UI blocking, add to common modes
-            RunLoop.main.add(self.prepareRotationTimer!, forMode: .common)
-            
-            
-            // Create and start the rotation timer
-            self.rotationTimer = Timer.scheduledTimer(
-                timeInterval: self.rotationInterval,
-                target: self, // Use the captured weak self
-                selector: #selector(self.rotateFile),
-                userInfo: nil,
-                repeats: true
-            )
-            // Optional: More robust against UI blocking, add to common modes
-            RunLoop.main.add(self.rotationTimer!, forMode: .common)
-            
-            print("✅ Timers scheduled on Main RunLoop.")
-        }
-    }
     
     
     // New method to prepare the next writer before rotation happens
-    @objc private func prepareNextWriter() {
+    private func prepareNextWriter(nextIndex: Int) {
         writerQueue.async { [weak self] in
             guard let self = self,
                   self.isRunning,
@@ -538,7 +468,7 @@ class SystemAudioOnlyService: ObservableObject {
             }
             
             do {
-                let (writer, input) = try self.setupNewAssetWriter(with: originalStreamDescription)
+                let (writer, input) = try self.setupNewAssetWriter(with: originalStreamDescription, segmentIndex: nextIndex)
                 self.nextAssetWriter = writer
                 self.nextAssetWriterInput = input
                 print("✅ Next segment writer ready")
@@ -548,25 +478,12 @@ class SystemAudioOnlyService: ObservableObject {
         }
     }
     
-    private func stopRotationTimer() {
-        prepareRotationTimerDS?.cancel()
-        rotationTimerDS?.cancel()
-        prepareRotationTimerDS = nil
-        rotationTimerDS = nil
-        print("🛑 Rotation timers stopped")
-    }
-    
     func stopRecording(isCancelled: Bool = false) {
         print("\n🔄 Starting cleanup process...")
         
         
         DispatchQueue.main.async { [weak self] in
             // Stop all timers
-            self?.stopRotationTimer()
-            self?.rotationTimer?.invalidate()
-            self?.rotationTimer = nil
-            self?.prepareRotationTimer?.invalidate()
-            self?.prepareRotationTimer = nil
             self?.sessionId = ""
             self?.baseFilename = ""
         }
@@ -607,17 +524,19 @@ class SystemAudioOnlyService: ObservableObject {
         
         writerQueue.async { [weak self] in
             guard let self = self else { return }
-            let segmentIndex: Int
             // Capture the current segment info before cleanup
-            if self.nextAssetWriter == nil && self.nextAssetWriterInput == nil {
-                segmentIndex = self.currentSegmentIndex
-            } else {
-                segmentIndex = self.currentSegmentIndex - 1
-            }
+            //            if self.nextAssetWriter == nil && self.nextAssetWriterInput == nil {
+            //                segmentIndex = self.currentSegmentIndex
+            //            } else {
+            //                segmentIndex = self.currentSegmentIndex - 1
+            //            }
             
-            let finalSegmentIndex = segmentIndex
+            let finalSegmentIndex = AudioSegmentCoordinator.shared.getCurrentSegmentIndex()
             let finalFileURL = self.segmentFileURLs[finalSegmentIndex]
             let finalFileName = finalFileURL?.lastPathComponent ?? "\(self.baseFilename)-\(finalSegmentIndex).m4a"
+            
+            print("🛑 Stop system audio recording for segment index \(finalSegmentIndex)")
+            
             // Finish current recording
             let currentWriter = self.assetWriter
             let currentInput = self.assetWriterInput
@@ -651,7 +570,6 @@ class SystemAudioOnlyService: ObservableObject {
             self.assetWriterInput = nil
             self.nextAssetWriter = nil
             self.nextAssetWriterInput = nil
-            self.currentSegmentIndex = 0
             self.isRotationInProgress = false
         }
     }
@@ -785,13 +703,13 @@ class SystemAudioOnlyService: ObservableObject {
 
 
 extension SystemAudioOnlyService: AudioSegmentService {
-    func prepareNextSegment() {
+    func prepareNextSegment(nextSegmentIndex: Int) {
         print("📝 SystemAudioService: Preparing next segment via coordinator")
-        self.prepareNextWriter()
+        self.prepareNextWriter(nextIndex: nextSegmentIndex)
     }
     
-    func rotateSegment() {
+    func rotateSegment(currentSegmentIndex: Int) {
         print("🔄 SystemAudioService: Rotating segment via coordinator")
-        self.rotateFile()
+        self.rotateFile(currentIndex: currentSegmentIndex)
     }
 }
