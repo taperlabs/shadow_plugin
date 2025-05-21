@@ -297,7 +297,7 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
         stream?.stopCapture { error in
             if let error = error {
                 print("Failed to stop capture: \(error)")
-                ShadowLogger.shared.log("[SystemAudioService] - Failed to stop capture: \(error)")
+                ShadowLogger.shared.info("[SystemAudioService] - Failed to stop capture: \(error)")
             } else {
                 print("Capture stopped")
             }
@@ -312,10 +312,10 @@ final class NewScreenCaptureService: NSObject, ObservableObject {
             segmentWriter?.finishWriting { [weak self] in
                 if let error = self?.segmentWriter?.error {
                     print("Failed to finish writing: \(error)")
-                    ShadowLogger.shared.log("[SystemAudioService] - Failed to finish writing \(error)")
+                    ShadowLogger.shared.error("[SystemAudioService] - Failed to finish writing \(error)")
                 } else {
                     print("Writing finished")
-                    ShadowLogger.shared.log("[SystemAudioService] - Writing Finished")
+                    ShadowLogger.shared.info("[SystemAudioService] - Writing Finished")
                     self?.finalizeLastSegment(isCancelled: isCancelled)
                 }
                 // Clean up
@@ -564,7 +564,7 @@ extension NewScreenCaptureService: SCStreamOutput, SCStreamDelegate {
         
         guard let nsError = error as NSError? else {
             print("SCStream stopped w/o NSError – replayd crash?")
-            ShadowLogger.shared.logCritical("SCStream stopped w/o NSError – replayd crash?")
+            ShadowLogger.shared.error("SCStream stopped w/o NSError – replayd crash?")
             stopCapture(); return
         }
         
@@ -574,7 +574,7 @@ extension NewScreenCaptureService: SCStreamOutput, SCStreamDelegate {
         print("Error code: \(nsError.code)")
         print("Error user info: \(nsError.userInfo)")
         
-        ShadowLogger.shared.logCritical("Stream did stop with error: \(error.localizedDescription)")
+        ShadowLogger.shared.error("Stream did stop with error: \(error.localizedDescription)")
         
         // Create the error object
         let systemError = SystemAudioListeningError(

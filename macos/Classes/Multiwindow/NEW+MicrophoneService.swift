@@ -375,7 +375,7 @@ class NewMicrophoneService {
         do {
             try fullFileWriter?.write(from: buffer)
         } catch {
-            ShadowLogger.shared.log("Error writing to full length file: \(error.localizedDescription)")
+            ShadowLogger.shared.error("Error writing to full length file: \(error.localizedDescription)")
             print("Error writing to full length file: \(error)")
         }
         
@@ -383,7 +383,7 @@ class NewMicrophoneService {
         do {
             try segmentFileWriter?.write(from: buffer)
         } catch {
-            ShadowLogger.shared.log("Error writing to segment file: \(error)")
+            ShadowLogger.shared.error("Error writing to segment file: \(error)")
             print("Error writing to segment file: \(error)")
         }
         
@@ -396,7 +396,7 @@ class NewMicrophoneService {
             do {
                 try createNewSegmentFile(fileName: micFileName)
             } catch {
-                ShadowLogger.shared.log("Error creating new segment file: \(error)")
+                ShadowLogger.shared.error("Error creating new segment file: \(error)")
                 print("Error creating new segment file: \(error)")
             }
         }

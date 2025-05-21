@@ -284,6 +284,8 @@ class SystemAudioOnlyService: ObservableObject {
         guard let inputFormat = AVAudioFormat(streamDescription: &originalStreamDescription) else {
             print("❌ Failed to create AVAudioFormat from stream description")
             print("Stream description: \(originalStreamDescription)")  // Add more logging
+            
+            ShadowLogger.shared.error("❌ Failed to create AVAudioFormat from stream description -- \(originalStreamDescription)")
             throw NSError(domain: "Failed to create audio format", code: -1)
         }
         
@@ -295,6 +297,7 @@ class SystemAudioOnlyService: ObservableObject {
         )!
         
         guard let _ = AVAudioConverter(from: inputFormat, to: outputFormat) else {
+            ShadowLogger.shared.error("Failed to create audio converter")
             throw NSError(domain: "Failed to create audio converter", code: -1)
         }
         
@@ -316,6 +319,7 @@ class SystemAudioOnlyService: ObservableObject {
                 
                 guard let format = AVAudioFormat(streamDescription: &originalStreamDescription) else {
                     print("❌ Failed to create AVAudioFormat from stream description")
+                    ShadowLogger.shared.error("❌ Failed to create AVAudioFormat from stream description")
                     return
                 }
                 
@@ -325,6 +329,7 @@ class SystemAudioOnlyService: ObservableObject {
                     deallocator: nil
                 ) else {
                     print("❌ Failed to create PCM buffer")
+                    ShadowLogger.shared.error("❌ Failed to create PCM buffer")
                     return
                 }
                 
@@ -361,6 +366,7 @@ class SystemAudioOnlyService: ObservableObject {
                 
                 guard blockStatus == noErr, let blockBuffer = blockBuffer else {
                     print("❌ Failed to create block buffer")
+                    ShadowLogger.shared.error("❌ Failed to create block buffer")
                     return
                 }
                 
@@ -389,6 +395,7 @@ class SystemAudioOnlyService: ObservableObject {
                 
                 guard formatStatus == noErr, let formatDescription = formatDescription else {
                     print("❌ Failed to create format description")
+                    ShadowLogger.shared.error("❌ Failed to create format description")
                     return
                 }
                 
@@ -414,11 +421,13 @@ class SystemAudioOnlyService: ObservableObject {
                     writerInput.append(sampleBuffer)
                 } else {
                     print("❌ Failed to create or append sample buffer")
+                    ShadowLogger.shared.error("❌ Failed to create or append sample buffer")
                 }
             }
         }
         
         guard status == noErr else {
+            ShadowLogger.shared.error("❌ An error occurred before ADS -- \(Int(status))")
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
         }
         
@@ -427,6 +436,7 @@ class SystemAudioOnlyService: ObservableObject {
         // Start the IO Proc
         let startStatus = AudioDeviceStart(aggregateDevice, procID)
         guard startStatus == noErr else {
+            ShadowLogger.shared.error("❌ An error occurred after ADS -- \(Int(status))")
             AudioDeviceDestroyIOProcID(aggregateDevice, procID!)
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(startStatus))
         }
@@ -488,37 +498,7 @@ class SystemAudioOnlyService: ObservableObject {
             self?.baseFilename = ""
         }
         
-        // First stop and destroy the IO proc if it exists
-        if let procID = procID {
-            AudioDeviceStop(aggregateDevice, procID)
-            AudioDeviceDestroyIOProcID(aggregateDevice, procID)
-            self.procID = nil
-            isRunning = false
-        }
-        
-        // First destroy the aggregate device if it exists
-        if aggregateDevice != 0 {
-            print("🗑️ Destroying aggregate device: \(aggregateDevice)")
-            let aggregateStatus = AudioHardwareDestroyAggregateDevice(aggregateDevice)
-            if aggregateStatus == noErr {
-                print("✅ Aggregate device destroyed successfully")
-            } else {
-                print("⚠️ Failed to destroy aggregate device with status: \(aggregateStatus)")
-            }
-            aggregateDevice = 0
-        }
-        
-        // Then destroy the tap if it exists
-        if tap != 0 {
-            print("🗑️ Destroying tap: \(tap)")
-            let tapStatus = AudioHardwareDestroyProcessTap(tap)
-            if tapStatus == noErr {
-                print("✅ Tap destroyed successfully")
-            } else {
-                print("⚠️ Failed to destroy tap with status: \(tapStatus)")
-            }
-            tap = 0
-        }
+        cleanupResources()
         
         print("🏁 Cleanup complete")
         
@@ -583,6 +563,8 @@ class SystemAudioOnlyService: ObservableObject {
         // Reset state
         isRotationInProgress = false
         
+        cleanupResources()
+        
         // Set session identification properties
         let baseFileName = sysFileName.replacingOccurrences(of: ".m4a", with: "")
         
@@ -615,7 +597,7 @@ class SystemAudioOnlyService: ObservableObject {
             kAudioAggregateDeviceUIDKey: UUID().uuidString,
             kAudioAggregateDeviceIsPrivateKey: false,
             kAudioAggregateDeviceTapListKey: [tapDescription.uuid.uuidString],
-            //            kAudioAggregateDeviceTapAutoStartKey: true
+//            kAudioAggregateDeviceTapAutoStartKey: true
         ]
         
         print("📝 Creating aggregate device with description: \(deviceDescription)")
@@ -693,11 +675,48 @@ class SystemAudioOnlyService: ObservableObject {
             print("\n📋 Final tap list verification: \(finalList)")
         }
         
-        //        try verifyDeviceSetup()
         try startIOProc()
         isRunning = true
         
         AudioSegmentCoordinator.shared.registerSystemAudioService(self)
+    }
+    
+    private func cleanupResources() {
+        // First stop and destroy the IO proc if it exists
+        if let procID = procID {
+            AudioDeviceStop(aggregateDevice, procID)
+            AudioDeviceDestroyIOProcID(aggregateDevice, procID)
+            self.procID = nil
+            isRunning = false
+        }
+        
+        // First destroy the aggregate device if it exists
+        if aggregateDevice != 0 {
+            print("🗑️ Destroying aggregate device: \(aggregateDevice)")
+            let aggregateStatus = AudioHardwareDestroyAggregateDevice(aggregateDevice)
+            if aggregateStatus == noErr {
+                ShadowLogger.shared.info("✅ Aggregate device destroyed successfully")
+                print("✅ Aggregate device destroyed successfully")
+            } else {
+                ShadowLogger.shared.error("⚠️ Failed to destroy aggregate device with status: \(aggregateStatus)")
+                print("⚠️ Failed to destroy aggregate device with status: \(aggregateStatus)")
+            }
+            aggregateDevice = 0
+        }
+        
+        // Then destroy the tap if it exists
+        if tap != 0 {
+            print("🗑️ Destroying tap: \(tap)")
+            let tapStatus = AudioHardwareDestroyProcessTap(tap)
+            if tapStatus == noErr {
+                ShadowLogger.shared.info("✅ Tap destroyed successfully")
+                print("✅ Tap destroyed successfully")
+            } else {
+                ShadowLogger.shared.error("⚠️ Failed to destroy tap with status: \(tapStatus)")
+                print("⚠️ Failed to destroy tap with status: \(tapStatus)")
+            }
+            tap = 0
+        }
     }
 }
 

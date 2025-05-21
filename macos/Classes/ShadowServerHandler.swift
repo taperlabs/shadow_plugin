@@ -31,11 +31,11 @@ final class ShadowServerHandler {
             if let error = error {
                 print("Failed to launch application: \(error)")
 //                result("failed")
-                ShadowLogger.shared.log("Failed to launch Shadow Server: \(error.localizedDescription)")
+                ShadowLogger.shared.error("Failed to launch Shadow Server: \(error.localizedDescription)")
             } else {
                 print("Application launched successfully")
 //                result("success")
-                ShadowLogger.shared.log("Application launched successfully")
+                ShadowLogger.shared.info("Application launched successfully")
             }
         }
         result("started")
@@ -48,7 +48,7 @@ final class ShadowServerHandler {
             
             // Attempt to terminate cleanly
             app.forceTerminate()
-            ShadowLogger.shared.log("App termination requested")
+            ShadowLogger.shared.info("App termination requested")
             
             // Allow some time for the app to terminate gracefully
 //            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {

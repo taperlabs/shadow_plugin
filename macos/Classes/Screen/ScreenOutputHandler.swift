@@ -92,9 +92,9 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         //Error Handler
         print("didStopWithError -> ❌",error)
-        ShadowLogger.shared.log("didStopWithError \(error.localizedDescription)")
+        ShadowLogger.shared.error("didStopWithError \(error.localizedDescription)")
         guard let recorder = recorder else {
-            ShadowLogger.shared.log("didStopWithError - Recorder nil")
+            ShadowLogger.shared.error("didStopWithError - Recorder nil")
             return
         }
         
@@ -105,7 +105,7 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
         // Return early if the sample buffer is invalid.
         guard sampleBuffer.isValid else {
-            ShadowLogger.shared.log("SampleBuffer - \(sampleBuffer.isValid)")
+            ShadowLogger.shared.error("SampleBuffer - \(sampleBuffer.isValid)")
             return
         }
         
@@ -130,13 +130,13 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
             //systemAudioInput에 AudioBuffer 쓰기
             guard let systemAudioInput = recorder.assetWriterSetup.systemAudioInput, systemAudioInput.isReadyForMoreMediaData else {
                 print("System Audio Recording Not Ready")
-                ShadowLogger.shared.log("System Audio Recording Not Ready")
+                ShadowLogger.shared.error("System Audio Recording Not Ready")
                 return
             }
             
             guard let audioData = timestampledSampleBuffer else {
                 print("Audio data does not exist")
-                ShadowLogger.shared.log("Audio data does not Exist")
+                ShadowLogger.shared.error("Audio data does not Exist")
                 return
             }
             
@@ -144,7 +144,7 @@ class ScreenRecorderOutputHandler: NSObject, SCStreamOutput, SCStreamDelegate, F
             //            audioInput.append(realSamplBuffer)
             
         @unknown default:
-            ShadowLogger.shared.log("Encountered unknown stream output type: \(type)")
+            ShadowLogger.shared.error("Encountered unknown stream output type: \(type)")
             fatalError("Encountered unknown stream output type: \(type)")
         }
     }

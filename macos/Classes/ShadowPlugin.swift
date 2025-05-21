@@ -174,6 +174,24 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let channel = FlutterMethodChannel(name: "shadow", binaryMessenger: registrar.messenger)
         let instance = ShadowPlugin()
         
+        let fileManager = FileManager.default
+        guard let appSupportDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            fatalError("Cannot find Application Support directory")
+        }
+        
+        // com.taperlab.shadow/logs 디렉토리 경로 생성
+        let taperLabDir = appSupportDir.appendingPathComponent("com.taperlabs.shadow", isDirectory: true)
+        let logsDir = taperLabDir.appendingPathComponent("logs", isDirectory: true)
+
+        // 로거 설정
+        ShadowLogger.configure(
+            subsystem: "com.taperlabs.shadow",
+            category: "ShadowPlugin",
+            logDirectory: logsDir,
+            retentionDays: 1,
+            minimumLogLevel: .debug
+        )
+        
         instance.registrar = registrar
         multiWindowEventChannel = FlutterEventChannel(name: multiWindowEventChannelName, binaryMessenger: registrar.messenger)
         let multiWindowStatusEventChannel = FlutterEventChannel(name: multiWindowStatusEventChannelName, binaryMessenger: registrar.messenger)
@@ -541,7 +559,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
 //MARK: - MethodChannel Call Error Handling extension
 extension ShadowPlugin {
     public func handleError(error: Error, result: @escaping FlutterResult) {
-        ShadowLogger.shared.log("Failed to handle Stop SC error called - \(error.localizedDescription)")
+        ShadowLogger.shared.error("Failed to handle Stop SC error called - \(error.localizedDescription)")
         result(FlutterError(code: "UNAVAILABLE",
                             message: "Failed to handle method call",
                             details: error.localizedDescription))
@@ -711,7 +729,7 @@ extension ShadowPlugin {
         
         if shadowServerApp.isAppRunning() {
             result("App already running")
-            ShadowLogger.shared.log("App already running - \(shadowServerApp.isAppRunning())")
+            ShadowLogger.shared.info("App already running - \(shadowServerApp.isAppRunning())")
             return
         }
         shadowServerApp.launchShadowServer(result: result)
@@ -722,7 +740,7 @@ extension ShadowPlugin {
         
         if !shadowServerApp.isAppRunning() {
             result("App is not running")
-            ShadowLogger.shared.log("App is not running - \(shadowServerApp.isAppRunning())")
+            ShadowLogger.shared.info("App is not running - \(shadowServerApp.isAppRunning())")
             return
         }
         

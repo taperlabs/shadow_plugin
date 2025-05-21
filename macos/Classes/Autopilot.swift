@@ -112,7 +112,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         startWindowCheckTimer()
 //        startLSOFUDPCheckTimer()
         print("Autopilot OnListen 시작 🟢")
-        ShadowLogger.shared.log("Autopilot Started...")
+        ShadowLogger.shared.info("Autopilot Started...")
         
         return nil
     }
@@ -123,7 +123,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
         endWindowCheckTimer()
 //        endLSOFUDPCheckTimer()
         print("Autopilot OnCancel 캔슬 🔴")
-        ShadowLogger.shared.log("Autopilot stopped...")
+        ShadowLogger.shared.info("Autopilot stopped...")
         
         return nil
     }
@@ -141,7 +141,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
     }
     
     private func startLSOFUDPCheckTimer() {
-        ShadowLogger.shared.log("EXECUTED 1")
+        ShadowLogger.shared.info("EXECUTED 1")
         lsofUDPCheckTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
             self?.detectMeetingInSession()
         }
@@ -176,7 +176,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                         self.isInMeetingByMic = false
                         self.isInMeetingByWindowTitle = false
                         self.updateMeetingStatus()
-                        ShadowLogger.shared.log("M-A 0")
+                        ShadowLogger.shared.info("M-A 0")
                         //Condition met, now end the function block
                         return
                     }
@@ -187,7 +187,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                         if self.isAppNameWhitelisted(appName: entry.appName) {
                             if entry.isConnectionOlderThanNSeconds {
                                 print("You are in a Meeting! 🟢 App Name: \(entry.appName), Port: \(entry.port), PID: \(entry.pid)")
-                                ShadowLogger.shared.log("M-A 1")
+                                ShadowLogger.shared.info("M-A 1")
                                 self.isMeetingInProgress = true
                                 self.isInMeetingByMic = true
                                 self.isInMeetingByWindowTitle = true
@@ -202,7 +202,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 
             } catch let error {
                 print("Failed to run ls execute 1: \(error.localizedDescription)")
-                ShadowLogger.shared.log("Failed to execute 1: \(error.localizedDescription)")
+                ShadowLogger.shared.error("Failed to execute 1: \(error.localizedDescription)")
             }
         }
         
@@ -233,19 +233,19 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
                 let errorOutput = String(data: errorData, encoding: .utf8) ?? "No error details available"
                 
-                ShadowLogger.shared.log("lsof failed with status: \(terminationStatus), error: \(errorOutput)")
+                ShadowLogger.shared.error("lsof failed with status: \(terminationStatus), error: \(errorOutput)")
                 throw NSError(domain: "executeLsof",
                              code: Int(terminationStatus),
                              userInfo: [NSLocalizedDescriptionKey: "lsof failed with status \(terminationStatus): \(errorOutput)"])
             }
         } catch {
-            ShadowLogger.shared.log("Process execution failed: \(error.localizedDescription)")
+            ShadowLogger.shared.error("Process execution failed: \(error.localizedDescription)")
             throw error
         }
         
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         guard let output = String(data: data, encoding: .utf8) else {
-            ShadowLogger.shared.log("Failed to decode lsof output")
+            ShadowLogger.shared.error("Failed to decode lsof output")
             throw NSError(domain: "executeLsof",
                          code: -1,
                          userInfo: [NSLocalizedDescriptionKey: "Failed to decode lsof output"])
@@ -365,14 +365,14 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 isMeetingDetected = true
                 self.eventSink?(["isInMeeting": isMeetingDetected])
                 print("✈️ 미팅 시작 감지 성공 Flutter로 메세지 보냅니다 🟢")
-                ShadowLogger.shared.log("U -- MSD")
+                ShadowLogger.shared.info("U -- MSD")
                 // Perform actions for meeting start
             } else if isMeetingDetected && !isInMeetingByMic {
                 isMeetingDetected = false
                 isInMeetingByWindowTitle = false
                 self.eventSink?(["isInMeeting": isMeetingDetected])
                 print("🗳️ 미팅 종료 감지 성공 Flutter로 메세지 보냅니다 🔴")
-                ShadowLogger.shared.log("U -- MED")
+                ShadowLogger.shared.info("U -- MED")
                 // Perform actions for meeting end
             }
         }
@@ -386,7 +386,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 //                print("SC 2222")
                 if let error = error {
                     print(error.localizedDescription)
-                    ShadowLogger.shared.log("SC Error occured: \(error.localizedDescription)")
+                    ShadowLogger.shared.error("SC Error occured: \(error.localizedDescription)")
                 }
                 guard let content = content else { return }
                 //                print("SC 3333")
@@ -417,38 +417,38 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 
                 if bundleID == "company.thebrowser.Browser" && self.isGoogleMeetFormat(title: title) {
                     self.isInMeetingByWindowTitle = true
-                    ShadowLogger.shared.log("W --- AR")
+                    ShadowLogger.shared.info("W --- AR")
                     break
                 } else if self.detectTeamsWebWindowTitle(title) {
                     self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.teams.appName
-                    ShadowLogger.shared.log("W --- 1")
+                    ShadowLogger.shared.info("W --- 1")
                     break
                 }
                 else if title.contains(WindowTitles.teams.detectionString) {
                     self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.teams.appName
-                    ShadowLogger.shared.log("W --- 1.5")
+                    ShadowLogger.shared.info("W --- 1.5")
                     break
                 } else if self.isGoogleMeetTitleForChrome(title) {
                     self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.googleMeet.appName
-                    ShadowLogger.shared.log("W --- 2")
+                    ShadowLogger.shared.info("W --- 2")
                     break
                 } else if title.contains(WindowTitles.webex.detectionString) {
                     self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.webex.appName
-                    ShadowLogger.shared.log("W --- 3")
+                    ShadowLogger.shared.info("W --- 3")
                     break
                 } else if title.contains(WindowTitles.around.detectionString) {
                     self.isInMeetingByWindowTitle = true
                     foundWindowID = Int(window.windowID)
                     foundAppName = WindowTitles.around.appName
-                    ShadowLogger.shared.log("W --- 4")
+                    ShadowLogger.shared.info("W --- 4")
                     break
                 }
             }
@@ -580,7 +580,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
             newProcess.executableURL = URL(fileURLWithPath: "/usr/bin/log")
             newProcess.arguments = ["stream", "--predicate", "subsystem == 'com.apple.controlcenter' AND eventMessage CONTAINS 'Active activity attributions changed to'"]
             newProcess.standardOutput = pipe
-            ShadowLogger.shared.log("EXECUTED 2")
+            ShadowLogger.shared.info("EXECUTED 2")
             
             let readHandle = pipe.fileHandleForReading
             readHandle.readabilityHandler = { fileHandle in
@@ -624,7 +624,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
-                                        ShadowLogger.shared.log("T(A-M)")
+                                        ShadowLogger.shared.info("T(A-M)")
                                         break
                                     }
                                     
@@ -633,7 +633,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
-                                        ShadowLogger.shared.log("Skype(A-M)")
+                                        ShadowLogger.shared.info("Skype(A-M)")
                                         break
                                     }
                                     
@@ -642,7 +642,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
-                                        ShadowLogger.shared.log("Webex(A-M)")
+                                        ShadowLogger.shared.info("Webex(A-M)")
                                         break
                                     }
                                     
@@ -651,7 +651,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
-                                        ShadowLogger.shared.log("Slack(A-M)")
+                                        ShadowLogger.shared.info("Slack(A-M)")
                                         break
                                     }
                                     
@@ -660,7 +660,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
-                                        ShadowLogger.shared.log("Discord(A-M)")
+                                        ShadowLogger.shared.info("Discord(A-M)")
                                         break
                                     }
                                     
@@ -669,7 +669,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
-                                        ShadowLogger.shared.log("Z(A-M)")
+                                        ShadowLogger.shared.info("Z(A-M)")
                                         break
                                     }
                                     
@@ -678,7 +678,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                         self.isInMeetingByMic = true
                                         self.activeMeetingApp = app
                                         self.isInMeetingByWindowTitle = true
-                                        ShadowLogger.shared.log("ARC(A-M)")
+                                        ShadowLogger.shared.info("ARC(A-M)")
                                         break
                                     }
                                     
@@ -687,7 +687,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                                     self.activeMeetingApp = app
                                     print("Active Meeting App", app)
                                     print("Microphone is in use by \(app)")
-                                    ShadowLogger.shared.log("\(app) - A(M)")
+                                    ShadowLogger.shared.info("\(app) - A(M)")
                                     // React to microphone being used by this app
                                     break
                                 }
@@ -716,7 +716,7 @@ final class Autopilot: NSObject, FlutterStreamHandler {
                 try newProcess.run()
             } catch {
                 print("Run Stream Error occurred: \(error)")
-                ShadowLogger.shared.log("Faield to execute 2: \(error.localizedDescription)")
+                ShadowLogger.shared.error("Faield to execute 2: \(error.localizedDescription)")
             }
         }
     }

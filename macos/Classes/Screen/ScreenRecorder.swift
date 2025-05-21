@@ -94,7 +94,7 @@ class ScreenRecorder {
         setupStreamOutput()
         try setupStream(with: filtered, config: streamConfig)
         try await initiateCapture()
-        ShadowLogger.shared.log("SC StartCapture EXECUTED")
+        ShadowLogger.shared.info("SC StartCapture EXECUTED")
     }
     
     private func setupStreamOutput() {
@@ -139,7 +139,7 @@ class ScreenRecorder {
             timeIndicator.stop()
             finishAssetWriting(assetWriter: assetWriterSetup.systemAudioAssetWriter)
             finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
-            ShadowLogger.shared.log("stopCaptureForError Called")
+            ShadowLogger.shared.error("stopCaptureForError Called")
     }
     
     
@@ -158,10 +158,10 @@ class ScreenRecorder {
             finishAssetWriting(assetWriter: assetWriterSetup.assetWriter)
 //            stream = nil
 //            streamOutput = nil
-            ShadowLogger.shared.log("STOP SC EXECUTED")
+            ShadowLogger.shared.info("STOP SC EXECUTED")
         } catch let error  {
             print(error.localizedDescription)
-            ShadowLogger.shared.log("Stop SC Error: \(error.localizedDescription)")
+            ShadowLogger.shared.error("Stop SC Error: \(error.localizedDescription)")
         }
         print("Stop Capture() Completed")
     }
@@ -169,7 +169,7 @@ class ScreenRecorder {
      private func finishAssetWriting(assetWriter: AVAssetWriter?) {
         guard let writer = assetWriter else {
             print("AssetWriter is nil")
-            ShadowLogger.shared.log("AssetWriter nil")
+            ShadowLogger.shared.error("AssetWriter nil")
             return
         }
         
@@ -177,19 +177,19 @@ class ScreenRecorder {
         case .writing:
             writer.finishWriting {
                 print("Finished writing to output file at:", writer.outputURL)
-                ShadowLogger.shared.log("Finished Writing output file")
+                ShadowLogger.shared.info("Finished Writing output file")
             }
         case .failed:
             print("Asset writer failed with error: \(writer.error?.localizedDescription ?? "Unknown error")")
-            ShadowLogger.shared.log("AS Error .failed: \(writer.error?.localizedDescription ?? "Unknown error")")
+            ShadowLogger.shared.error("AS Error .failed: \(writer.error?.localizedDescription ?? "Unknown error")")
         case .completed:
             print("AssetWriter Status: Completed successfully")
         case .cancelled:
             print("AssetWriter Status: Cancelled")
-            ShadowLogger.shared.log("AS Error .cancelled")
+            ShadowLogger.shared.info("AS Error .cancelled")
         case .unknown:
             print("AssetWriter Status: Unknown")
-            ShadowLogger.shared.log("AS Error .Unknown")
+            ShadowLogger.shared.error("AS Error .Unknown")
         @unknown default:
             print("AssetWriter Status: Encountered unknown status")
         }
