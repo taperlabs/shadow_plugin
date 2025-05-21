@@ -188,7 +188,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             subsystem: "com.taperlabs.shadow",
             category: "ShadowPlugin",
             logDirectory: logsDir,
-            retentionDays: 1,
+            retentionDays: 5,
             minimumLogLevel: .debug
         )
         
