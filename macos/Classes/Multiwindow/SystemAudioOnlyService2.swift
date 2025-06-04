@@ -559,20 +559,49 @@ class SystemAudioOnlyService: ObservableObject {
         stopRecording(isCancelled: true)
     }
     
+    private func validateDeviceState() throws {
+        // 1. Check if IOProc already exists
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyIOProcStreamUsage,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        var hasProperty = AudioObjectHasProperty(aggregateDevice, &address)
+        print("Device has IOProc property: \(hasProperty)")
+        
+        // 2. Verify device is not already running
+        address.mSelector = kAudioDevicePropertyDeviceIsRunning
+        var isRunning: UInt32 = 0
+        var size = UInt32(MemoryLayout<UInt32>.size)
+        let status = AudioObjectGetPropertyData(
+            aggregateDevice, &address, 0, nil, &size, &isRunning
+        )
+        
+        if status == noErr && isRunning != 0 {
+            throw NSError(domain: "Device already running", code: -1)
+        }
+    }
+    
     func startRecording(sysFileName: String) throws {
         // Reset state
         isRotationInProgress = false
         
         cleanupResources()
         
+        try validateDeviceState()
+        
         // Set session identification properties
         let baseFileName = sysFileName.replacingOccurrences(of: ".m4a", with: "")
         
         self.baseFilename = baseFileName
         
+        let systemOutputID = try getDefaultOutputDevice()
+        let outputUID = try getDeviceUID(systemOutputID)
+        
         // 1. Create a tap for all system audio
         let tapDescription = CATapDescription(monoGlobalTapButExcludeProcesses: [])
-        tapDescription.name = "SystemAudioTapPhoenix"
+        tapDescription.name = "ShadowSystemAudioTap"
         tapDescription.isPrivate = false
         //        tapDescription.muteBehavior = .mutedWhenTapped
         tapDescription.muteBehavior = .unmuted
@@ -591,13 +620,34 @@ class SystemAudioOnlyService: ObservableObject {
         print("✅ Tap created successfully with ID: \(tapID)")
         self.tap = tapID
         
+        let uniqueID = UUID().uuidString
+        let aggregateDeviceName = "ShadowSystemAudioDevice_\(uniqueID)"
+        
         // 2. Create aggregate device
-        let deviceDescription: [String: Any] = [
-            kAudioAggregateDeviceNameKey: "SystemAudioTapPhoenix",
-            kAudioAggregateDeviceUIDKey: UUID().uuidString,
-            kAudioAggregateDeviceIsPrivateKey: false,
-            kAudioAggregateDeviceTapListKey: [tapDescription.uuid.uuidString],
+//        let deviceDescription: [String: Any] = [
+//            kAudioAggregateDeviceNameKey: aggregateDeviceName,
+//            kAudioAggregateDeviceUIDKey: UUID().uuidString,
+//            kAudioAggregateDeviceIsPrivateKey: true,
+//            kAudioAggregateDeviceTapListKey: [tapDescription.uuid.uuidString],
 //            kAudioAggregateDeviceTapAutoStartKey: true
+//        ]
+        
+        let deviceDescription: [String: Any] = [
+            kAudioAggregateDeviceNameKey: aggregateDeviceName,
+            kAudioAggregateDeviceUIDKey: UUID().uuidString,
+            kAudioAggregateDeviceMainSubDeviceKey: outputUID,  // Add this!
+            kAudioAggregateDeviceIsPrivateKey: false,
+            kAudioAggregateDeviceIsStackedKey: false,
+            kAudioAggregateDeviceTapAutoStartKey: true,
+            kAudioAggregateDeviceSubDeviceListKey: [           // Add this!
+                [kAudioSubDeviceUIDKey: outputUID]
+            ],
+            kAudioAggregateDeviceTapListKey: [                 // Use dictionary format
+                [
+                    kAudioSubTapDriftCompensationKey: true,
+                    kAudioSubTapUIDKey: tapDescription.uuid.uuidString
+                ]
+            ]
         ]
         
         print("📝 Creating aggregate device with description: \(deviceDescription)")
@@ -679,6 +729,59 @@ class SystemAudioOnlyService: ObservableObject {
         isRunning = true
         
         AudioSegmentCoordinator.shared.registerSystemAudioService(self)
+    }
+    
+    private func getDefaultOutputDevice() throws -> AudioDeviceID {
+        var deviceID = AudioDeviceID()
+        var size = UInt32(MemoryLayout<AudioDeviceID>.size)
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        let status = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &address,
+            0,
+            nil,
+            &size,
+            &deviceID
+        )
+        
+        guard status == noErr else {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+        }
+        
+        return deviceID
+    }
+
+    private func getDeviceUID(_ deviceID: AudioDeviceID) throws -> String {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyDeviceUID,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        var cfUID: CFString = "" as CFString
+        var size = UInt32(MemoryLayout<CFString>.size)
+        
+        let status = withUnsafeMutablePointer(to: &cfUID) { ptr in
+            AudioObjectGetPropertyData(
+                deviceID,
+                &address,
+                0,
+                nil,
+                &size,
+                ptr
+            )
+        }
+        
+        guard status == noErr else {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+        }
+        
+        return cfUID as String
     }
     
     private func cleanupResources() {
