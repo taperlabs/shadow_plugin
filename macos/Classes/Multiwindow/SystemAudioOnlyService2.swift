@@ -635,16 +635,16 @@ class SystemAudioOnlyService: ObservableObject {
         let deviceDescription: [String: Any] = [
             kAudioAggregateDeviceNameKey: aggregateDeviceName,
             kAudioAggregateDeviceUIDKey: UUID().uuidString,
-            kAudioAggregateDeviceMainSubDeviceKey: outputUID,  // Add this!
+//            kAudioAggregateDeviceMainSubDeviceKey: outputUID,  // Add this!
             kAudioAggregateDeviceIsPrivateKey: false,
             kAudioAggregateDeviceIsStackedKey: false,
             kAudioAggregateDeviceTapAutoStartKey: true,
-            kAudioAggregateDeviceSubDeviceListKey: [           // Add this!
-                [kAudioSubDeviceUIDKey: outputUID]
-            ],
+//            kAudioAggregateDeviceSubDeviceListKey: [           // Add this!
+//                [kAudioSubDeviceUIDKey: outputUID]
+//            ],
             kAudioAggregateDeviceTapListKey: [                 // Use dictionary format
                 [
-                    kAudioSubTapDriftCompensationKey: true,
+                    kAudioSubTapDriftCompensationKey: false,
                     kAudioSubTapUIDKey: tapDescription.uuid.uuidString
                 ]
             ]
