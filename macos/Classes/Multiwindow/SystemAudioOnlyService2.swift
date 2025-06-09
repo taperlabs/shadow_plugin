@@ -589,7 +589,7 @@ class SystemAudioOnlyService: ObservableObject {
         
         cleanupResources()
         
-        try removeDevicesWithName(containing: "SystemAudioPhoenix")
+        try removeDevicesWithName(containing: "SystemAudioTapPhoenix")
         
         try validateDeviceState()
         
