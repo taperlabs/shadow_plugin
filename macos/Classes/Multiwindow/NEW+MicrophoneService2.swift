@@ -27,6 +27,14 @@ final class MicrophoneService2: NSObject, ObservableObject {
             if granted {
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
+                    
+                    self.audioRecorder?.stop()
+                    self.audioRecorder = nil
+                    self.nextAudioRecorder = nil
+                    self.nextMicSegmentFileName = ""
+                    self.micSegmentFileName = ""
+                    self.stopTimers()
+                    
                     self.baseFileName = name
                     let initialIndex = AudioSegmentCoordinator.shared.getCurrentSegmentIndex()
                     self.startNewSegment(segmentIndex: initialIndex)
