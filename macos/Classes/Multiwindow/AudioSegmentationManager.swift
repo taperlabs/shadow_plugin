@@ -17,7 +17,7 @@ class AudioSegmentCoordinator: ObservableObject {
     private weak var microphoneService: AudioSegmentService?
     
     // Timing configuration
-    private let segmentDuration: TimeInterval = 15.0
+    private let segmentDuration: TimeInterval = 10.0
     private let prepareBeforeRotation: TimeInterval = 3.0
     
     // Timing state
