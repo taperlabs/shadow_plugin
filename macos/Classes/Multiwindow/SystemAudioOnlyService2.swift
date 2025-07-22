@@ -160,7 +160,7 @@ class SystemAudioOnlyService: ObservableObject {
         let completedFileURL = self.segmentFileURLs[completedSegmentIndex]
         let completedFileName = completedFileURL?.lastPathComponent ?? "\(self.baseFilename)-\(completedSegmentIndex).m4a"
         
-        print("⭐️ Rotation triggered the file completed -- \(completedFileName), index == \(completedSegmentIndex), \(self.segmentFileURLs)")
+//        print("⭐️ Rotation triggered the file completed -- \(completedFileName), index == \(completedSegmentIndex), \(self.segmentFileURLs)")
         
         writerQueue.async { [weak self] in
             guard let self = self,
