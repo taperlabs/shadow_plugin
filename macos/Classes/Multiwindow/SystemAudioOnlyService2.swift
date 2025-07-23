@@ -496,9 +496,8 @@ class SystemAudioOnlyService: ObservableObject {
             // Stop all timers
             self?.sessionId = ""
             self?.baseFilename = ""
+            self?.cleanupResources()
         }
-        
-        cleanupResources()
         
         print("🏁 Cleanup complete")
         
@@ -545,12 +544,15 @@ class SystemAudioOnlyService: ObservableObject {
                 print("❌ Cancelled prepared next writer")
             }
             
-            // Reset all state
-            self.assetWriter = nil
-            self.assetWriterInput = nil
-            self.nextAssetWriter = nil
-            self.nextAssetWriterInput = nil
-            self.isRotationInProgress = false
+            DispatchQueue.main.async { [weak self] in
+                // Reset all state
+                self?.assetWriter = nil
+                self?.assetWriterInput = nil
+                self?.nextAssetWriter = nil
+                self?.nextAssetWriterInput = nil
+                self?.isRotationInProgress = false
+                self?.segmentFileURLs = [:]
+            }
         }
     }
     

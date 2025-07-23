@@ -82,10 +82,11 @@ final class ListeningCoordinator {
         // If we have both audio files, send the event
         if updatedEvent.microphoneFile != nil && updatedEvent.systemAudioFile != nil {
             // Dispatch to main queue if needed for UI updates
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
                 ListeningStatusService.shared.sendListeningEvent(updatedEvent.toDictionary())
+                self?.currentSegmentEvents.removeValue(forKey: index)
             }
-            currentSegmentEvents.removeValue(forKey: index)
+//            currentSegmentEvents.removeValue(forKey: index)
         }
     }
 }
