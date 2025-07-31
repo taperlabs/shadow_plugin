@@ -14,29 +14,7 @@ extension EnvironmentValues {
     }
 }
 
-struct CustomSwitchToggleStyle: ToggleStyle {
-    var tint: Color
-    
-    func makeBody(configuration: Configuration) -> some View {
-        HStack {
-            configuration.label
-            
-            Capsule()
-                .fill(configuration.isOn ? tint : Color.gray.opacity(0.3))
-                .frame(width: 40, height: 22)
-                .overlay(
-                    Circle()
-                        .fill(.white)
-                        .padding(2)
-                        .offset(x: configuration.isOn ? 9 : -9)
-                        .animation(.spring(), value: configuration.isOn)
-                )
-                .onTapGesture {
-                    configuration.isOn.toggle()
-                }
-        }
-    }
-}
+
 
 struct PreListeningView: View {
     @ObservedObject var vm: ListeningViewModel
