@@ -15,6 +15,17 @@ enum WindowCloseType: String {
 }
 
 
+public class FirstClickNSHostingView<Content>: NSHostingView<Content> where Content : View {
+    public override var acceptsFirstResponder: Bool {
+        true
+    }
+    
+    public override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        true
+    }
+}
+
+
 final class WindowManager: NSObject, NSWindowDelegate {
     // Singleton instance
     static let shared = WindowManager()
@@ -199,7 +210,8 @@ final class WindowManager: NSObject, NSWindowDelegate {
             listeningWindow.isReleasedWhenClosed = false
             
             let listeningView = NewListeningView(viewModel: listeningVM)
-            let hostingView = NSHostingView(rootView: listeningView)
+//            let hostingView = NSHostingView(rootView: listeningView)
+            let hostingView = FirstClickNSHostingView(rootView: listeningView)
             listeningWindow.contentView = hostingView
             self.updateWindowState(.listening, isRecording: true)
             MultiWindowStatusService.shared.sendWindowStatus(WindowStatus(windowState: .listening, isRecording: true))

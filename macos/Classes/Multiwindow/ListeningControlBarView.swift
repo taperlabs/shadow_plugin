@@ -2,27 +2,36 @@ import SwiftUI
 import Combine
 
 struct LottieButton: View {
+    let action: () -> Void
     @EnvironmentObject var viewModel: ListeningViewModel
     @State private var animationID = UUID()
     @State private var isAnimationRunning = false
-
-    // 애니메이션 전체 사이클의 예상 시간 (초)
+    
     let animationDuration: TimeInterval = 1.0
     let noiseThreshold: Float = 0.1
 
     var body: some View {
         Group {
-            if let waveformLottie = viewModel.waveformLottie {
-                LottieView(
-                    lottieFile: waveformLottie,
-                    loopMode: .playOnce,
-                    autostart: true,
-                    contentMode: .scaleAspectFit,
-                    stickColors: viewModel.stickColors
-                )
-                .id(animationID)
-                .frame(width: 20, height: 20)
+            ZStack {
+                if let waveformLottie = viewModel.waveformLottie {
+                    LottieView(
+                        lottieFile: waveformLottie,
+                        loopMode: .playOnce,
+                        autostart: true,
+                        contentMode: .scaleAspectFit,
+                        stickColors: viewModel.stickColors
+                    )
+                    .id(animationID)
+                    .frame(width: 20, height: 20)
+                }
+                Color.clear
+                    .contentShape(Rectangle()) // Makes the entire frame tappable
+                    .onTapGesture {
+                        // This gesture will now fire correctly on the first click!
+                        action()
+                    }
             }
+
         }
         .onReceive(
             Publishers.CombineLatest(
@@ -42,6 +51,52 @@ struct LottieButton: View {
         }
     }
 }
+
+//struct LottieButton: View {
+//    @EnvironmentObject var viewModel: ListeningViewModel
+//    @State private var animationID = UUID()
+//    @State private var isAnimationRunning = false
+//
+//    // 애니메이션 전체 사이클의 예상 시간 (초)
+//    let animationDuration: TimeInterval = 1.0
+//    let noiseThreshold: Float = 0.1
+//
+//    var body: some View {
+//        Group {
+//            if let waveformLottie = viewModel.waveformLottie {
+//                LottieView(
+//                    lottieFile: waveformLottie,
+//                    loopMode: .playOnce,
+//                    autostart: true,
+//                    contentMode: .scaleAspectFit,
+//                    stickColors: viewModel.stickColors,
+//                    onTap: {
+//                        WindowManager.shared.showMainAppWindow()
+//                        print("Lottie Button Clicked!!!")
+//                    }
+//                )
+//                .id(animationID)
+//                .frame(width: 20, height: 20)
+//            }
+//        }
+//        .onReceive(
+//            Publishers.CombineLatest(
+//                viewModel.$micNoiseLevel,
+//                viewModel.$sysNoiseLevel
+//            )
+//        ) { micNoise, sysNoise in
+//            let shouldAnimate = micNoise > noiseThreshold || sysNoise > noiseThreshold
+//
+//            if !isAnimationRunning && shouldAnimate {
+//                isAnimationRunning = true
+//                animationID = UUID()
+//                DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+//                    isAnimationRunning = false
+//                }
+//            }
+//        }
+//    }
+//}
 
 // Custom button component
 struct ControlBarButton: View {
@@ -152,11 +207,15 @@ struct ListeningControlBar: View {
                            .foregroundColor(.white)
                            .font(.system(size: 15, weight: .bold))
                    } else {
-                       LottieButton()
-                           .onTapGesture {
-                               WindowManager.shared.showMainAppWindow()
-                               print("Lottie Button Clicked!!!")
-                           }
+//                       LottieButton()
+//                           .onTapGesture {
+//                               WindowManager.shared.showMainAppWindow()
+//                               print("Lottie Button Clicked!!!")
+//                           }
+                       LottieButton(action: {
+                           WindowManager.shared.showMainAppWindow()
+                           print("Lottie Button Clicked!!!")
+                       })
                    }
                }
         .confirmationDialog("Are you sure you want to cancel?",

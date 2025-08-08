@@ -20,13 +20,15 @@ public struct LottieView: NSViewRepresentable {
         loopMode: LottieLoopMode = .loop,
         autostart: Bool = true,
         contentMode: LottieContentMode = .scaleAspectFit,
-        stickColors: [Int: Color] = [:]
+        stickColors: [Int: Color] = [:],
+        onTap: (() -> Void)? = nil
     ) {
         self.lottieFile = lottieFile
         self.loopMode = loopMode
         self.autostart = autostart
         self.contentMode = contentMode
         self.stickColors = stickColors
+        self.onTap = onTap
     }
 
     let lottieFile: String
@@ -34,6 +36,7 @@ public struct LottieView: NSViewRepresentable {
     let autostart: Bool
     let contentMode: LottieContentMode
     let stickColors: [Int: Color]  // Empty dictionary means use original colors
+    let onTap: (() -> Void)?  // Add this parameter
 
     public class Coordinator: NSObject {
         var animationView: LottieAnimationView?
@@ -81,6 +84,7 @@ public struct LottieView: NSViewRepresentable {
         if autostart {
             animationView.play()
         }
+
 
         // Add Lottie animation view to the container
         containerView.addSubview(animationView)
