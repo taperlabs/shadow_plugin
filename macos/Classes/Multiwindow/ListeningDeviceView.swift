@@ -8,16 +8,18 @@ struct ListeningDeviceView: View {
         HStack(spacing: 10) {
             Image(systemName: "mic.fill")
                 .foregroundStyle(.white)
-                .frame(maxHeight: .infinity)
+//                .frame(maxHeight: .infinity)
             Text(viewModel.defaultInputDeviceName)
                 .foregroundStyle(.white)
         }
-        .padding()
-        .frame(width: 240, height: 40, alignment: .leading)
-        .background(Color.newBgColor.clipShape(RoundedRectangle(cornerRadius: 8)))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(Color.borderColor, lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+//        .padding()
+//        .frame(width: 240, height: 40, alignment: .leading)
+//        .background(Color.accentColor)
+//        .background(Color.accentColor.clipShape(RoundedRectangle(cornerRadius: 8)))
+//        .overlay(
+//            RoundedRectangle(cornerRadius: 8)
+//                .strokeBorder(Color.borderColor, lineWidth: 1)
+//        )
     }
 }

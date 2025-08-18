@@ -592,6 +592,7 @@ class SystemAudioOnlyService: ObservableObject {
         cleanupResources()
         
         try removeDevicesWithName(containing: "SystemAudioTapPhoenix")
+        try removeDevicesWithName(containing: "ShadowSystemAudioDevice_")
         
         try validateDeviceState()
         
@@ -839,15 +840,28 @@ class SystemAudioOnlyService: ObservableObject {
             let hasAggregateProperty = AudioObjectHasProperty(deviceID, &aggregatePropertyAddress)
             
             if hasAggregateProperty {
-                // Get device name
+                // Get device name property address
                 var namePropertyAddress = AudioObjectPropertyAddress(
                     mSelector: kAudioObjectPropertyName,
                     mScope: kAudioObjectPropertyScopeGlobal,
                     mElement: kAudioObjectPropertyElementMain
                 )
                 
-                var name: CFString = "" as CFString
-                var nameSize = UInt32(MemoryLayout<CFString>.size)
+                // First, get the actual size needed for the name
+                var nameSize: UInt32 = 0
+                var sizeStatus = AudioObjectGetPropertyDataSize(
+                    deviceID,
+                    &namePropertyAddress,
+                    0,
+                    nil,
+                    &nameSize
+                )
+                
+                guard sizeStatus == noErr else { continue }
+                
+                // Create a buffer for the CFString
+                let name = UnsafeMutablePointer<CFString?>.allocate(capacity: 1)
+                defer { name.deallocate() }
                 
                 let nameStatus = AudioObjectGetPropertyData(
                     deviceID,
@@ -855,11 +869,11 @@ class SystemAudioOnlyService: ObservableObject {
                     0,
                     nil,
                     &nameSize,
-                    &name
+                    name
                 )
                 
-                if nameStatus == noErr {
-                    let deviceName = name as String
+                if nameStatus == noErr, let cfName = name.pointee {
+                    let deviceName = cfName as String
                     print("Found aggregate device: '\(deviceName)' (ID: \(deviceID))")
                     
                     // Check if name matches pattern
@@ -879,6 +893,98 @@ class SystemAudioOnlyService: ObservableObject {
             }
         }
     }
+    
+//    func removeDevicesWithName(containing namePattern: String) throws {
+//        // Get the AudioHardware object
+//        var propertyAddress = AudioObjectPropertyAddress(
+//            mSelector: kAudioHardwarePropertyDevices,
+//            mScope: kAudioObjectPropertyScopeGlobal,
+//            mElement: kAudioObjectPropertyElementMain
+//        )
+//        
+//        // Get size of device list
+//        var dataSize: UInt32 = 0
+//        var status = AudioObjectGetPropertyDataSize(
+//            AudioObjectID(kAudioObjectSystemObject),
+//            &propertyAddress,
+//            0,
+//            nil,
+//            &dataSize
+//        )
+//        
+//        guard status == noErr else {
+//            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+//        }
+//        
+//        // Get device list
+//        let deviceCount = Int(dataSize) / MemoryLayout<AudioObjectID>.size
+//        var deviceIDs = Array<AudioObjectID>(repeating: 0, count: deviceCount)
+//        
+//        status = AudioObjectGetPropertyData(
+//            AudioObjectID(kAudioObjectSystemObject),
+//            &propertyAddress,
+//            0,
+//            nil,
+//            &dataSize,
+//            &deviceIDs
+//        )
+//        
+//        guard status == noErr else {
+//            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+//        }
+//        
+//        // Check each device
+//        for deviceID in deviceIDs {
+//            // Check if it's an aggregate device
+//            var aggregatePropertyAddress = AudioObjectPropertyAddress(
+//                mSelector: kAudioAggregateDevicePropertyComposition,
+//                mScope: kAudioObjectPropertyScopeGlobal,
+//                mElement: kAudioObjectPropertyElementMain
+//            )
+//            
+//            let hasAggregateProperty = AudioObjectHasProperty(deviceID, &aggregatePropertyAddress)
+//            
+//            if hasAggregateProperty {
+//                // Get device name
+//                var namePropertyAddress = AudioObjectPropertyAddress(
+//                    mSelector: kAudioObjectPropertyName,
+//                    mScope: kAudioObjectPropertyScopeGlobal,
+//                    mElement: kAudioObjectPropertyElementMain
+//                )
+//                
+//                var name: CFString = "" as CFString
+//                var nameSize = UInt32(MemoryLayout<CFString>.size)
+//                
+//                let nameStatus = AudioObjectGetPropertyData(
+//                    deviceID,
+//                    &namePropertyAddress,
+//                    0,
+//                    nil,
+//                    &nameSize,
+//                    &name
+//                )
+//                
+//                if nameStatus == noErr {
+//                    let deviceName = name as String
+//                    print("Found aggregate device: '\(deviceName)' (ID: \(deviceID))")
+//                    
+//                    // Check if name matches pattern
+//                    if deviceName.contains(namePattern) {
+//                        print("➡️ Removing aggregate device: \(deviceName)")
+//                        
+//                        // Destroy the aggregate device using the correct function
+//                        let destroyStatus = AudioHardwareDestroyAggregateDevice(deviceID)
+//                        
+//                        if destroyStatus == noErr {
+//                            print("✅ Successfully removed aggregate device: \(deviceName)")
+//                        } else {
+//                            print("❌ Failed to remove aggregate device: \(deviceName), status: \(destroyStatus)")
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
     
     private func cleanupResources() {
         // First stop and destroy the IO proc if it exists

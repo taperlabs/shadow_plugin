@@ -44,7 +44,7 @@ struct ListeningDeviceListView: View {
                     .frame(maxWidth: .infinity, maxHeight: 25, alignment: .leading)
 
                 }
-            .padding(EdgeInsets(top: 7, leading: 12, bottom: 5, trailing: 30))
+//            .padding(EdgeInsets(top: 7, leading: 12, bottom: 5, trailing: 30))
         }
         .onAppear{
             viewModel.setAudioDeviceListener()
@@ -56,12 +56,14 @@ struct ListeningDeviceListView: View {
             selectedDeviceId = newDeviceID
             print("Updated defaultInputDevice: \(viewModel.defaultInputDeviceName)")
         }
-        .background(Color.newBgColor.clipShape(RoundedRectangle(cornerRadius: 8)))
+        .frame(maxWidth: .infinity, maxHeight: dynamicHeight)
+        .fixedSize(horizontal: false, vertical: true)
+//        .background(Color.newBgColor.clipShape(RoundedRectangle(cornerRadius: 8)))
         // 폭은 고정, 높이는 min~max 범위 내에서 자동으로
-        .frame(width: 240, height: dynamicHeight)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(Color.borderColor, lineWidth: 1)
-        )
+//        .frame(width: 240, height: dynamicHeight, alignment: .leading)
+//        .overlay(
+//            RoundedRectangle(cornerRadius: 8)
+//                .strokeBorder(Color.borderColor, lineWidth: 1)
+//        )
     }
 }

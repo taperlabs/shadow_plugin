@@ -74,13 +74,13 @@ struct InPersonMeetingToggleView: View {
                 .font(.system(size: fontSize, weight: fontWeight))
             
             Spacer()
-                .frame(maxWidth: 10)
+                .frame(maxWidth: 23)
             
             Toggle("", isOn: $isInPersonMeeting)
                 .toggleStyle(CustomSwitchToggleStyle(tint: .accentColor))
                 .labelsHidden()
         }
-        .padding(.horizontal, 5)
+//        .padding(.horizontal, 5)
 //        .padding(.vertical, 8)
 //        .cornerRadius(8)
         .opacity(opacity)
