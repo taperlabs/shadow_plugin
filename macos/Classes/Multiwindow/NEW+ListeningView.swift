@@ -65,7 +65,7 @@ struct NewListeningView: View {
                     .fill(Color.newBgColor)
                     .stroke(Color.gray.opacity(0.3), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+//            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
             .opacity(isControlBarExpanded ? 1 : 0)
             .animation(.easeInOut, value: isControlBarExpanded)
             
