@@ -22,16 +22,16 @@ struct CustomSwitchToggleStyle: ToggleStyle {
 
             ZStack {
                 Capsule()
-                    .fill(configuration.isOn ? tint : Color.gray.opacity(0.3))
+                    .fill(configuration.isOn ? tint : Color.newBgColor)
                     .frame(width: trackWidth, height: trackHeight)
 
                 // 경계는 내부에만 그리게 (붙어 보이지 않게)
                 Capsule()
-                    .strokeBorder(Color.buttonWhiteColor.opacity(0.3), lineWidth: strokeLineWidth)
+                    .strokeBorder(Color.borderColor, lineWidth: strokeLineWidth)
                     .frame(width: trackWidth, height: trackHeight)
 
                 Circle()
-                    .fill(.white)
+                    .fill(Color.borderColor)
                     .frame(width: knobSize, height: knobSize)
                     .offset(x: configuration.isOn ? effectiveOffset : -effectiveOffset)
                     .animation(.spring(), value: configuration.isOn)
@@ -77,7 +77,7 @@ struct InPersonMeetingToggleView: View {
                 .frame(maxWidth: 23)
             
             Toggle("", isOn: $isInPersonMeeting)
-                .toggleStyle(CustomSwitchToggleStyle(tint: .accentColor))
+                .toggleStyle(CustomSwitchToggleStyle(tint: Color.brandPrimaryColor))
                 .labelsHidden()
         }
 //        .padding(.horizontal, 5)

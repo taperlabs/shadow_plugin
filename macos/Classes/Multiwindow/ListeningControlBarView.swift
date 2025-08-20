@@ -162,6 +162,7 @@ struct ListeningControlBar: View {
                            },
                            color: Color.buttonWhiteColor
                        )
+                       .padding(.leading, 5)
                        
                        ControlDivider()
                        

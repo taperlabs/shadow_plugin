@@ -7,10 +7,10 @@ struct ListeningDeviceView: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "mic.fill")
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.buttonWhiteColor)
 //                .frame(maxHeight: .infinity)
             Text(viewModel.defaultInputDeviceName)
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.buttonWhiteColor)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
 //        .padding()

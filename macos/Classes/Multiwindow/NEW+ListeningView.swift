@@ -8,9 +8,9 @@ struct NewListeningView: View {
     @State private var isInPersonMeeting = false  // Toggle state
     
     var body: some View {
-        VStack(alignment: .trailing, spacing: 5) {
+        VStack(alignment: .trailing, spacing: 15) {
             // Settings Panel - grouped with styling
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 7) {
                 // Toggle은 항상 같은 위치에서 렌더링 - 흔들림 방지
                 InPersonMeetingToggleView(
                     isInPersonMeeting: $isInPersonMeeting,
@@ -59,7 +59,7 @@ struct NewListeningView: View {
             }
             .frame(width: 220)
 //            .frame(maxHeight: 150)
-            .padding(EdgeInsets(top: 15, leading: 15, bottom: 20, trailing: 15))
+            .padding(EdgeInsets(top: 13, leading: 15, bottom: 13, trailing: 15))
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color.newBgColor)
