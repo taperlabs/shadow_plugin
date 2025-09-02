@@ -84,8 +84,9 @@ final class ListeningCoordinator {
             // Dispatch to main queue if needed for UI updates
             DispatchQueue.main.async { [weak self] in
                 ListeningStatusService.shared.sendListeningEvent(updatedEvent.toDictionary())
-                self?.currentSegmentEvents.removeValue(forKey: index)
+//                self?.currentSegmentEvents.removeValue(forKey: index)
             }
+            currentSegmentEvents.removeValue(forKey: index)
 //            currentSegmentEvents.removeValue(forKey: index)
         }
     }

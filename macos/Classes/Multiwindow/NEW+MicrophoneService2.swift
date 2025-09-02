@@ -140,24 +140,45 @@ final class MicrophoneService2: NSObject, ObservableObject {
         let oldRecorder = recorder
         // 현재 녹음기에서 delegate 제거 (더 이상 이벤트를 받지 않도록)
         oldRecorder.delegate = nil
+        
+        // ❗️ 1. 상태가 변경되기 전에 현재 파일 이름을 별도 상수에 저장
+        let completedFileName = self.micSegmentFileName
         // 현재 녹음 중지
         oldRecorder.stop()
         
         let currentIndex = AudioSegmentCoordinator.shared.getCurrentSegmentIndex()
         
-        // 현재 세그먼트 처리를 직접 수행 (delegate에 의존하지 않음)
-        if !isCancelled && !isFinishedListening {
-            ListeningCoordinator.shared.handleMicrophoneSegment(index: currentIndex, fileName: micSegmentFileName)
-            
-            // 전체 녹음이 중단되지 않았다면 다음 세그먼트를 시작합니다.
-            if isRecording {
-                startNewSegment(segmentIndex: newIndex)
-            }
-        } else if isCancelled {
-            ListeningCoordinator.shared.handleMicrophoneSegment(index: currentIndex, fileName: micSegmentFileName, isFinished: true, isCancelled: true)
-        } else if isFinishedListening {
-            ListeningCoordinator.shared.handleMicrophoneSegment(index: currentIndex, fileName: micSegmentFileName, isFinished: true)
+        // 2. 다음 세그먼트 녹음을 시작 --> 이때 self.micSegmentFileName이 변경됨
+        if !isCancelled && !isFinishedListening && isRecording {
+            startNewSegment(segmentIndex: newIndex)
         }
+
+        // 3. 알림을 보낼 때는 아까 캡처해 둔 `completedFileName`을 사용합
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            guard let self = self else { return }
+            
+            if !self.isCancelled && !self.isFinishedListening {
+                ListeningCoordinator.shared.handleMicrophoneSegment(index: currentIndex, fileName: completedFileName) // 여기
+            } else if self.isCancelled {
+                ListeningCoordinator.shared.handleMicrophoneSegment(index: currentIndex, fileName: completedFileName, isFinished: true, isCancelled: true) // 여기
+            } else if self.isFinishedListening {
+                ListeningCoordinator.shared.handleMicrophoneSegment(index: currentIndex, fileName: completedFileName, isFinished: true) // 여기
+            }
+        }
+        
+        // 현재 세그먼트 처리를 직접 수행 (delegate에 의존하지 않음)
+//        if !isCancelled && !isFinishedListening {
+//            ListeningCoordinator.shared.handleMicrophoneSegment(index: currentIndex, fileName: micSegmentFileName)
+//            
+//            // 전체 녹음이 중단되지 않았다면 다음 세그먼트를 시작합니다.
+//            if isRecording {
+//                startNewSegment(segmentIndex: newIndex)
+//            }
+//        } else if isCancelled {
+//            ListeningCoordinator.shared.handleMicrophoneSegment(index: currentIndex, fileName: micSegmentFileName, isFinished: true, isCancelled: true)
+//        } else if isFinishedListening {
+//            ListeningCoordinator.shared.handleMicrophoneSegment(index: currentIndex, fileName: micSegmentFileName, isFinished: true)
+//        }
     }
     
     /// 녹음 중지 (전체 녹음 종료)
@@ -174,22 +195,42 @@ final class MicrophoneService2: NSObject, ObservableObject {
             let currentRecorder = self.audioRecorder
             
             // 녹음기의 delegate를 nil로 설정하여 더 이상 이벤트를 받지 않도록 함
-            currentRecorder?.delegate = nil
+//            currentRecorder?.delegate = nil
             
             let currentIndex = AudioSegmentCoordinator.shared.getCurrentSegmentIndex()
             
+            // ❗️ 1. 상태가 초기화되기 전에 마지막 파일 이름을 캡처
+            let finalFileName = self.micSegmentFileName
+            
             // 마지막 세그먼트 처리를 직접 수행
-            if let recorder = currentRecorder, recorder.isRecording {
-                recorder.stop()
-                
-                // delegate 메서드를 대신해서 직접 처리
-                ListeningCoordinator.shared.handleMicrophoneSegment(
-                    index: currentIndex,
-                    fileName: micSegmentFileName,
-                    isFinished: true,
-                    isCancelled: isCancelled
-                )
-            }
+             if let recorder = currentRecorder, recorder.isRecording {
+                 // delegate를 stop 전에 nil로 설정하여 예기치 않은 delegate 호출을 막기
+                 recorder.delegate = nil
+                 recorder.stop()
+                 
+                 // ❗️ 2. File I/O 경쟁 상태를 막기 위해 asyncAfter를 추가
+                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                     ListeningCoordinator.shared.handleMicrophoneSegment(
+                         index: currentIndex,
+                         fileName: finalFileName, // 캡처해 둔 파일 이름 사용
+                         isFinished: true,
+                         isCancelled: isCancelled
+                     )
+                 }
+             }
+            
+            // 마지막 세그먼트 처리를 직접 수행
+//            if let recorder = currentRecorder, recorder.isRecording {
+//                recorder.stop()
+//                
+//                // delegate 메서드를 대신해서 직접 처리
+//                ListeningCoordinator.shared.handleMicrophoneSegment(
+//                    index: currentIndex,
+//                    fileName: micSegmentFileName,
+//                    isFinished: true,
+//                    isCancelled: isCancelled
+//                )
+//            }
             
             // 모든 상태 및 참조 초기화
             self.baseFileName = ""

@@ -179,9 +179,34 @@ class SystemAudioOnlyService: ObservableObject {
             
             // Finish old writer asynchronously
             oldWriter?.finishWriting { [weak self] in
+                
+                // 1. ⭐️ 상태(Status)를 가장 먼저 확인.
+                guard oldWriter?.status == .completed else {
+                    // 쓰기 작업이 성공적으로 완료되지 않음.
+                    ShadowLogger.shared.error("❌ File writing did not complete successfully. Status: \(String(describing: oldWriter?.status))")
+                    print("❌ File writing did not complete successfully. Status: \(String(describing: oldWriter?.status))")
+                    
+                    if let error = oldWriter?.error {
+                        // 에러가 있다면 상세 내용을 로그
+                        ShadowLogger.shared.error("Writer Error : \(error.localizedDescription)")
+                        print("🚨 Writer Error: \(error.localizedDescription)")
+                    }
+                    
+                    DispatchQueue.main.async {
+                        ListeningCoordinator.shared.handleSystemAudioSegment(
+                            index: completedSegmentIndex,
+                            fileName: completedFileName
+                        )
+                    }
+                    
+                    // 실패했으므로 다음 단계(파일 경로 전송)를 진행 X
+                    self?.isRotationInProgress = false
+                    return
+                }
+                
                 print("✅ Finished writing previous audio segment")
                 // Notify the ListeningCoordinator about the completed segment
-                DispatchQueue.main.async {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     ListeningCoordinator.shared.handleSystemAudioSegment(
                         index: completedSegmentIndex,
                         fileName: completedFileName
@@ -529,7 +554,8 @@ class SystemAudioOnlyService: ObservableObject {
             currentWriter?.finishWriting {
                 print("✅ Finished writing final audio segment -- Index : \(finalSegmentIndex), FileName : \(finalFileName)")
                 
-                DispatchQueue.main.async {
+                // ❗️동일한 File I/O 경쟁 상태를 막기 위해 안전 여유 시간을 추가
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     ListeningCoordinator.shared.handleSystemAudioSegment(
                         index: finalSegmentIndex,
                         fileName: finalFileName
@@ -559,6 +585,70 @@ class SystemAudioOnlyService: ObservableObject {
     func cancelRecording() {
         // Use the existing stopRecording method but indicate it was cancelled
         stopRecording(isCancelled: true)
+    }
+    
+    private func validateFileWithRetry(
+        at url: URL,
+        maxRetries: Int = 5,
+        retryInterval: TimeInterval = 0.1,
+        minSize: Int64 = 1000,
+        completion: @escaping (Bool) -> Void
+    ) {
+        var retryCount = 0
+        
+        func attemptValidation() {
+            if validateAudioFile(at: url, minSize: minSize) {
+                completion(true)
+            } else if retryCount < maxRetries {
+                retryCount += 1
+                print("🔄 Retrying file validation (\(retryCount)/\(maxRetries))...")
+                DispatchQueue.main.asyncAfter(deadline: .now() + retryInterval) {
+                    attemptValidation()
+                }
+            } else {
+                print("❌ File validation failed after \(maxRetries) retries")
+                completion(false)
+            }
+        }
+        
+        attemptValidation()
+    }
+    
+    /// 파일이 유효한지 검증 (존재 여부, 크기, 읽기 가능)
+    private func validateAudioFile(at url: URL, minSize: Int64 = 1000) -> Bool {
+        do {
+            // 1. 파일 존재 확인
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                print("⚠️ File does not exist: \(url.lastPathComponent)")
+                return false
+            }
+            
+            // 2. 파일 속성 및 크기 확인
+            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            let fileSize = attributes[.size] as? Int64 ?? 0
+            
+            if fileSize < minSize {
+                print("⚠️ File too small: \(fileSize) bytes (min: \(minSize)) - \(url.lastPathComponent)")
+                return false
+            }
+            
+            // 3. 파일 읽기 가능 확인 (첫 바이트만 시도)
+            let fileHandle = try FileHandle(forReadingFrom: url)
+            defer { fileHandle.closeFile() }
+            
+            let data = fileHandle.readData(ofLength: 1)
+            if data.isEmpty {
+                print("⚠️ File is not readable: \(url.lastPathComponent)")
+                return false
+            }
+            
+            print("✅ File validation passed: \(url.lastPathComponent) (\(fileSize) bytes)")
+            return true
+            
+        } catch {
+            print("❌ File validation error: \(error.localizedDescription) - \(url.lastPathComponent)")
+            return false
+        }
     }
     
     private func validateDeviceState() throws {
