@@ -29,8 +29,8 @@ final class ListeningCoordinator {
     
     // MARK: - Segment Management
     private var currentSegmentEvents: [Int: AudioSegmentEvent] = [:]
-    private var isFinishedListening: Bool = false
-    private var isCancelledListening: Bool = false
+//    private var isFinishedListening: Bool = false
+//    private var isCancelledListening: Bool = false
     
     // MARK: - Event Handling
     func handleMicrophoneSegment(index: Int, fileName: String, isFinished: Bool = false, isCancelled: Bool = false) {
@@ -39,15 +39,15 @@ final class ListeningCoordinator {
         queue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
             
-            self.isFinishedListening = isFinished
-            self.isCancelledListening = isCancelled
+//            self.isFinishedListening = isFinished
+//            self.isCancelledListening = isCancelled
             self.updateSegmentEvent(index: index) { event in
                 AudioSegmentEvent(
                     microphoneFile: fileName,
                     systemAudioFile: event?.systemAudioFile,
                     segmentIndex: index,
-                    isFinishedListening: self.isFinishedListening,
-                    isCancelledListening: self.isCancelledListening
+                    isFinishedListening: isFinished,
+                    isCancelledListening: isCancelled
                 )
             }
         }
@@ -64,8 +64,8 @@ final class ListeningCoordinator {
                     microphoneFile: event?.microphoneFile,
                     systemAudioFile: fileName,
                     segmentIndex: index,
-                    isFinishedListening: self.isFinishedListening,
-                    isCancelledListening: self.isCancelledListening
+                    isFinishedListening: event?.isFinishedListening ?? false,
+                    isCancelledListening: event?.isCancelledListening ?? false
                 )
             }
         }
@@ -81,13 +81,8 @@ final class ListeningCoordinator {
         
         // If we have both audio files, send the event
         if updatedEvent.microphoneFile != nil && updatedEvent.systemAudioFile != nil {
-            // Dispatch to main queue if needed for UI updates
-            DispatchQueue.main.async { [weak self] in
-                ListeningStatusService.shared.sendListeningEvent(updatedEvent.toDictionary())
-//                self?.currentSegmentEvents.removeValue(forKey: index)
-            }
+            ListeningStatusService.shared.sendListeningEvent(updatedEvent.toDictionary())
             currentSegmentEvents.removeValue(forKey: index)
-//            currentSegmentEvents.removeValue(forKey: index)
         }
     }
 }
@@ -95,18 +90,18 @@ final class ListeningCoordinator {
 // MARK: - Audio Segment Coordinator
 //final class ListeningCoordinator {
 //    static let shared = ListeningCoordinator()
-//    
+//
 //    private init() {}
-//    
+//
 //    // MARK: - Segment Management
 //    private var currentSegmentEvents: [Int: AudioSegmentEvent] = [:]
 //    private var isFinishedListening: Bool = false
 //    private var isCancelledListening: Bool = false  // Added flag
-//    
+//
 //    // MARK: - Event Handling
 //    func handleMicrophoneSegment(index: Int, fileName: String, isFinished: Bool = false, isCancelled: Bool = false) {
 //        print("🎙️ \(index) -- \(fileName) got called for Mic Audio")
-//        
+//
 //        isFinishedListening = isFinished
 //        isCancelledListening = isCancelled
 //        updateSegmentEvent(index: index) { event in
@@ -119,10 +114,10 @@ final class ListeningCoordinator {
 //            )
 //        }
 //    }
-//    
+//
 //    func handleSystemAudioSegment(index: Int, fileName: String) {
 //        print("🖥️ \(index) -- \(fileName) got called for System Audio")
-//        
+//
 //        updateSegmentEvent(index: index) { event in
 //            AudioSegmentEvent(
 //                microphoneFile: event?.microphoneFile,
@@ -133,14 +128,14 @@ final class ListeningCoordinator {
 //            )
 //        }
 //    }
-//    
+//
 //    private func updateSegmentEvent(index: Int, updateHandler: (AudioSegmentEvent?) -> AudioSegmentEvent) {
 //        let currentEvent = currentSegmentEvents[index]
 //        let updatedEvent = updateHandler(currentEvent)
 //        currentSegmentEvents[index] = updatedEvent
-//        
+//
 //        print("🗂️ Update Segment Event Called ")
-//        
+//
 //        // If we have both audio files, send the event
 //        if updatedEvent.microphoneFile != nil && updatedEvent.systemAudioFile != nil {
 //            ListeningStatusService.shared.sendListeningEvent(updatedEvent.toDictionary())
