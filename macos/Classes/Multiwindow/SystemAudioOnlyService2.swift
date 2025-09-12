@@ -263,6 +263,7 @@ class SystemAudioOnlyService: ObservableObject {
                     self.assetWriter = newWriter
                     self.assetWriterInput = newInput
                 } catch {
+                    ShadowLogger.shared.error("❌ Failed to create new writer during rotation: \(error.localizedDescription)")
                     print("❌ Failed to create new writer during rotation: \(error.localizedDescription)")
                     self.isRotationInProgress = false
                     return
@@ -498,6 +499,7 @@ class SystemAudioOnlyService: ObservableObject {
             )
             
             guard formatStatus == noErr else {
+                ShadowLogger.shared.error("Failed to get audio format for preparation.")
                 print("❌ Failed to get audio format for preparation")
                 return
             }
@@ -508,6 +510,7 @@ class SystemAudioOnlyService: ObservableObject {
                 self.nextAssetWriterInput = input
                 print("✅ Next segment writer ready")
             } catch {
+                ShadowLogger.shared.error("❌ Failed to prepare next writer: \(error.localizedDescription)")
                 print("❌ Failed to prepare next writer: \(error.localizedDescription)")
             }
         }
