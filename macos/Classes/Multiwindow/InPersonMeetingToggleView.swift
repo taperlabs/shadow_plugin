@@ -80,9 +80,6 @@ struct InPersonMeetingToggleView: View {
                 .toggleStyle(CustomSwitchToggleStyle(tint: Color.brandPrimaryColor))
                 .labelsHidden()
         }
-//        .padding(.horizontal, 5)
-//        .padding(.vertical, 8)
-//        .cornerRadius(8)
         .opacity(opacity)
         .onChange(of: isInPersonMeeting) { oldValue, newValue in
             print("Toggle changed from \(oldValue) to \(newValue)")

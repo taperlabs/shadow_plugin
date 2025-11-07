@@ -117,8 +117,66 @@ class _MyAppState extends State<MyApp> {
     getAudioInputDeviceList();
     _setupMultiWindowStatusEventStream();
     _setupListeningStatusEventStream();
+    _shadowPlugin.setNativeCallHandler(_handleNativeCall);
 
     // initPlatformState();
+  }
+
+  Future<dynamic> _handleNativeCall(MethodCall call) async {
+    print("Flutter received a native call: ${call.method} with arguments: ${call.arguments}");
+
+    // Handle different method calls from native code
+    switch (call.method) {
+      case 'onCaptureTargetSelected':
+        // Handle capture target selection from Swift
+        final data = Map<String, dynamic>.from(call.arguments);
+        final type = data['type'];
+
+        print("Capture Target Selected:");
+        print("  Type: $type");
+
+        if (type == 'noCapture') {
+          print("  No capture selected");
+        } else {
+          // WindowInfo or DisplayInfo data
+          print("  Full data: $data");
+
+          // Common fields for both window and display
+          if (data.containsKey('windowID')) {
+            // WindowInfo
+            print("  Window ID: ${data['windowID']}");
+            print("  Title: ${data['title']}");
+            print("  App: ${data['owningApplicationName']}");
+            print("  Bundle ID: ${data['bundleID']}");
+            print("  Position: (${data['x']}, ${data['y']})");
+            print("  Size: ${data['width']} x ${data['height']}");
+            print("  Is Active: ${data['isActive']}");
+          } else if (data.containsKey('displayID')) {
+            // DisplayInfo
+            print("  Display ID: ${data['displayID']}");
+            print("  Name: ${data['localizedName']}");
+            print("  Position: (${data['x']}, ${data['y']})");
+            print("  Size: ${data['width']} x ${data['height']}");
+          }
+        }
+
+        // You can update UI state here if needed
+        // setState(() {
+        //   // Update some state based on the selected target
+        // });
+        break;
+
+      case 'someNativeMethod':
+        // Handle the method and log the arguments
+        print("Handling someNativeMethod with arguments: ${call.arguments}");
+        break;
+
+      default:
+        throw PlatformException(
+          code: 'Unimplemented',
+          message: 'Method ${call.method} not implemented in Flutter.',
+        );
+    }
   }
 
   connectWebSocket(String uuid) {
@@ -140,7 +198,13 @@ class _MyAppState extends State<MyApp> {
 
     print("convUuid: ${currentUUID} micFileName: $micFileName -- systemFileName: $systemFileName");
 
-    final listeningConfig = {'userName': "Phoenix", 'micFileName': micFileName, 'sysFileName': systemFileName, 'uuid': currentUUID};
+    final listeningConfig = {
+      'userName': "Phoenix",
+      'micFileName': micFileName,
+      'sysFileName': systemFileName,
+      'uuid': currentUUID,
+      'shouldScreenshotCapture': true
+    };
 
     await _shadowPlugin.testStartListening(listeningConfig: listeningConfig);
     connectWebSocket(currentUUID);

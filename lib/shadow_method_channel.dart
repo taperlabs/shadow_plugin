@@ -6,6 +6,7 @@ import 'shadow_platform_interface.dart';
 /// An implementation of [ShadowPlatform] that uses method channels.
 class MethodChannelShadow extends ShadowPlatform {
   /// The method channel used to interact with the native platform.
+  /// This channel is bi-directional: Flutter → Swift and Swift → Flutter
   @visibleForTesting
   final methodChannel = const MethodChannel('shadow');
   final _micEventChannel = const EventChannel('phoenixMicEventChannel');
@@ -270,5 +271,10 @@ class MethodChannelShadow extends ShadowPlatform {
   @override
   Future<void> stopRecordingMicAndSystemAudio() async {
     return methodChannel.invokeMethod('stopSystemAndMicAudioRecording');
+  }
+
+  @override
+  void setNativeCallHandler(Future<dynamic> Function(MethodCall call)? handler) {
+    methodChannel.setMethodCallHandler(handler);
   }
 }

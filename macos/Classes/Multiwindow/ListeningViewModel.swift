@@ -21,6 +21,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     private var microphoneService = MicrophoneService()
     private var screenCaptureService = ScreenCaptureService()
     private var coreAudioService = CoreAudioService()
+    var screenshotCaptureService = ScreenshotCaptureService()
     private var cancellables = Set<AnyCancellable>()
     
     @Published var showListeningView: Bool = false
@@ -43,7 +44,11 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     @Published var defaultInputDevice: AudioDeviceID?
     @Published var defaultOutputDevice: AudioDeviceID?
     @Published var inputDevices: [AudioDevice] = []
-    
+
+    @Published var captureTargets: [CaptureTarget] = []
+    @Published var selectedCaptureTarget: CaptureTarget? = .noCapture
+    @Published var shouldScreenshotCapture: Bool = false
+
     @Published var username: String?
     @Published var micFileName: String?
     @Published var sysFileName: String?
@@ -110,11 +115,13 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         super.init()
         print("ListeningViewModel initialized 🦊")
         setupSubscriptions()
+        setAudioDeviceListener()
     }
     
     deinit {
         print("ListeningViewModel deinitialized 🦊")
         print("ListeningViewModel deinitializing - memory address: \(Unmanaged.passUnretained(self).toOpaque())")
+        removeAudioDeviceListener()
     }
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
@@ -276,11 +283,12 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         countdownNumber = nil
     }
     
-    func setRecordingProperties(userName: String, micFileName: String, sysFileName: String, uuid: String) {
+    func setRecordingProperties(userName: String, micFileName: String, sysFileName: String, uuid: String, shouldScreenshotCapture: Bool) {
         self.username = userName
         self.micFileName = micFileName
         self.sysFileName = sysFileName
         self.uuid = uuid
+        self.shouldScreenshotCapture = shouldScreenshotCapture
     }
     
     func setHotkeys(with hotkey: String) {
@@ -390,6 +398,20 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             .receive(on: RunLoop.main)
             .sink { [weak self] newValue in
                 self?.sendEvent(["isRecording": newValue])
+            }
+            .store(in: &cancellables)
+
+        // ScreenshotCaptureService subscriptions
+        screenshotCaptureService.$windows
+            .combineLatest(screenshotCaptureService.$displays)
+            .map { windows, displays in
+                let displayTargets = displays.map { CaptureTarget.display($0) }
+                let windowTargets = windows.map { CaptureTarget.window($0) }
+                return [.noCapture] + displayTargets + windowTargets
+            }
+            .receive(on: RunLoop.main)
+            .sink { [weak self] targets in
+                self?.captureTargets = targets
             }
             .store(in: &cancellables)
     }
@@ -506,6 +528,15 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         if let audioDeviceID = coreAudioService.getInputDeviceID(fromName: name) {
             _ = coreAudioService.setDefaultAudioInputDevice(deviceID: audioDeviceID)
         }
+    }
+
+    func fetchCaptureTargets() async {
+        await screenshotCaptureService.getAvailableDisplays()
+        await screenshotCaptureService.getAvailableTargets()
+    }
+    
+    func fetchAppIcon(bundleID: String) -> NSImage? {
+        return ScreenshotCaptureService.getAppIcon(for: bundleID)
     }
     
     func startMicRecording() {

@@ -39,7 +39,22 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     let coreAudioHandler = CoreAudioHandler()
     let screenCaptureKitBugEventsClass = ScreenCaptureKitBugHandler()
     var systemAudioOnlyPermission = SystemAudioOnlyPermission()
-
+    
+    private static var nativeMethodChannel: FlutterMethodChannel?
+    
+    // MARK: - Native to Flutter Communication
+    /// Sends data from Swift native code to Flutter via the native method channel
+    /// - Parameters:
+    ///   - method: The method name that Flutter will receive in the MethodCall
+    ///   - data: The data payload to send (can be any encodable type)
+    static func sendToFlutter(method: String, data: Any) {
+        guard let channel = nativeMethodChannel else {
+            print("Warning: nativeMethodChannel is nil. Make sure the plugin is registered.")
+            return
+        }
+        
+        channel.invokeMethod(method, arguments: data)
+    }
     
     func isFontAvailable(_ fontName: String) -> Bool {
         _ = NSFontManager.shared.availableFontFamilies
@@ -174,6 +189,9 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         let channel = FlutterMethodChannel(name: "shadow", binaryMessenger: registrar.messenger)
         let instance = ShadowPlugin()
         
+        // Use the same channel for bi-directional communication
+        nativeMethodChannel = channel
+        
         let fileManager = FileManager.default
         guard let appSupportDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             fatalError("Cannot find Application Support directory")
@@ -182,7 +200,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         // com.taperlab.shadow/logs 디렉토리 경로 생성
         let taperLabDir = appSupportDir.appendingPathComponent("com.taperlabs.shadow", isDirectory: true)
         let logsDir = taperLabDir.appendingPathComponent("logs", isDirectory: true)
-
+        
         // 로거 설정
         ShadowLogger.configure(
             subsystem: "com.taperlabs.shadow",
@@ -289,7 +307,9 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
               let userName = listeningConfig["userName"] as? String,
               let micFileName = listeningConfig["micFileName"] as? String,
               let sysFileName = listeningConfig["sysFileName"] as? String,
-              let convUuid = listeningConfig["uuid"] as? String else {
+              let convUuid = listeningConfig["uuid"] as? String,
+              let shouldScreenshotCapture =  listeningConfig["shouldScreenshotCapture"] as? Bool else
+        {
             result(FlutterError(
                 code: "INVALID_ARGUMENTS",
                 message: "Missing or invalid listeningConfig parameters",
@@ -332,7 +352,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "UNAVAILABLE", message: "ListeningViewModel not available in windowManager", details: nil))
             return
         }
-        newListeningVM.setRecordingProperties(userName: userName, micFileName: micFileName, sysFileName: sysFileName, uuid: convUuid)
+        newListeningVM.setRecordingProperties(userName: userName, micFileName: micFileName, sysFileName: sysFileName, uuid: convUuid, shouldScreenshotCapture: shouldScreenshotCapture)
         
         if WindowManager.shared.currentWindow == nil {
             windowManager?.createListeningWindow()
@@ -390,7 +410,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             print("Cehck System Audio Permission")
             let permission = systemAudioOnlyPermission.checkPermissionStatus()
             result(permission)
-        
+            
         case .requestSystemAudioPermission:
             print("requestSystemAudioPermission")
             result("requestSystemAudioPermission")
@@ -584,12 +604,12 @@ extension ShadowPlugin {
 
 extension ShadowPlugin {
     struct AssetPaths {
-//        let lottie: String
+        //        let lottie: String
         let waveform: String
         let font: String
-//        let done: String
-//        let cancel: String
-//        let minimize: String
+        //        let done: String
+        //        let cancel: String
+        //        let minimize: String
     }
     
     func loadAssets(registrar: FlutterPluginRegistrar, listeningVM: ListeningViewModel) -> Bool {
@@ -597,50 +617,50 @@ extension ShadowPlugin {
         let fileManager = FileManager.default
         
         let assetPaths = AssetPaths(
-//            lottie: registrar.lookupKey(forAsset: "assets/lotties/loading_white.json"),
+            //            lottie: registrar.lookupKey(forAsset: "assets/lotties/loading_white.json"),
             waveform: registrar.lookupKey(forAsset: "assets/lotties/waveformicon.json"),
             font: registrar.lookupKey(forAsset: "assets/fonts/Inter-Regular.ttf")
-//            done: registrar.lookupKey(forAsset: "assets/images/icon/listening/done.svg"),
-//            cancel: registrar.lookupKey(forAsset: "assets/images/icon/listening/cancel.svg"),
-//            minimize: registrar.lookupKey(forAsset: "assets/images/icon/listening/minimize.svg")
+            //            done: registrar.lookupKey(forAsset: "assets/images/icon/listening/done.svg"),
+            //            cancel: registrar.lookupKey(forAsset: "assets/images/icon/listening/cancel.svg"),
+            //            minimize: registrar.lookupKey(forAsset: "assets/images/icon/listening/minimize.svg")
         )
         
         // Log the asset paths returned by lookupKey
         print("Asset paths from lookupKey:")
-//        print("Lottie: \(assetPaths.lottie)")
+        //        print("Lottie: \(assetPaths.lottie)")
         print("Waveform: \(assetPaths.waveform)")
         print("Font: \(assetPaths.font)")
-//        print("Done: \(assetPaths.done)")
-//        print("Cancel: \(assetPaths.cancel)")
-//        print("Minimize: \(assetPaths.minimize)")
+        //        print("Done: \(assetPaths.done)")
+        //        print("Cancel: \(assetPaths.cancel)")
+        //        print("Minimize: \(assetPaths.minimize)")
         
         let fullPaths = AssetPaths(
-//            lottie: "\(bundlePath)/\(assetPaths.lottie)",
+            //            lottie: "\(bundlePath)/\(assetPaths.lottie)",
             waveform: "\(bundlePath)/\(assetPaths.waveform)",
             font: "\(bundlePath)/\(assetPaths.font)"
-//            done: "\(bundlePath)/\(assetPaths.done)",
-//            cancel: "\(bundlePath)/\(assetPaths.cancel)",
-//            minimize: "\(bundlePath)/\(assetPaths.minimize)"
+            //            done: "\(bundlePath)/\(assetPaths.done)",
+            //            cancel: "\(bundlePath)/\(assetPaths.cancel)",
+            //            minimize: "\(bundlePath)/\(assetPaths.minimize)"
         )
         
         // Log the full paths
         print("Bundle path: \(bundlePath)")
         print("Full paths:")
-//        print("Lottie: \(fullPaths.lottie)")
+        //        print("Lottie: \(fullPaths.lottie)")
         print("Waveform: \(fullPaths.waveform)")
         print("Font: \(fullPaths.font)")
-//        print("Done: \(fullPaths.done)")
-//        print("Cancel: \(fullPaths.cancel)")
-//        print("Minimize: \(fullPaths.minimize)")
+        //        print("Done: \(fullPaths.done)")
+        //        print("Cancel: \(fullPaths.cancel)")
+        //        print("Minimize: \(fullPaths.minimize)")
         
         // Check if files exist and log the results
         for (assetName, path) in [
-//            ("Lottie", fullPaths.lottie),
+            //            ("Lottie", fullPaths.lottie),
             ("Waveform", fullPaths.waveform),
             ("Font", fullPaths.font),
-//            ("Done", fullPaths.done),
-//            ("Cancel", fullPaths.cancel),
-//            ("Minimize", fullPaths.minimize)
+            //            ("Done", fullPaths.done),
+            //            ("Cancel", fullPaths.cancel),
+            //            ("Minimize", fullPaths.minimize)
         ] {
             if fileManager.fileExists(atPath: path) {
                 print("✅ \(assetName) file exists at path: \(path)")
@@ -657,10 +677,10 @@ extension ShadowPlugin {
         
         // Update ViewModel paths
         listeningVM.updateWaveformPath(fullPaths.waveform)
-//        listeningVM.updateLottiePath(fullPaths.lottie)
-//        listeningVM.updateDonePath(fullPaths.done)
-//        listeningVM.updateCancelPath(fullPaths.cancel)
-//        listeningVM.updateMinimizePath(fullPaths.minimize)
+        //        listeningVM.updateLottiePath(fullPaths.lottie)
+        //        listeningVM.updateDonePath(fullPaths.done)
+        //        listeningVM.updateCancelPath(fullPaths.cancel)
+        //        listeningVM.updateMinimizePath(fullPaths.minimize)
         
         return true
     }

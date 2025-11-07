@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'shadow_method_channel.dart';
@@ -214,5 +215,9 @@ abstract class ShadowPlatform extends PlatformInterface {
 
   Future<void> stopRecordingMicAndSystemAudio() {
     throw UnimplementedError('stopRecordingMicAndSystemAudio() has not been implemented.');
+  }
+
+  void setNativeCallHandler(Future<dynamic> Function(MethodCall call)? handler) {
+    throw UnimplementedError('setNativeCallHandler() has not been implemented.');
   }
 }

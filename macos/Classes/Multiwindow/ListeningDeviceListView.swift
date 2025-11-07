@@ -10,9 +10,9 @@ struct DeviceItemView: View {
         Text(device.name)
             .lineLimit(1)          // 한 줄로 제한
             .truncationMode(.tail) // 긴 텍스트는 끝에 ...
-//            .padding(.horizontal, 12)  좌우 여백 추가
-            .padding(.vertical, 4)    // 상하 여백
             .foregroundColor(isSelected ? .brandSecondaryColor : .fontColor)
+            .padding(.vertical, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -42,28 +42,22 @@ struct ListeningDeviceListView: View {
                         print("device Selected \(device.name)")
                     }
                     .frame(maxWidth: .infinity, maxHeight: 25, alignment: .leading)
-
                 }
-//            .padding(EdgeInsets(top: 7, leading: 12, bottom: 5, trailing: 30))
         }
-        .onAppear{
-            viewModel.setAudioDeviceListener()
-        }
-        .onDisappear {
-            viewModel.removeAudioDeviceListener()
-        }
+        .frame(maxWidth: .infinity, maxHeight: 100)
+        .fixedSize(horizontal: false, vertical: true)
+//        .padding(.bottom, 5)
+//        .background(Color.red)
+//        .onAppear{
+//            viewModel.setAudioDeviceListener()
+//        }
+//        .onDisappear {
+//            viewModel.removeAudioDeviceListener()
+//        }
         .onReceive(viewModel.$defaultInputDevice) { newDeviceID in
             selectedDeviceId = newDeviceID
             print("Updated defaultInputDevice: \(viewModel.defaultInputDeviceName)")
         }
-        .frame(maxWidth: .infinity, maxHeight: dynamicHeight)
-        .fixedSize(horizontal: false, vertical: true)
-//        .background(Color.newBgColor.clipShape(RoundedRectangle(cornerRadius: 8)))
-        // 폭은 고정, 높이는 min~max 범위 내에서 자동으로
-//        .frame(width: 240, height: dynamicHeight, alignment: .leading)
-//        .overlay(
-//            RoundedRectangle(cornerRadius: 8)
-//                .strokeBorder(Color.borderColor, lineWidth: 1)
-//        )
+
     }
 }

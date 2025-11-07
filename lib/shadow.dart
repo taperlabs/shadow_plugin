@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 import 'shadow_platform_interface.dart';
 
 //User facing API
@@ -174,5 +176,9 @@ class Shadow {
 
   Future<void> stopRecordingMicAndSystemAudio() {
     return ShadowPlatform.instance.stopRecordingMicAndSystemAudio();
+  }
+
+  void setNativeCallHandler(Future<dynamic> Function(MethodCall call)? handler) {
+    ShadowPlatform.instance.setNativeCallHandler(handler);
   }
 }
