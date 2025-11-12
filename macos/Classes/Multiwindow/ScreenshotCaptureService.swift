@@ -22,6 +22,7 @@ struct WindowInfo: Codable, Identifiable {
     /// Flutter 메서드 채널 전송용 딕셔너리 변환
     func asDictionary() -> [String: Any] {
         [
+            "type": "window",
             "windowID": Int(windowID),
             "title": title,
             "owningApplicationName": owningApplicationName,
@@ -48,6 +49,7 @@ struct DisplayInfo: Codable {
     /// Flutter 메서드 채널 전송용 딕셔너리 변환
     func asDictionary() -> [String: Any] {
         [
+            "type": "display",
             "displayID": displayID,
             "localizedName": localizedName,
             "x": Double(frame.origin.x),
