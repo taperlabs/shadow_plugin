@@ -122,6 +122,20 @@ class _MyAppState extends State<MyApp> {
     // initPlatformState();
   }
 
+  Future<void> testUpdateCaptureTarget() async {
+    try {
+      final windowConfig = {
+        'type': 'window',
+        'windowTitle': "Google Meet - Meet - ",
+      };
+
+      final result = await _shadowPlugin.updateCaptureTarget(windowConfig);
+      print("Update Capture Target Success ✅: $result");
+    } on PlatformException catch (e) {
+      print("Update Capture Target Error ❌: ${e.code} - ${e.message}");
+    }
+  }
+
   Future<dynamic> _handleNativeCall(MethodCall call) async {
     print("Flutter received a native call: ${call.method} with arguments: ${call.arguments}");
 
@@ -803,6 +817,7 @@ class _MyAppState extends State<MyApp> {
 
               CustomButton("Test Start Listening", () => testStartListening()),
               CustomButton("Test Stop Listening", () => testStopListening()),
+              CustomButton("Test Update Capture Target", () => testUpdateCaptureTarget()),
 
               CustomButton("Create createNewWindow", () => _createNewWindow()),
               CustomButton("Start Listening", () => _startListening()),

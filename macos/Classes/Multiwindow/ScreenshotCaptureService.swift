@@ -131,6 +131,14 @@ final class ScreenshotCaptureService: ObservableObject {
     @Published var displays: [DisplayInfo] = []
     @Published var isLoading = false
 
+    /// 현재 windows와 displays에서 CaptureTarget 배열 생성
+    /// - Returns: [.noCapture] + displays + windows 형태의 CaptureTarget 배열
+    func buildCaptureTargets() -> [CaptureTarget] {
+        let displayTargets = displays.map { CaptureTarget.display($0) }
+        let windowTargets = windows.map { CaptureTarget.window($0) }
+        return [.noCapture] + displayTargets + windowTargets
+    }
+
     /// 번들 ID로 앱 아이콘 가져오기
     /// - Parameters:
     ///   - bundleID: 앱 번들 식별자

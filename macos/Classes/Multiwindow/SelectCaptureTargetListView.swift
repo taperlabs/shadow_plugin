@@ -103,6 +103,14 @@ struct SelectCaptureTargetListView: View {
         .onDisappear {
             print("SelectCaptureTarget On Disappear")
         }
+        .onReceive(viewModel.$selectedCaptureTarget) { newTarget in
+            // Sync local state when ViewModel changes (e.g., from auto-reset)
+            if let newTarget = newTarget {
+                selectedTargetId = newTarget.id
+            } else {
+                selectedTargetId = nil
+            }
+        }
         .fixedSize(horizontal: false, vertical: true)
     }
 }

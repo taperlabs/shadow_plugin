@@ -411,7 +411,23 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             }
             .receive(on: RunLoop.main)
             .sink { [weak self] targets in
-                self?.captureTargets = targets
+                guard let self = self else { return }
+                self.captureTargets = targets
+
+                // Validate selectedCaptureTarget still exists
+                if let selected = self.selectedCaptureTarget, !selected.isNoCapture {
+                    let stillExists = targets.contains { $0.id == selected.id }
+                    if !stillExists {
+                        self.selectedCaptureTarget = .noCapture
+                        ShadowLogger.shared.info("⚠️ Selected capture target '\(selected.name)' no longer available, reset to .noCapture")
+
+                        // Notify Flutter about the auto-reset
+                        ShadowPlugin.sendToFlutter(
+                            method: "onCaptureTargetAutoReset",
+                            data: ["reason": "target_unavailable", "previousTarget": selected.asDictionary()]
+                        )
+                    }
+                }
             }
             .store(in: &cancellables)
     }
@@ -545,11 +561,104 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             print("No File Name Given")
             return
         }
-        
+
         Task {
             try await screenCaptureService.startCapture(name: sysFileName)
         }
-        
+
         microphoneService.startRecording(name: micFileName)
+    }
+
+    // MARK: - Capture Target Selection
+
+    /// Update capture target by searching in captureTargets list
+    /// - Parameters:
+    ///   - type: Type of capture target ("noCapture", "window", "display")
+    ///   - windowID: Optional window ID for exact match
+    ///   - windowTitle: Optional window title for partial match (case-insensitive)
+    ///   - displayID: Optional display ID for exact match
+    ///   - displayName: Optional display name for partial match (case-insensitive)
+    /// - Returns: The found CaptureTarget, or nil if not found
+    func updateCaptureTarget(
+        type: String,
+        windowID: Int? = nil,
+        windowTitle: String? = nil,
+        displayID: Int? = nil,
+        displayName: String? = nil
+    ) async -> CaptureTarget? {
+
+        // Refresh the latest capture targets before searching
+        await fetchCaptureTargets()
+
+        // Build fresh targets directly from the service (no delay needed)
+        let freshTargets = screenshotCaptureService.buildCaptureTargets()
+
+        // Update the @Published property for UI
+        await MainActor.run {
+            self.captureTargets = freshTargets
+        }
+
+        switch type {
+        case "noCapture":
+            await MainActor.run {
+                self.selectedCaptureTarget = .noCapture
+            }
+            return .noCapture
+
+        case "window":
+            // Search for window
+            for target in freshTargets {
+                if case .window(let windowInfo) = target {
+                    // Match by ID if provided
+                    if let id = windowID {
+                        if windowInfo.windowID == CGWindowID(id) {
+                            await MainActor.run {
+                                self.selectedCaptureTarget = target
+                            }
+                            return target
+                        }
+                    }
+                    // Match by title if provided (case-insensitive partial match)
+                    else if let title = windowTitle {
+                        if windowInfo.title.lowercased().contains(title.lowercased()) {
+                            await MainActor.run {
+                                self.selectedCaptureTarget = target
+                            }
+                            return target
+                        }
+                    }
+                }
+            }
+            return nil
+
+        case "display":
+            // Search for display
+            for target in freshTargets {
+                if case .display(let displayInfo) = target {
+                    // Match by ID if provided
+                    if let id = displayID {
+                        if displayInfo.displayID == id {
+                            await MainActor.run {
+                                self.selectedCaptureTarget = target
+                            }
+                            return target
+                        }
+                    }
+                    // Match by name if provided (case-insensitive partial match)
+                    else if let name = displayName {
+                        if displayInfo.localizedName.lowercased().contains(name.lowercased()) {
+                            await MainActor.run {
+                                self.selectedCaptureTarget = target
+                            }
+                            return target
+                        }
+                    }
+                }
+            }
+            return nil
+
+        default:
+            return nil
+        }
     }
 }

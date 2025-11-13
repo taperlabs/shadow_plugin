@@ -230,6 +230,14 @@ class MethodChannelShadow extends ShadowPlatform {
     return methodChannel.invokeMethod('stopScreenCapture');
   }
 
+  @override
+  Future<dynamic> updateCaptureTarget(Map<String, dynamic> targetConfig) async {
+    final arguments = {
+      'targetConfig': targetConfig,
+    };
+    return methodChannel.invokeMethod('updateCaptureTarget', arguments);
+  }
+
   //Microphone
   @override
   Future<void> startMicRecordingWithDefault() async {

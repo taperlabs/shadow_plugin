@@ -60,6 +60,7 @@ enum MethodChannelCall: String {
     //Before
     case startScreenCapture = "startScreenCapture"
     case stopScreenCapture = "stopScreenCapture"
+    case updateCaptureTarget = "updateCaptureTarget"
     case startMicRecording = "startMicRecording"
     case stopMicRecording = "stopMicRecording"
     case startFileIO = "startFileIO"

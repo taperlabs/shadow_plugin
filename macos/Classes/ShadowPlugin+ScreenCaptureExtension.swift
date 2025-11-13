@@ -73,4 +73,59 @@ extension ShadowPlugin {
             }
         }
     }
+
+    public func updateCaptureTarget(targetConfig: [String: Any], result: @escaping FlutterResult) {
+        Task {
+            // Extract type from targetConfig
+            guard let type = targetConfig["type"] as? String else {
+                result(FlutterError(code: "INVALID_TYPE", message: "Missing or invalid 'type' field in targetConfig", details: nil))
+                return
+            }
+
+            guard let viewModel = windowManager?.listeningViewModel else {
+                result(FlutterError(code: "NO_VIEW_MODEL", message: "ListeningViewModel not available", details: nil))
+                return
+            }
+
+            // Parse optional search parameters
+            let windowID = targetConfig["windowID"] as? Int
+            let windowTitle = targetConfig["windowTitle"] as? String
+            let displayID = targetConfig["displayID"] as? Int
+            let displayName = targetConfig["displayName"] as? String
+
+            // Call ViewModel method to update capture target (now async)
+            guard let foundTarget = await viewModel.updateCaptureTarget(
+                type: type,
+                windowID: windowID,
+                windowTitle: windowTitle,
+                displayID: displayID,
+                displayName: displayName
+            ) else {
+            // Target not found
+            let searchParam: String
+            if let id = windowID {
+                searchParam = "windowID: \(id)"
+            } else if let title = windowTitle {
+                searchParam = "windowTitle: '\(title)'"
+            } else if let id = displayID {
+                searchParam = "displayID: \(id)"
+            } else if let name = displayName {
+                searchParam = "displayName: '\(name)'"
+            } else {
+                searchParam = "no search parameters"
+            }
+
+            result(FlutterError(
+                code: "TARGET_NOT_FOUND",
+                message: "Capture target not found for type '\(type)' with \(searchParam)",
+                details: nil
+            ))
+            return
+        }
+
+            // Success - return the target info
+            ShadowLogger.shared.info("Capture target updated to: \(foundTarget.name)")
+            result(foundTarget.asDictionary())
+        }
+    }
 }

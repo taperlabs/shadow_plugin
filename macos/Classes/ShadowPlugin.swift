@@ -19,7 +19,7 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
     private static let multiWindowStatusEventChannelName = "multiWindowStatusEventChannel"
     private static let listeningStatusEventChannelName = "listeningStatusEventChannel"
     
-    private var windowManager: WindowManager?
+    var windowManager: WindowManager?
     private var listeningViewModel: ListeningViewModel?
     static var multiWindowEventChannel: FlutterEventChannel?
     static var multiWindowStatusEventChannel: FlutterEventChannel?
@@ -568,11 +568,28 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
             
         case .stopScreenCapture:
             handleStopScreenCapture(result: result)
-            
+
+        case .updateCaptureTarget:
+            handleUpdateCaptureTarget(call: call, result: result)
+
         case .startFileIO:
             // Handle startFileIO
             break
         }
+    }
+
+    private func handleUpdateCaptureTarget(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any] else {
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil))
+            return
+        }
+
+        guard let targetConfig = args["targetConfig"] as? [String: Any] else {
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid targetConfig value", details: nil))
+            return
+        }
+
+        updateCaptureTarget(targetConfig: targetConfig, result: result)
     }
 }
 

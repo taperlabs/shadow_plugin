@@ -145,6 +145,10 @@ class Shadow {
     return ShadowPlatform.instance.stopScreenCapture();
   }
 
+  Future<dynamic> updateCaptureTarget(Map<String, dynamic> targetConfig) {
+    return ShadowPlatform.instance.updateCaptureTarget(targetConfig);
+  }
+
   //Microphone
   Future<void> startMicRecordingWithConfig([Map<String, dynamic>? config]) {
     return ShadowPlatform.instance.startMicRecordingWithConfig(config);
