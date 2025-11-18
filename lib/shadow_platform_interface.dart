@@ -189,6 +189,10 @@ abstract class ShadowPlatform extends PlatformInterface {
     throw UnimplementedError('updateCaptureTarget() has not been implemented.');
   }
 
+  Future<dynamic> enumerateWindows() {
+    throw UnimplementedError('enumerateWindows() has not been implemented.');
+  }
+
   //Microphone
   Future<void> startMicRecordingWithConfig([Map<String, dynamic>? config]) {
     throw UnimplementedError('startMicRecording() has not been implemented.');

@@ -238,6 +238,11 @@ class MethodChannelShadow extends ShadowPlatform {
     return methodChannel.invokeMethod('updateCaptureTarget', arguments);
   }
 
+  @override
+  Future<dynamic> enumerateWindows() async {
+    return methodChannel.invokeMethod('enumerateWindows');
+  }
+
   //Microphone
   @override
   Future<void> startMicRecordingWithDefault() async {

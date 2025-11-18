@@ -149,6 +149,10 @@ class Shadow {
     return ShadowPlatform.instance.updateCaptureTarget(targetConfig);
   }
 
+  Future<dynamic> enumerateWindows() {
+    return ShadowPlatform.instance.enumerateWindows();
+  }
+
   //Microphone
   Future<void> startMicRecordingWithConfig([Map<String, dynamic>? config]) {
     return ShadowPlatform.instance.startMicRecordingWithConfig(config);

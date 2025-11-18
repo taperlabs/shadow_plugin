@@ -125,14 +125,49 @@ class _MyAppState extends State<MyApp> {
   Future<void> testUpdateCaptureTarget() async {
     try {
       final windowConfig = {
-        'type': 'window',
-        'windowTitle': "Google Meet - Meet - ",
+        'type': 'noCapture',
+        // 'windowTitle': "Google Meet - Meet - ",
       };
 
       final result = await _shadowPlugin.updateCaptureTarget(windowConfig);
       print("Update Capture Target Success ✅: $result");
     } on PlatformException catch (e) {
       print("Update Capture Target Error ❌: ${e.code} - ${e.message}");
+    }
+  }
+
+  Future<void> testEnumerateWindows() async {
+    try {
+      final result = await _shadowPlugin.enumerateWindows();
+      print("=== Enumerate Windows Success ✅ ===");
+
+      if (result is Map<dynamic, dynamic>) {
+        final windows = result['windows'] as List<dynamic>? ?? [];
+        final displays = result['displays'] as List<dynamic>? ?? [];
+
+        print("\n🖥️ Displays (${displays.length}):");
+        for (var display in displays) {
+          print("  Display ID: ${display['displayID']}");
+          print("  Name: ${display['localizedName']}");
+          print("  Size: ${display['width']} x ${display['height']}");
+          print("  Position: (${display['x']}, ${display['y']})");
+          print("  ---");
+        }
+
+        print("\n🪟 Windows (${windows.length}):");
+        for (var window in windows) {
+          print("  Window ID: ${window['windowID']}");
+          print("  Title: ${window['title']}");
+          print("  App: ${window['owningApplicationName']}");
+          print("  Bundle ID: ${window['bundleID']}");
+          print("  Size: ${window['width']} x ${window['height']}");
+          print("  Position: (${window['x']}, ${window['y']})");
+          print("  Active: ${window['isActive']}");
+          print("  ---");
+        }
+      }
+    } on PlatformException catch (e) {
+      print("Enumerate Windows Error ❌: ${e.code} - ${e.message}");
     }
   }
 
@@ -818,6 +853,7 @@ class _MyAppState extends State<MyApp> {
               CustomButton("Test Start Listening", () => testStartListening()),
               CustomButton("Test Stop Listening", () => testStopListening()),
               CustomButton("Test Update Capture Target", () => testUpdateCaptureTarget()),
+              CustomButton("Test Enumerate Windows", () => testEnumerateWindows()),
 
               CustomButton("Create createNewWindow", () => _createNewWindow()),
               CustomButton("Start Listening", () => _startListening()),

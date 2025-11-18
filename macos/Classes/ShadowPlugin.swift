@@ -572,6 +572,9 @@ public class ShadowPlugin: NSObject, FlutterPlugin {
         case .updateCaptureTarget:
             handleUpdateCaptureTarget(call: call, result: result)
 
+        case .enumerateWindows:
+            handleEnumerateWindows(result: result)
+
         case .startFileIO:
             // Handle startFileIO
             break

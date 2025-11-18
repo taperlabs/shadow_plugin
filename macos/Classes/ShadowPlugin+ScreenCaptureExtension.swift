@@ -128,4 +128,30 @@ extension ShadowPlugin {
             result(foundTarget.asDictionary())
         }
     }
+
+    public func handleEnumerateWindows(result: @escaping FlutterResult) {
+        Task {
+            // Create a new ScreenshotCaptureService instance for fresh data
+            let screenshotService = ScreenshotCaptureService()
+
+            // Fetch both windows and displays
+            await screenshotService.getAvailableTargets()
+            await screenshotService.getAvailableDisplays()
+
+            // Convert to dictionaries for Flutter
+            let windowDictionaries = screenshotService.windows.map { $0.asDictionary() }
+            let displayDictionaries = screenshotService.displays.map { $0.asDictionary() }
+
+            // Return response with both windows and displays
+            let response: [String: Any] = [
+                "windows": windowDictionaries,
+                "displays": displayDictionaries
+            ]
+
+            DispatchQueue.main.async {
+                result(response)
+            }
+            // screenshotService is automatically deallocated here
+        }
+    }
 }

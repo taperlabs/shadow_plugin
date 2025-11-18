@@ -131,6 +131,10 @@ final class ScreenshotCaptureService: ObservableObject {
     @Published var displays: [DisplayInfo] = []
     @Published var isLoading = false
 
+    deinit {
+        print("🗑️ ScreenshotCaptureService deallocated - Memory freed successfully")
+    }
+
     /// 현재 windows와 displays에서 CaptureTarget 배열 생성
     /// - Returns: [.noCapture] + displays + windows 형태의 CaptureTarget 배열
     func buildCaptureTargets() -> [CaptureTarget] {
