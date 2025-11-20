@@ -46,7 +46,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
     @Published var inputDevices: [AudioDevice] = []
 
     @Published var captureTargets: [CaptureTarget] = []
-    @Published var selectedCaptureTarget: CaptureTarget? = .noCapture
+    @Published var selectedCaptureTarget: CaptureTarget? = .autoCapture(nil)
     @Published var shouldScreenshotCapture: Bool = false
 
     @Published var username: String?
@@ -403,23 +403,37 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
 
         // ScreenshotCaptureService subscriptions
         screenshotCaptureService.$windows
-            .combineLatest(screenshotCaptureService.$displays)
-            .map { windows, displays in
+            .combineLatest(screenshotCaptureService.$displays, $selectedCaptureTarget)
+            .map { windows, displays, selectedTarget in
                 let displayTargets = displays.map { CaptureTarget.display($0) }
                 let windowTargets = windows.map { CaptureTarget.window($0) }
-                return [.noCapture] + displayTargets + windowTargets
+
+                // Smart index 0 logic
+                // State 1: Show .autoCapture(nil) at index 0 when selectedTarget is .autoCapture without window info
+                // State 2: Show .autoCapture(windowInfo) at index 0 when a window is found
+                // Note: We keep the window in the list (Slack-like behavior), not filtering it out
+                var firstElement: CaptureTarget = .autoCapture(nil)
+
+                if let selectedTarget = selectedTarget,
+                   case .autoCapture(let windowInfo) = selectedTarget,
+                   let window = windowInfo {
+                    // State 2: Auto-captured window at index 0
+                    firstElement = .autoCapture(window)
+                }
+
+                return [firstElement, .noCapture] + displayTargets + windowTargets
             }
             .receive(on: RunLoop.main)
-            .sink { [weak self] targets in
+            .sink { [weak self] (targets: [CaptureTarget]) in
                 guard let self = self else { return }
                 self.captureTargets = targets
 
                 // Validate selectedCaptureTarget still exists
-                if let selected = self.selectedCaptureTarget, !selected.isNoCapture {
+                if let selected = self.selectedCaptureTarget, !selected.isNoCapture && !selected.isAutoCapture {
                     let stillExists = targets.contains { $0.id == selected.id }
                     if !stillExists {
-                        self.selectedCaptureTarget = .noCapture
-                        ShadowLogger.shared.info("⚠️ Selected capture target '\(selected.name)' no longer available, reset to .noCapture")
+                        self.selectedCaptureTarget = .autoCapture(nil)
+                        ShadowLogger.shared.info("⚠️ Selected capture target '\(selected.name)' no longer available, reset to .autoCapture")
 
                         // Notify Flutter about the auto-reset
                         ShadowPlugin.sendToFlutter(
@@ -573,7 +587,7 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
 
     /// Update capture target by searching in captureTargets list
     /// - Parameters:
-    ///   - type: Type of capture target ("noCapture", "window", "display")
+    ///   - type: Type of capture target ("noCapture", "autoCapture", "window", "display")
     ///   - windowID: Optional window ID for exact match
     ///   - windowTitle: Optional window title for partial match (case-insensitive)
     ///   - displayID: Optional display ID for exact match
@@ -605,6 +619,44 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
             }
             return .noCapture
 
+        case "autoCapture":
+            // If windowID or windowTitle is provided, search for the window
+            if windowID != nil || windowTitle != nil {
+                // Search for window
+                for target in freshTargets {
+                    if case .window(let windowInfo) = target {
+                        // Match by ID if provided
+                        if let id = windowID {
+                            if windowInfo.windowID == CGWindowID(id) {
+                                let updatedTarget = CaptureTarget.autoCapture(windowInfo)
+                                await MainActor.run {
+                                    self.selectedCaptureTarget = updatedTarget
+                                }
+                                return updatedTarget
+                            }
+                        }
+                        // Match by title if provided (case-insensitive partial match)
+                        else if let title = windowTitle {
+                            if windowInfo.title.lowercased().contains(title.lowercased()) {
+                                let updatedTarget = CaptureTarget.autoCapture(windowInfo)
+                                await MainActor.run {
+                                    self.selectedCaptureTarget = updatedTarget
+                                }
+                                return updatedTarget
+                            }
+                        }
+                    }
+                }
+                // Window not found, return nil
+                return nil
+            } else {
+                // No search parameters, return .autoCapture(nil) for "Meeting Screen (Auto)"
+                await MainActor.run {
+                    self.selectedCaptureTarget = .autoCapture(nil)
+                }
+                return .autoCapture(nil)
+            }
+
         case "window":
             // Search for window
             for target in freshTargets {
@@ -612,19 +664,21 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
                     // Match by ID if provided
                     if let id = windowID {
                         if windowInfo.windowID == CGWindowID(id) {
+                            let updatedTarget = CaptureTarget.window(windowInfo)
                             await MainActor.run {
-                                self.selectedCaptureTarget = target
+                                self.selectedCaptureTarget = updatedTarget
                             }
-                            return target
+                            return updatedTarget
                         }
                     }
                     // Match by title if provided (case-insensitive partial match)
                     else if let title = windowTitle {
                         if windowInfo.title.lowercased().contains(title.lowercased()) {
+                            let updatedTarget = CaptureTarget.window(windowInfo)
                             await MainActor.run {
-                                self.selectedCaptureTarget = target
+                                self.selectedCaptureTarget = updatedTarget
                             }
-                            return target
+                            return updatedTarget
                         }
                     }
                 }

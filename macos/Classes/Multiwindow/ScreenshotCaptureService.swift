@@ -140,7 +140,7 @@ final class ScreenshotCaptureService: ObservableObject {
     func buildCaptureTargets() -> [CaptureTarget] {
         let displayTargets = displays.map { CaptureTarget.display($0) }
         let windowTargets = windows.map { CaptureTarget.window($0) }
-        return [.noCapture] + displayTargets + windowTargets
+        return [.autoCapture(nil), .noCapture] + displayTargets + windowTargets
     }
 
     /// 번들 ID로 앱 아이콘 가져오기

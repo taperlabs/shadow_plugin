@@ -127,6 +127,7 @@ class _MyAppState extends State<MyApp> {
       final windowConfig = {
         'type': 'noCapture',
         // 'windowTitle': "Google Meet - Meet - ",
+        // 'isAutoCapture': true,
       };
 
       final result = await _shadowPlugin.updateCaptureTarget(windowConfig);

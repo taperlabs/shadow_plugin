@@ -26,6 +26,16 @@ struct SelectCaptureTargetItemView: View {
     @ViewBuilder
     private var iconView: some View {
         switch target {
+        case .autoCapture(let windowInfo):
+            if let window = windowInfo,
+               let bundleID = window.bundleID,
+               let icon = ScreenshotCaptureService.getAppIcon(for: bundleID, size: 16) {
+                Image(nsImage: icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: "sparkles")
+            }
         case .noCapture:
             Image(systemName: "xmark.circle")
         case .display:

@@ -34,6 +34,7 @@ struct NewListeningView: View {
                 
                 if viewModel.shouldScreenshotCapture {
                     SelectCaptureTargetView()
+                        .contentShape(Rectangle())  // Makes entire frame tappable
                         .onTapGesture {
                             withAnimation { showCaptureTargets.toggle() }
                         }
