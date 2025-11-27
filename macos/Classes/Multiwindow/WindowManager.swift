@@ -202,6 +202,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
             listeningWindow.isMovableByWindowBackground = true
             listeningWindow.delegate = self
             listeningWindow.hasShadow = false
+            listeningWindow.sharingType = .none
             
             listeningWindow.contentView?.wantsLayer = true
             listeningWindow.contentView?.layer?.cornerRadius = 0

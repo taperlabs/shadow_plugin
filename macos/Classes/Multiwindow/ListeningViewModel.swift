@@ -2,7 +2,7 @@
 import Foundation
 import FlutterMacOS
 import Combine
-import SwiftUICore
+import SwiftUI
 
 //MARK: - LsteningViewModel
 final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler {
