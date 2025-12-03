@@ -119,7 +119,8 @@ private enum FilterConfiguration {
         "com.apple.Spotlight",
         "com.apple.wallpaper.agent",
         "com.apple.WindowManager",
-        "com.apple.systemuiserver"
+        "com.apple.systemuiserver",
+        "com.taperlabs.shadow"
     ]
 }
 
