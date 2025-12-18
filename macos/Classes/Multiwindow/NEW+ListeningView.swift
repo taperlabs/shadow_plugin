@@ -28,23 +28,21 @@ struct NewListeningView: View {
                 Divider()
                 
                 // Device list는 조건부로 표시
-                if viewModel.shouldScreenshotCapture && showCaptureTargets && isControlBarExpanded {
+                if showCaptureTargets && isControlBarExpanded {
                     SelectCaptureTargetListView()
                     //                        .transition(.opacity.combined(with: .scale))
-                    
+
                     Divider()
                 }
-                
-                if viewModel.shouldScreenshotCapture {
-                    SelectCaptureTargetView()
-                        .contentShape(Rectangle())  // Makes entire frame tappable
-                        .onTapGesture {
-                            withAnimation { showCaptureTargets.toggle() }
-                        }
-                    //                        .padding(.bottom, 5)
-                    //                        .animation(.easeInOut, value: isControlBarExpanded)
-                    Divider()
-                }
+
+                SelectCaptureTargetView()
+                    .contentShape(Rectangle())  // Makes entire frame tappable
+                    .onTapGesture {
+                        withAnimation { showCaptureTargets.toggle() }
+                    }
+                //                        .padding(.bottom, 5)
+                //                        .animation(.easeInOut, value: isControlBarExpanded)
+                Divider()
                 
                 // Device list는 조건부로 표시
                 if showDevices && isControlBarExpanded {

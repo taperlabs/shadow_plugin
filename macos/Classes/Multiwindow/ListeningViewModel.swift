@@ -289,6 +289,11 @@ final class ListeningViewModel:NSObject, ObservableObject, FlutterStreamHandler 
         self.sysFileName = sysFileName
         self.uuid = uuid
         self.shouldScreenshotCapture = shouldScreenshotCapture
+
+        // shouldScreenshotCapture가 false이면 noCapture로 시작
+        if !shouldScreenshotCapture {
+            self.selectedCaptureTarget = .noCapture
+        }
     }
     
     func setHotkeys(with hotkey: String) {
